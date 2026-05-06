@@ -26,6 +26,35 @@ function getCoverUrl(media: Record<string, unknown>): string | null {
   return url
 }
 
+function getAppIconUrl(media: Record<string, unknown>): string | null {
+  for (const key of [
+    'appIconUrl',
+    'app_icon_url',
+    'iconUrl',
+    'icon_url',
+    'sourceIconUrl',
+    'playSourceIconUrl',
+    'playerIconUrl',
+    'programIconUrl',
+    'appIcon',
+    'icon',
+  ]) {
+    const raw = media[key]
+    if (typeof raw !== 'string') continue
+    const url = raw.trim()
+    if (!url || url.startsWith('data:')) continue
+    return url
+  }
+  return null
+}
+
+function getNcmId(media: Record<string, unknown>): string | null {
+  const genreRaw = media.genre ?? media.category ?? media.tag ?? media.label
+  if (typeof genreRaw !== 'string') return null
+  const match = genreRaw.match(/NCM-\d+/i)
+  return match ? match[0] : null
+}
+
 function getNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
   if (typeof value === 'string' && value.trim()) {
@@ -116,6 +145,8 @@ export function getMediaDisplay(metadata: unknown): MediaDisplay | null {
   const sourceRaw = (metadata as Record<string, unknown>).play_source
   const source = getOptionalText(sourceRaw)
   const coverUrl = getCoverUrl(m)
+  const appIconUrl = getAppIconUrl(m)
+  const ncmId = getNcmId(m)
   const { startedAtMs, endsAtMs } = getTimestamps(m)
   const inferredDurationMs =
     startedAtMs !== null && endsAtMs !== null && endsAtMs > startedAtMs
@@ -137,6 +168,7 @@ export function getMediaDisplay(metadata: unknown): MediaDisplay | null {
     album,
     source,
     coverUrl,
+    appIconUrl,
     state,
     positionMs,
     durationMs,
@@ -147,5 +179,6 @@ export function getMediaDisplay(metadata: unknown): MediaDisplay | null {
       getTimestampMs(m.updatedAt) ??
       getTimestampMs(m.timestamp) ??
       null,
+    ncmId,
   }
 }

@@ -582,12 +582,20 @@
       "placeholder": "Example: Code.exe"
     },
     "mediaSource": {
-      "title": "Media-source blocklist (play_source)",
+      "title": "Media source rules (play_source)",
       "count": "{{value}} rules configured",
-      "dialogDescription": "When the reported metadata.play_source matches, the activity's media information is hidden by removing metadata.media only.",
-      "inputDescription": "Enter source values, lowercase recommended",
-      "empty": "No blocklist rules",
-      "placeholder": "Example: system_media"
+      "dialogDescription": "When reported metadata.play_source matches, either hide media information or override the source name shown publicly. Legacy blocklists are treated as block rules.",
+      "inputDescription": "Enter a source value, lowercase recommended, then choose what happens after a match.",
+      "empty": "No media source rules",
+      "placeholder": "Example: system_media",
+      "displayNamePlaceholder": "Show as, example: Spotify",
+      "noMatchingHistory": "No matching historical media source",
+      "blockSummary": "Hide media information after match",
+      "renameSummary": "Show as: {{value}}",
+      "actions": {
+        "block": "Block",
+        "rename": "Override"
+      }
     },
     "captureReportedApps": {
       "title": "Save reported app history (for rule selection/export)",
@@ -932,6 +940,10 @@
     "mediaDisplayShowSourceDescription": "When hovering over the music row, display the source (e.g., Spotify, Apple Music) in a popover.",
     "mediaDisplayShowCoverTitle": "Show media cover image in hover card",
     "mediaDisplayShowCoverDescription": "When hovering over the music row, display the cover image in a popover.",
+    "mediaDisplayShowAppIconTitle": "Report playback app icon",
+    "mediaDisplayShowAppIconDescription": "When enabled, playback app icons from activity reports are stored and shown before the music row.",
+    "mediaDisplayShowNcmLinkTitle": "Show NCM song link",
+    "mediaDisplayShowNcmLinkDescription": "When enabled and the activity report contains genre info (e.g. NCM-{id} from inflink-rs), a link to the song on music.163.com will be shown in the hover card.",
     "mediaCoverMaxCountLabel": "Max cover images per device",
     "mediaCoverMaxCountHint": "Number of cover images to keep per device. Set to 0 for unlimited. Older images are automatically deleted.",
     "mediaCoverServerlessWarning": "Strongly avoid enabling this on serverless platforms: covers are written to the database with activity reports, which can noticeably increase function payload size, database storage, and read bandwidth. You can ignore this note on non-serverless deployments.",

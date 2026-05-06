@@ -582,12 +582,20 @@
       "placeholder": "例如：Code.exe"
     },
     "mediaSource": {
-      "title": "媒体来源屏蔽规则（play_source）",
+      "title": "媒体来源规则（play_source）",
       "count": "已配置 {{value}} 条",
-      "dialogDescription": "当上报的 metadata.play_source 命中时，将隐藏该条活动的媒体信息（仅移除 metadata.media）。",
-      "inputDescription": "输入来源值（建议小写）",
-      "empty": "暂无屏蔽规则",
-      "placeholder": "例如：system_media"
+      "dialogDescription": "当上报的 metadata.play_source 命中时，可选择隐藏媒体信息，或复写前台显示的来源名称。旧的屏蔽列表会自动按“屏蔽”处理。",
+      "inputDescription": "输入来源值（建议小写），然后选择命中后的处理方式。",
+      "empty": "暂无媒体来源规则",
+      "placeholder": "例如：system_media",
+      "displayNamePlaceholder": "显示为，例如：Spotify",
+      "noMatchingHistory": "没有匹配的历史媒体来源",
+      "blockSummary": "命中后屏蔽媒体信息",
+      "renameSummary": "命中后显示为：{{value}}",
+      "actions": {
+        "block": "屏蔽",
+        "rename": "复写"
+      }
     },
     "captureReportedApps": {
       "title": "保存上报行为的应用记录（用于规则选择/导出）",
@@ -932,6 +940,10 @@
     "mediaDisplayShowSourceDescription": "鼠标悬停在音乐行时，在弹出框中显示来源（如 Spotify、Apple Music）。",
     "mediaDisplayShowCoverTitle": "在悬停卡片中显示媒体封面图",
     "mediaDisplayShowCoverDescription": "鼠标悬停在音乐行时，在弹出框中显示封面图。",
+    "mediaDisplayShowAppIconTitle": "上报播放程序的 ICON",
+    "mediaDisplayShowAppIconDescription": "开启后，活动上报中的播放程序图标会被保存，并优先显示在音乐行左侧。",
+    "mediaDisplayShowNcmLinkTitle": "显示 NCM 歌曲链接",
+    "mediaDisplayShowNcmLinkDescription": "开启后，当活动上报包含流派信息时（例如 inflink-rs 的 NCM-{id}），在悬浮框中显示跳转至 music.163.com 的链接。",
     "mediaCoverMaxCountLabel": "每设备最大封面图数量",
     "mediaCoverMaxCountHint": "每个设备保留的封面图数量上限。设为 0 则不限制，旧图片自动清理。",
     "mediaCoverServerlessWarning": "强烈不建议在 Serverless 平台开启：封面会随活动上报写入数据库，可能明显增加函数请求体、数据库体积与读取带宽。如果你的部署不是 Serverless，可忽略此提示。",

@@ -1,6 +1,7 @@
 import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { parseJsonString } from '@/lib/json-parse'
+import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
@@ -23,6 +24,8 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     smoothScrollEnabled: config.smoothScrollEnabled === true,
     mediaDisplayShowSource: config.mediaDisplayShowSource === true,
     mediaDisplayShowCover: config.mediaDisplayShowCover === true,
+    mediaDisplayShowAppIcon: config.mediaDisplayShowAppIcon === true,
+    mediaDisplayShowNcmLink: config.mediaDisplayShowNcmLink === true,
     mediaCoverMaxCount: Number.isFinite(mediaCoverMaxCount)
       ? Math.min(Math.max(Math.round(mediaCoverMaxCount), 0), 500)
       : 50,
@@ -43,5 +46,9 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     appWhitelist: normalizeStringArrayField(config.appWhitelist),
     appNameOnlyList: normalizeStringArrayField(config.appNameOnlyList),
     mediaPlaySourceBlocklist: normalizeStringArrayField(config.mediaPlaySourceBlocklist),
+    mediaPlaySourceRules: normalizeMediaPlaySourceRules(
+      parseJsonString(config.mediaPlaySourceRules),
+      config.mediaPlaySourceBlocklist,
+    ),
   }
 }

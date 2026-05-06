@@ -19,6 +19,7 @@ import {
 } from '@/components/admin/web-settings-layout'
 import {
   ListPaginationBar,
+  SETTINGS_APP_LIST_PAGE_SIZE,
   SETTINGS_RULES_PAGE_SIZE,
 } from '@/components/admin/web-settings-paging'
 import { webSettingsMigrationAtom } from '@/components/admin/web-settings-store'
@@ -89,6 +90,10 @@ export function WebSettingsRuleTools() {
     pagedMediaSourceItems,
     nameOnlySuggestionsQuery,
     mediaSourceSuggestionsQuery,
+    mediaSourceAction,
+    setMediaSourceAction,
+    mediaSourceDisplayName,
+    setMediaSourceDisplayName,
     ruleProcessSuggestionsQuery,
     blacklistInput,
     setBlacklistInput,
@@ -126,6 +131,8 @@ export function WebSettingsRuleTools() {
     importRulesInput,
     setImportRulesInput,
     editingListItem,
+    editingMediaSourceRule,
+    setEditingMediaSourceRule,
     setEditingListItem,
     setSelectedRuleId,
     handleOpenRuleSelector,
@@ -139,6 +146,10 @@ export function WebSettingsRuleTools() {
     handleAddFilterItem,
     handleAddNameOnlyItem,
     handleAddMediaSourceItem,
+    handleStartEditMediaSourceRule,
+    handleCancelEditMediaSourceRule,
+    handleSaveEditedMediaSourceRule,
+    handleRemoveMediaSourceRule,
     handleAddRuleGroup,
     handleDeleteRuleGroup,
     handleMoveRuleGroup,
@@ -802,7 +813,7 @@ export function WebSettingsRuleTools() {
             <WebSettingsRow
               title={t('webSettingsRuleTools.mediaSource.title')}
               description={t('webSettingsRuleTools.mediaSource.count', {
-                value: currentSummary?.mediaPlaySourceBlocklistCount ?? 0,
+                value: currentSummary?.mediaPlaySourceRuleCount ?? 0,
               })}
               action={
                 <Button
@@ -1077,7 +1088,7 @@ export function WebSettingsRuleTools() {
         open={dialogMediaSourceOpen}
         onOpenChange={(open) => {
           setDialogMediaSourceOpen(open)
-          if (!open) setEditingListItem(null)
+          if (!open) setEditingMediaSourceRule(null)
         }}
       >
         <DialogContent className="flex h-[calc(100vh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:h-[min(90vh,56rem)] sm:max-h-[min(90vh,56rem)] sm:w-[calc(100vw-1.5rem)]">
@@ -1088,49 +1099,215 @@ export function WebSettingsRuleTools() {
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6">
-            <ListDialogEditor
-              description={t('webSettingsRuleTools.mediaSource.inputDescription')}
-              emptyText={t('webSettingsRuleTools.mediaSource.empty')}
-              inputId="rule-tools-media-source"
-              placeholder={t('webSettingsRuleTools.mediaSource.placeholder')}
-              suggestions={mediaSourceSuggestionsQuery.data ?? []}
-              suggestionsEnabled={captureReportedAppsEnabled}
-              inputValue={mediaSourceInput}
-              onInputValueChange={setMediaSourceInput}
-              onAdd={handleAddMediaSourceItem}
-              items={pagedMediaSourceItems}
-              total={filteredMediaSourceItems.length}
-              page={resolvedMediaSourceListPage}
-              onPageChange={setMediaSourceListPage}
-              savedSearchValue={mediaSourceSearchInput}
-              onSavedSearchValueChange={(value) => {
-                setMediaSourceSearchInput(value)
-                setMediaSourceListPage(0)
-              }}
-              loading={ruleToolsQuery.isLoading && !currentPayload}
-              refreshing={ruleToolsQuery.isFetching && !ruleToolsQuery.isLoading}
-              busy={busy}
-              editingItem={
-                editingListItem?.listKey === 'mediaPlaySourceBlocklist'
-                  ? {
-                      currentValue: editingListItem.currentValue,
-                      draftValue: editingListItem.draftValue,
+            <div className="flex h-full min-h-0 flex-col gap-3">
+              <div className="shrink-0 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {t('webSettingsRuleTools.mediaSource.inputDescription')}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem]">
+                  <Autocomplete
+                    id="rule-tools-media-source"
+                    items={mediaSourceSuggestionsQuery.data ?? []}
+                    value={mediaSourceInput}
+                    onValueChange={setMediaSourceInput}
+                    placeholder={t('webSettingsRuleTools.mediaSource.placeholder')}
+                    inputClassName="font-mono"
+                    showClear={false}
+                    emptyText={
+                      captureReportedAppsEnabled
+                        ? t('webSettingsRuleTools.mediaSource.noMatchingHistory')
+                        : t('webSettingsRuleTools.appNameListEditor.historyDisabled')
                     }
-                  : null
-              }
-              onEditingValueChange={(value) =>
-                setEditingListItem((current) =>
-                  current ? { ...current, draftValue: value } : current,
-                )
-              }
-              onStartEdit={(value) =>
-                handleStartEditListItem('mediaPlaySourceBlocklist', value)
-              }
-              onCancelEdit={handleCancelEditListItem}
-              onSaveEdit={handleSaveEditedListItem}
-              onRemove={(value) => handleRemoveListItem('mediaPlaySourceBlocklist', value)}
-              inputClassName="font-mono"
-            />
+                  />
+                  <RadioGroup
+                    value={mediaSourceAction}
+                    onValueChange={(value) => {
+                      if (value === 'block' || value === 'rename') setMediaSourceAction(value)
+                    }}
+                    className="grid grid-cols-2 gap-2"
+                    disabled={busy}
+                  >
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                      <RadioGroupItem value="block" id="media-source-action-block" />
+                      {t('webSettingsRuleTools.mediaSource.actions.block')}
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                      <RadioGroupItem value="rename" id="media-source-action-rename" />
+                      {t('webSettingsRuleTools.mediaSource.actions.rename')}
+                    </label>
+                  </RadioGroup>
+                </div>
+                {mediaSourceAction === 'rename' ? (
+                  <Input
+                    value={mediaSourceDisplayName}
+                    onChange={(event) => setMediaSourceDisplayName(event.target.value)}
+                    placeholder={t('webSettingsRuleTools.mediaSource.displayNamePlaceholder')}
+                  />
+                ) : null}
+                <Button
+                  type="button"
+                  disabled={
+                    busy ||
+                    mediaSourceInput.trim().length === 0 ||
+                    (mediaSourceAction === 'rename' && mediaSourceDisplayName.trim().length === 0)
+                  }
+                  onClick={() => void handleAddMediaSourceItem()}
+                >
+                  {t('webSettingsRuleTools.appNameListEditor.add')}
+                </Button>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rule-tools-media-source-saved-search">{t('common.search')}</Label>
+                  <Input
+                    id="rule-tools-media-source-saved-search"
+                    value={mediaSourceSearchInput}
+                    onChange={(event) => {
+                      setMediaSourceSearchInput(event.target.value)
+                      setMediaSourceListPage(0)
+                    }}
+                    placeholder={t('webSettingsRuleTools.appNameListEditor.savedSearchPlaceholder')}
+                  />
+                  {ruleToolsQuery.isFetching && !ruleToolsQuery.isLoading ? (
+                    <p className="text-xs text-muted-foreground">{t('common.refreshing')}</p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                {ruleToolsQuery.isLoading && !currentPayload ? (
+                  <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 bg-background/30 px-6 py-8 text-center">
+                    <p className="text-xs text-muted-foreground">{t('webSettings.loading')}</p>
+                  </div>
+                ) : filteredMediaSourceItems.length === 0 ? (
+                  <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 bg-background/30 px-6 py-8 text-center">
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {mediaSourceSearchInput.trim()
+                        ? t('webSettingsRuleTools.appNameListEditor.noSavedResults')
+                        : t('webSettingsRuleTools.mediaSource.empty')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+                    <p className="shrink-0 text-xs text-muted-foreground">
+                      {t('webSettingsRuleTools.appNameListEditor.savedItemsPaged')}
+                    </p>
+                    <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border/60 bg-background/20 p-3">
+                      <motion.ul className="space-y-3" layout>
+                        <AnimatePresence initial={false}>
+                          {pagedMediaSourceItems.map((item) => {
+                            const isEditing =
+                              editingMediaSourceRule?.source.toLowerCase() === item.source.toLowerCase()
+                            return (
+                              <motion.li
+                                key={item.source.toLowerCase()}
+                                className="rounded-md border bg-background/50 px-3 py-2.5"
+                                variants={sectionVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={sectionTransition}
+                                layout
+                              >
+                                {isEditing ? (
+                                  <div className="space-y-3">
+                                    <Input
+                                      value={editingMediaSourceRule?.source ?? ''}
+                                      onChange={(event) =>
+                                        setEditingMediaSourceRule((current) =>
+                                          current ? { ...current, source: event.target.value } : current,
+                                        )
+                                      }
+                                      className="font-mono"
+                                      placeholder={t('webSettingsRuleTools.mediaSource.placeholder')}
+                                    />
+                                    <RadioGroup
+                                      value={editingMediaSourceRule?.action ?? 'block'}
+                                      onValueChange={(value) => {
+                                        if (value !== 'block' && value !== 'rename') return
+                                        setEditingMediaSourceRule((current) =>
+                                          current ? { ...current, action: value } : current,
+                                        )
+                                      }}
+                                      className="grid grid-cols-2 gap-2"
+                                      disabled={busy}
+                                    >
+                                      <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                                        <RadioGroupItem value="block" id={`media-source-edit-block-${item.position}`} />
+                                        {t('webSettingsRuleTools.mediaSource.actions.block')}
+                                      </label>
+                                      <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs">
+                                        <RadioGroupItem value="rename" id={`media-source-edit-rename-${item.position}`} />
+                                        {t('webSettingsRuleTools.mediaSource.actions.rename')}
+                                      </label>
+                                    </RadioGroup>
+                                    {editingMediaSourceRule?.action === 'rename' ? (
+                                      <Input
+                                        value={editingMediaSourceRule?.displayName ?? ''}
+                                        onChange={(event) =>
+                                          setEditingMediaSourceRule((current) =>
+                                            current ? { ...current, displayName: event.target.value } : current,
+                                          )
+                                        }
+                                        placeholder={t('webSettingsRuleTools.mediaSource.displayNamePlaceholder')}
+                                      />
+                                    ) : null}
+                                    <div className="flex flex-wrap gap-2">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        disabled={
+                                          busy ||
+                                          !(editingMediaSourceRule?.source.trim() ?? '') ||
+                                          (editingMediaSourceRule?.action === 'rename' &&
+                                            !(editingMediaSourceRule.displayName?.trim() ?? ''))
+                                        }
+                                        onClick={() => void handleSaveEditedMediaSourceRule()}
+                                      >
+                                        {t('common.save')}
+                                      </Button>
+                                      <Button type="button" size="sm" variant="outline" disabled={busy} onClick={handleCancelEditMediaSourceRule}>
+                                        {t('common.cancel')}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="min-w-0 space-y-1">
+                                      <p className="break-all font-mono text-sm text-foreground">{item.source}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {item.action === 'rename'
+                                          ? t('webSettingsRuleTools.mediaSource.renameSummary', {
+                                              value: item.displayName ?? '',
+                                            })
+                                          : t('webSettingsRuleTools.mediaSource.blockSummary')}
+                                      </p>
+                                    </div>
+                                    <div className="flex shrink-0 flex-wrap gap-2">
+                                      <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => handleStartEditMediaSourceRule(item)}>
+                                        {t('common.edit')}
+                                      </Button>
+                                      <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => void handleRemoveMediaSourceRule(item.source)}>
+                                        {t('common.delete')}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.li>
+                            )
+                          })}
+                        </AnimatePresence>
+                      </motion.ul>
+                    </div>
+                    <ListPaginationBar
+                      page={resolvedMediaSourceListPage}
+                      pageSize={SETTINGS_APP_LIST_PAGE_SIZE}
+                      total={filteredMediaSourceItems.length}
+                      onPageChange={setMediaSourceListPage}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <DialogFooter className="shrink-0 border-t px-4 py-4 sm:px-6">
             <Button

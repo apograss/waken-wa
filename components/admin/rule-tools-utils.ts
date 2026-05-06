@@ -2,8 +2,13 @@ import {
   type AppMessageTitleRule,
   prepareAppMessageRulesForSave,
 } from '@/lib/app-message-rules'
+import {
+  mediaPlaySourceBlocklistFromRules,
+  normalizeMediaPlaySourceRules,
+} from '@/lib/media-play-source-rules'
 import type {
   AppMessageRuleGroup,
+  MediaPlaySourceRule,
   RuleToolsExportPayload,
   RuleToolsListItem,
   RuleToolsListKey,
@@ -37,6 +42,10 @@ export function summarizeAppRuleGroup(
 }
 
 export function cloneRuleToolsPayload(payload: RuleToolsExportPayload): RuleToolsExportPayload {
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    payload.mediaPlaySourceRules,
+    payload.mediaPlaySourceBlocklist,
+  ).map((rule) => ({ ...rule }))
   return {
     appMessageRules: payload.appMessageRules.map((rule) => ({
       ...rule,
@@ -48,11 +57,16 @@ export function cloneRuleToolsPayload(payload: RuleToolsExportPayload): RuleTool
     appWhitelist: [...payload.appWhitelist],
     appNameOnlyList: [...payload.appNameOnlyList],
     captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
-    mediaPlaySourceBlocklist: [...payload.mediaPlaySourceBlocklist],
+    mediaPlaySourceRules,
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
   }
 }
 
 export function buildRuleToolsSummary(payload: RuleToolsExportPayload): RuleToolsSummary {
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    payload.mediaPlaySourceRules,
+    payload.mediaPlaySourceBlocklist,
+  )
   return {
     appMessageRulesShowProcessName: payload.appMessageRulesShowProcessName !== false,
     appFilterMode: payload.appFilterMode === 'whitelist' ? 'whitelist' : 'blacklist',
@@ -61,7 +75,8 @@ export function buildRuleToolsSummary(payload: RuleToolsExportPayload): RuleTool
     appBlacklistCount: payload.appBlacklist.length,
     appWhitelistCount: payload.appWhitelist.length,
     appNameOnlyListCount: payload.appNameOnlyList.length,
-    mediaPlaySourceBlocklistCount: payload.mediaPlaySourceBlocklist.length,
+    mediaPlaySourceRuleCount: mediaPlaySourceRules.length,
+    mediaPlaySourceBlocklistCount: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules).length,
   }
 }
 
@@ -94,9 +109,25 @@ export function filterListValues(values: string[], q: string): RuleToolsListItem
     )
 }
 
-export function normalizeDraftListValue(listKey: RuleToolsListKey, raw: string): string {
-  const base = raw.trim()
-  return listKey === 'mediaPlaySourceBlocklist' ? base.toLowerCase() : base
+export function normalizeDraftListValue(_listKey: RuleToolsListKey, raw: string): string {
+  return raw.trim()
+}
+
+export function normalizeDraftMediaPlaySourceRule(raw: Partial<MediaPlaySourceRule>): MediaPlaySourceRule | null {
+  const source = String(raw.source ?? '').trim().toLowerCase()
+  if (!source) return null
+  const action = raw.action === 'rename' ? 'rename' : 'block'
+  const displayName = String(raw.displayName ?? '').trim()
+  return {
+    source,
+    action,
+    ...(action === 'rename' && displayName ? { displayName } : {}),
+    ...(raw.default === true ? { default: true } : {}),
+  }
+}
+
+export function dedupeMediaPlaySourceRules(rules: unknown, legacy?: unknown): MediaPlaySourceRule[] {
+  return normalizeMediaPlaySourceRules(rules, legacy).map((rule) => ({ ...rule }))
 }
 
 export function dedupeDraftList(listKey: RuleToolsListKey, values: string[]): string[] {
@@ -138,9 +169,12 @@ export function normalizePayloadForSave(
       appWhitelist: dedupeDraftList('appWhitelist', payload.appWhitelist),
       appNameOnlyList: dedupeDraftList('appNameOnlyList', payload.appNameOnlyList),
       captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
-      mediaPlaySourceBlocklist: dedupeDraftList(
-        'mediaPlaySourceBlocklist',
+      mediaPlaySourceRules: dedupeMediaPlaySourceRules(
+        payload.mediaPlaySourceRules,
         payload.mediaPlaySourceBlocklist,
+      ),
+      mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(
+        dedupeMediaPlaySourceRules(payload.mediaPlaySourceRules, payload.mediaPlaySourceBlocklist),
       ),
     },
     error: null,

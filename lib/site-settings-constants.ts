@@ -67,6 +67,7 @@ export const SITE_SETTINGS_RULES_KEYS = [
   'appNameOnlyList',
   'captureReportedAppsEnabled',
   'mediaPlaySourceBlocklist',
+  'mediaPlaySourceRules',
 ] as const
 
 export const SITE_SETTINGS_CORE_HEAVY_KEYS = [
@@ -77,6 +78,8 @@ export const SITE_SETTINGS_CORE_HEAVY_KEYS = [
 export const SITE_SETTINGS_MIGRATED_CORE_KEYS = [
   'mediaDisplayShowSource',
   'mediaDisplayShowCover',
+  'mediaDisplayShowAppIcon',
+  'mediaDisplayShowNcmLink',
   'mediaCoverMaxCount',
 ] as const
 
@@ -107,6 +110,7 @@ export const SITE_SETTINGS_CLEAR_LEGACY_VALUES: Record<string, unknown> = {
   appNameOnlyList: null,
   captureReportedAppsEnabled: true,
   mediaPlaySourceBlocklist: null,
+  mediaPlaySourceRules: null,
   scheduleSlotMinutes: SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
   schedulePeriodTemplate: null,
   scheduleGridByWeekday: null,

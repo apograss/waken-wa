@@ -316,6 +316,8 @@ export function useWebSettingsController() {
       hideActivityMedia: data.hideActivityMedia === true,
       mediaDisplayShowSource: data.mediaDisplayShowSource === true,
       mediaDisplayShowCover: data.mediaDisplayShowCover === true,
+      mediaDisplayShowAppIcon: data.mediaDisplayShowAppIcon === true,
+      mediaDisplayShowNcmLink: data.mediaDisplayShowNcmLink === true,
       mediaCoverMaxCount: Number(data.mediaCoverMaxCount ?? 50),
       hideInspirationOnHome: data.hideInspirationOnHome === true,
       activityRejectLockappSleep: data.activityRejectLockappSleep === true,

@@ -5,6 +5,7 @@ import {
   Battery,
   BatteryCharging,
   Clock,
+  ExternalLink,
   Gamepad2,
   Hourglass,
   Laptop,
@@ -195,11 +196,13 @@ function MediaAndSteamRow({
   steam,
   showMediaSource,
   showMediaCover,
+  showMediaNcmLink,
 }: {
   media: MediaDisplay | null
   steam: SteamNowPlayingInfo | null
   showMediaSource: boolean
   showMediaCover: boolean
+  showMediaNcmLink: boolean
 }) {
   const { t } = useT('common')
   const isMobile = useIsMobile()
@@ -293,9 +296,40 @@ function MediaAndSteamRow({
         </div>
       ) : null}
       {showMediaSource && media?.source ? (
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">{t('site.currentStatus.mediaSource')}</p>
-          <p className="text-sm leading-snug break-words">{media.source}</p>
+        <div className="rounded-md border border-border/60 bg-muted/20 px-2.5 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              {media.appIconUrl ? (
+                <Image
+                  src={media.appIconUrl}
+                  alt=""
+                  width={32}
+                  height={32}
+                  loading="eager"
+                  className="h-4 w-4 shrink-0 rounded object-cover bg-muted"
+                />
+              ) : (
+                <Music className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              )}
+              <div className="min-w-0">
+                <p className="text-[11px] leading-none text-muted-foreground">
+                  {t('site.currentStatus.mediaSource')}
+                </p>
+                <p className="truncate text-sm leading-snug">{media.source}</p>
+              </div>
+            </div>
+            {showMediaNcmLink && media.ncmId ? (
+              <a
+                href={`https://music.163.com/#/song?id=${media.ncmId.replace(/^NCM-/i, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-background/80"
+              >
+                <ExternalLink className="h-3 w-3" aria-hidden />
+                {t('site.currentStatus.viewMusic')}
+              </a>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </>
@@ -477,6 +511,7 @@ interface CurrentStatusProps {
   hideActivityMedia?: boolean
   showMediaSource?: boolean
   showMediaCover?: boolean
+  showMediaNcmLink?: boolean
 }
 
 function LastReportTime({
@@ -508,6 +543,7 @@ function CurrentStatusCard({
   hideActivityMedia,
   showMediaSource,
   showMediaCover,
+  showMediaNcmLink,
   sectionTransition,
   sectionVariants,
 }: {
@@ -515,6 +551,7 @@ function CurrentStatusCard({
   hideActivityMedia: boolean
   showMediaSource: boolean
   showMediaCover: boolean
+  showMediaNcmLink: boolean
   sectionTransition: ReturnType<typeof getSiteSectionTransition>
   sectionVariants: ReturnType<typeof getSiteSectionVariants>
 }) {
@@ -677,6 +714,7 @@ function CurrentStatusCard({
             steam={steam}
             showMediaSource={showMediaSource}
             showMediaCover={showMediaCover}
+            showMediaNcmLink={showMediaNcmLink}
           />
         ) : null}
 
@@ -713,6 +751,7 @@ export function CurrentStatus({
   hideActivityMedia = false,
   showMediaSource = false,
   showMediaCover = false,
+  showMediaNcmLink = false,
 }: CurrentStatusProps) {
   const { t } = useT('common')
   const { feed, error } = useSharedActivityFeed()
@@ -761,6 +800,7 @@ export function CurrentStatus({
               hideActivityMedia={hideActivityMedia}
               showMediaSource={showMediaSource}
               showMediaCover={showMediaCover}
+              showMediaNcmLink={showMediaNcmLink}
               sectionTransition={sectionTransition}
               sectionVariants={sectionVariants}
               key={

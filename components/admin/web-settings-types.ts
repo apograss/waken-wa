@@ -119,6 +119,10 @@ export interface SiteConfig {
   mediaDisplayShowSource: boolean
   /** When true, show media cover image in hover card. */
   mediaDisplayShowCover: boolean
+  /** When true, accept and display reported playback app icons. */
+  mediaDisplayShowAppIcon: boolean
+  /** When true, show NCM song link in hover card when genre info is available. */
+  mediaDisplayShowNcmLink: boolean
   /** Max number of cover images to keep per device (0 = unlimited, recommended: 50). */
   mediaCoverMaxCount: number
   /** When true, hide the inspiration section from the home page. */

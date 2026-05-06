@@ -30,7 +30,8 @@
       "mediaPlaying": "正在播放",
       "mediaPaused": "已暂停",
       "mediaStopped": "已停止",
-      "mediaPlayback": "播放进度"
+      "mediaPlayback": "播放进度",
+      "viewMusic": "查看音乐"
     },
     "note": {
       "loadingHitokoto": "加载一言…",

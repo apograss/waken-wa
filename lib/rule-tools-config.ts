@@ -9,6 +9,10 @@ import {
   normalizeAppMessageRules,
   prepareAppMessageRulesForSave,
 } from '@/lib/app-message-rules'
+import {
+  mediaPlaySourceBlocklistFromRules,
+  normalizeMediaPlaySourceRules,
+} from '@/lib/media-play-source-rules'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
 import { persistRulesSettingsValues } from '@/lib/site-settings-write'
@@ -40,6 +44,7 @@ export const RULE_TOOLS_SITE_CONFIG_KEYS = [
   'appNameOnlyList',
   'captureReportedAppsEnabled',
   'mediaPlaySourceBlocklist',
+  'mediaPlaySourceRules',
 ] as const
 
 type RuleToolsState = {
@@ -48,6 +53,7 @@ type RuleToolsState = {
   appWhitelist: string[]
   appNameOnlyList: string[]
   mediaPlaySourceBlocklist: string[]
+  mediaPlaySourceRules: ReturnType<typeof normalizeMediaPlaySourceRules>
   config: RuleToolsConfigData
 }
 
@@ -97,7 +103,8 @@ function buildRuleToolsSummary(state: RuleToolsState): RuleToolsSummary {
     appBlacklistCount: state.appBlacklist.length,
     appWhitelistCount: state.appWhitelist.length,
     appNameOnlyListCount: state.appNameOnlyList.length,
-    mediaPlaySourceBlocklistCount: state.mediaPlaySourceBlocklist.length,
+    mediaPlaySourceRuleCount: state.mediaPlaySourceRules.length,
+    mediaPlaySourceBlocklistCount: mediaPlaySourceBlocklistFromRules(state.mediaPlaySourceRules).length,
   }
 }
 
@@ -127,9 +134,15 @@ async function readRuleToolsState(): Promise<RuleToolsState> {
     appBlacklist: normalizeRuleToolsList('appBlacklist', normalized.appBlacklist),
     appWhitelist: normalizeRuleToolsList('appWhitelist', normalized.appWhitelist),
     appNameOnlyList: normalizeRuleToolsList('appNameOnlyList', normalized.appNameOnlyList),
-    mediaPlaySourceBlocklist: normalizeRuleToolsList(
-      'mediaPlaySourceBlocklist',
+    mediaPlaySourceRules: normalizeMediaPlaySourceRules(
+      (normalized as Record<string, unknown>).mediaPlaySourceRules,
       normalized.mediaPlaySourceBlocklist,
+    ),
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(
+      normalizeMediaPlaySourceRules(
+        (normalized as Record<string, unknown>).mediaPlaySourceRules,
+        normalized.mediaPlaySourceBlocklist,
+      ),
     ),
     config: {
       appMessageRulesShowProcessName:
@@ -623,7 +636,8 @@ export async function getRuleToolsExportPayload(): Promise<RuleToolsExportPayloa
     appBlacklist: [...state.appBlacklist],
     appWhitelist: [...state.appWhitelist],
     appNameOnlyList: [...state.appNameOnlyList],
-    mediaPlaySourceBlocklist: [...state.mediaPlaySourceBlocklist],
+    mediaPlaySourceRules: state.mediaPlaySourceRules.map((rule) => ({ ...rule })),
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(state.mediaPlaySourceRules),
   }
 }
 
@@ -636,9 +650,12 @@ export async function importRuleToolsPayload(
     appBlacklist: normalizeRuleToolsList('appBlacklist', body.appBlacklist),
     appWhitelist: normalizeRuleToolsList('appWhitelist', body.appWhitelist),
     appNameOnlyList: normalizeRuleToolsList('appNameOnlyList', body.appNameOnlyList),
-    mediaPlaySourceBlocklist: normalizeRuleToolsList(
-      'mediaPlaySourceBlocklist',
+    mediaPlaySourceRules: normalizeMediaPlaySourceRules(
+      body.mediaPlaySourceRules,
       body.mediaPlaySourceBlocklist,
+    ),
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(
+      normalizeMediaPlaySourceRules(body.mediaPlaySourceRules, body.mediaPlaySourceBlocklist),
     ),
     config: {
       appMessageRulesShowProcessName: body.appMessageRulesShowProcessName !== false,
@@ -655,7 +672,8 @@ export async function importRuleToolsPayload(
     appWhitelist: nextState.appWhitelist,
     appNameOnlyList: nextState.appNameOnlyList,
     captureReportedAppsEnabled: nextState.config.captureReportedAppsEnabled,
-    mediaPlaySourceBlocklist: nextState.mediaPlaySourceBlocklist,
+    mediaPlaySourceRules: nextState.mediaPlaySourceRules,
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(nextState.mediaPlaySourceRules),
   })
 
   return buildRuleToolsSummary(nextState)

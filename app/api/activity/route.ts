@@ -24,6 +24,7 @@ import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
 import { devices, userActivities } from '@/lib/drizzle-schema'
 import { isLockScreenReporterProcessName } from '@/lib/lockapp-reporter'
 import { saveCoverFromDataUrl } from '@/lib/media-cover-storage'
+import { findMediaPlaySourceRuleMatch } from '@/lib/media-play-source-rules'
 import { buildDeviceApprovalUrl, getPublicOrigin } from '@/lib/public-request-url'
 import { removeRealtimeActivity, upsertRealtimeActivity } from '@/lib/realtime-activity-cache'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
@@ -34,17 +35,37 @@ import { toDbJsonValue } from '@/lib/sqlite-json'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-function normalizeMediaPlaySource(value: unknown): string {
-  return String(value ?? '').trim().toLowerCase()
+function mediaPlaySourceBlocked(config: unknown, metadata: Record<string, unknown>): boolean {
+  const cfg = config as Record<string, unknown> | null
+  return (
+    findMediaPlaySourceRuleMatch(
+      metadata,
+      cfg?.mediaPlaySourceRules,
+      cfg?.mediaPlaySourceBlocklist,
+    )?.action === 'block'
+  )
 }
 
-function mediaPlaySourceBlocked(config: unknown, metadata: Record<string, unknown>): boolean {
-  const blockedSources = (config as Record<string, unknown> | null)?.mediaPlaySourceBlocklist
-  if (!Array.isArray(blockedSources) || blockedSources.length === 0) return false
+function stripMediaAppIconFields(metadata: Record<string, unknown>): Record<string, unknown> {
+  const media = metadata.media
+  if (!media || typeof media !== 'object' || Array.isArray(media)) return metadata
 
-  const source = normalizeMediaPlaySource(metadata.play_source)
-  if (!source) return false
-  return blockedSources.some((item) => normalizeMediaPlaySource(item) === source)
+  const nextMedia = { ...(media as Record<string, unknown>) }
+  for (const key of [
+    'appIconUrl',
+    'app_icon_url',
+    'iconUrl',
+    'icon_url',
+    'sourceIconUrl',
+    'playSourceIconUrl',
+    'playerIconUrl',
+    'programIconUrl',
+    'appIcon',
+    'icon',
+  ]) {
+    delete nextMedia[key]
+  }
+  return { ...metadata, media: nextMedia }
 }
 
 async function validateToken(request: NextRequest): Promise<{ id: number } | null> {
@@ -119,6 +140,7 @@ export async function POST(request: NextRequest) {
     const parsedBody = parseActivityReportBody(body as Record<string, unknown>, {
       stripMetadataKeysAfterNormalize: PUBLIC_ACTIVITY_RESERVED_METADATA_KEYS,
       extractMediaCoverDataUrl: true,
+      extractMediaAppIconDataUrl: true,
     })
     if (!parsedBody.ok) {
       return NextResponse.json({ success: false, error: parsedBody.error }, { status: parsedBody.status })
@@ -131,6 +153,7 @@ export async function POST(request: NextRequest) {
       processTitle: process_title,
       metadata,
       mediaCoverDataUrl,
+      mediaAppIconDataUrl,
     } = parsedBody.data
 
     if (!generatedHashKey || !process_name) {
@@ -304,9 +327,10 @@ export async function POST(request: NextRequest) {
         : {}),
     }
 
+    const sourceBlocked = mediaPlaySourceBlocked(siteCfg, finalMetadata)
     const enableCover =
       siteCfg?.mediaDisplayShowCover === true &&
-      !mediaPlaySourceBlocked(siteCfg, finalMetadata)
+      !sourceBlocked
 
     if (enableCover && mediaCoverDataUrl) {
       const maxCoverCount = Number(siteCfg.mediaCoverMaxCount ?? 50)
@@ -325,6 +349,31 @@ export async function POST(request: NextRequest) {
             ? { ...(media as Record<string, unknown>), coverUrl: coverInfo.url }
             : { coverUrl: coverInfo.url }
       }
+    }
+
+    const enableAppIcon =
+      siteCfg?.mediaDisplayShowAppIcon === true &&
+      !sourceBlocked
+
+    if (enableAppIcon && mediaAppIconDataUrl) {
+      const maxCoverCount = Number(siteCfg.mediaCoverMaxCount ?? 50)
+      const baseUrl = getPublicOrigin(request)
+      const iconInfo = await saveCoverFromDataUrl(
+        deviceRecord.id,
+        generatedHashKey,
+        mediaAppIconDataUrl,
+        Number.isFinite(maxCoverCount) && maxCoverCount >= 0 ? maxCoverCount : 50,
+        baseUrl,
+      )
+      if (iconInfo) {
+        const media = finalMetadata.media
+        finalMetadata.media =
+          media && typeof media === 'object' && !Array.isArray(media)
+            ? { ...(media as Record<string, unknown>), appIconUrl: iconInfo.url }
+            : { appIconUrl: iconInfo.url }
+      }
+    } else if (!enableAppIcon) {
+      Object.assign(finalMetadata, stripMediaAppIconFields(finalMetadata))
     }
 
     if (isActivePush) {

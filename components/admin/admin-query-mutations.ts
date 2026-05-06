@@ -187,23 +187,6 @@ export async function patchAdminSkills(body: Record<string, unknown>): Promise<A
   return data.data
 }
 
-export async function patchAdminSettings(
-  body: Record<string, unknown>,
-): Promise<Record<string, any>> {
-  const res = await fetch('/api/admin/settings', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const data = await readJson<SuccessResponse<Record<string, any>>>(res)
-  if (!res.ok || !data?.success || !data.data) {
-    throw new Error(
-      data?.error || tAdminClient('mutation.saveSettingsFailedHttp', { status: res.status }),
-    )
-  }
-  return data.data
-}
-
 export async function createAdminActivity(payload: Record<string, unknown>): Promise<void> {
   const res = await fetch('/api/admin/activity', {
     method: 'POST',

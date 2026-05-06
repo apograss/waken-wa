@@ -15,6 +15,7 @@ import {
 import { db } from '@/lib/db'
 import { devices, userActivities } from '@/lib/drizzle-schema'
 import { isLockScreenReporterProcessName } from '@/lib/lockapp-reporter'
+import { applyMediaPlaySourceRulesToMetadata, normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { listRealtimeActivities } from '@/lib/realtime-activity-cache'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
@@ -97,19 +98,13 @@ function omitActivityMediaFromFeed(feed: ActivityFeedData): ActivityFeedData {
 
 function stripMediaByPlaySource(
   item: ActivityFeedItem,
-  blockedSources: Set<string>,
+  rules: unknown,
+  legacyBlocklist?: unknown,
 ): ActivityFeedItem {
-  if (blockedSources.size === 0) return item
   const meta = normalizeMetadata(item.metadata)
   if (!meta) return item
-  const source = String(meta.play_source ?? '')
-    .trim()
-    .toLowerCase()
-  if (!source) return item
-  if (!blockedSources.has(source)) return item
-  if (!Object.prototype.hasOwnProperty.call(meta, 'media')) return item
-  const { media: _omit, ...rest } = meta
-  return { ...item, metadata: rest }
+  const nextMeta = applyMediaPlaySourceRulesToMetadata(meta, rules, legacyBlocklist)
+  return nextMeta === meta ? item : { ...item, metadata: nextMeta }
 }
 
 export type GetActivityFeedOptions = {
@@ -198,13 +193,13 @@ export async function getActivityFeedData(
   const appFilterModeRaw = String(config?.appFilterMode ?? 'blacklist').trim().toLowerCase()
   const appFilterMode = appFilterModeRaw === 'whitelist' ? 'whitelist' : 'blacklist'
   const appNameOnlyList = parseProcessList(config?.appNameOnlyList)
-  const mediaPlaySourceBlocklist = parseProcessList(
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    (config as Record<string, unknown> | null)?.mediaPlaySourceRules,
     (config as Record<string, unknown> | null)?.mediaPlaySourceBlocklist,
   )
   const blacklistSet = new Set(appBlacklist)
   const whitelistSet = new Set(appWhitelist)
   const nameOnlySet = new Set(appNameOnlyList)
-  const blockedMediaSourceSet = new Set(mediaPlaySourceBlocklist)
 
   const passesAppFilter = (processName: string): boolean => {
     const key = normalizeProcessName(processName)
@@ -505,13 +500,13 @@ export async function getActivityFeedData(
   }
 
   const data = {
-    activeStatuses: activeStatuses.map((i) => stripMediaByPlaySource(i, blockedMediaSourceSet)),
+    activeStatuses: activeStatuses.map((i) => stripMediaByPlaySource(i, mediaPlaySourceRules)),
     recentActivities: (recentActivities as unknown as ActivityFeedItem[]).map((i) =>
-      stripMediaByPlaySource(i, blockedMediaSourceSet),
+      stripMediaByPlaySource(i, mediaPlaySourceRules),
     ),
     historyWindowMinutes,
     processStaleSeconds: defaultStaleSeconds,
-    recentTopApps: recentTopApps.map((i) => stripMediaByPlaySource(i, blockedMediaSourceSet)),
+    recentTopApps: recentTopApps.map((i) => stripMediaByPlaySource(i, mediaPlaySourceRules)),
     generatedAt: new Date().toISOString(),
   } as ActivityFeedData
 

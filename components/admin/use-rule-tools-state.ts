@@ -24,6 +24,7 @@ import {
   type ListEditingState,
   moveItem,
   normalizeDraftListValue,
+  normalizeDraftMediaPlaySourceRule,
   normalizePayloadForSave,
 } from '@/components/admin/rule-tools-utils'
 import {
@@ -39,6 +40,8 @@ import {
   createAppMessageTitleRuleId,
 } from '@/lib/app-message-rules'
 import type {
+  MediaPlaySourceRule,
+  MediaPlaySourceRuleAction,
   RuleToolsExportPayload,
   RuleToolsListKey,
   RuleToolsRuleItem,
@@ -52,6 +55,9 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
   const [whitelistInput, setWhitelistInput] = useState('')
   const [nameOnlyListInput, setNameOnlyListInput] = useState('')
   const [mediaSourceInput, setMediaSourceInput] = useState('')
+  const [mediaSourceAction, setMediaSourceAction] = useState<MediaPlaySourceRuleAction>('block')
+  const [mediaSourceDisplayName, setMediaSourceDisplayName] = useState('')
+  const [editingMediaSourceRule, setEditingMediaSourceRule] = useState<MediaPlaySourceRule | null>(null)
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null)
   const [groupListPage, setGroupListPage] = useState(0)
   const [ruleSearchInput, setRuleSearchInput] = useState('')
@@ -185,11 +191,18 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
       ),
     [filteredNameOnlyItems, resolvedNameOnlyListPage],
   )
-  const filteredMediaSourceItems = useMemo(
-    () =>
-      filterListValues(currentPayload?.mediaPlaySourceBlocklist ?? [], mediaSourceSearchInput),
-    [currentPayload?.mediaPlaySourceBlocklist, mediaSourceSearchInput],
-  )
+  const filteredMediaSourceItems = useMemo(() => {
+    const normalized = mediaSourceSearchInput.trim().toLowerCase()
+    const rules = currentPayload?.mediaPlaySourceRules ?? []
+    return rules
+      .map((rule, position) => ({ ...rule, position }))
+      .filter((rule) => {
+        if (!normalized) return true
+        return [rule.source, rule.action, rule.displayName ?? ''].some((value) =>
+          String(value).toLowerCase().includes(normalized),
+        )
+      })
+  }, [currentPayload?.mediaPlaySourceRules, mediaSourceSearchInput])
   const resolvedMediaSourceListPage = Math.min(
     mediaSourceListPage,
     listMaxPage(filteredMediaSourceItems.length, SETTINGS_APP_LIST_PAGE_SIZE),
@@ -456,21 +469,74 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
     )
   }
 
+  const updateMediaSourceRules = (
+    updater: (items: MediaPlaySourceRule[]) => MediaPlaySourceRule[],
+  ) => {
+    updateDraftPayload((current) => ({
+      ...current,
+      mediaPlaySourceRules: updater(current.mediaPlaySourceRules.map((rule) => ({ ...rule }))),
+    }))
+  }
+
   const handleAddMediaSourceItem = () => {
-    const value = normalizeDraftListValue('mediaPlaySourceBlocklist', mediaSourceInput)
-    if (!value) return
-    updateDraftList('mediaPlaySourceBlocklist', (items) => {
-      if (items.some((item) => item.toLowerCase() === value.toLowerCase())) return items
-      return [...items, value]
+    const rule = normalizeDraftMediaPlaySourceRule({
+      source: mediaSourceInput,
+      action: mediaSourceAction,
+      displayName: mediaSourceDisplayName,
+    })
+    if (!rule) return
+    updateMediaSourceRules((items) => {
+      if (items.some((item) => item.source.toLowerCase() === rule.source.toLowerCase())) return items
+      return [...items, rule]
     })
     setMediaSourceInput('')
+    setMediaSourceAction('block')
+    setMediaSourceDisplayName('')
     setMediaSourceSearchInput('')
     setMediaSourceListPage(
       listMaxPage(
-        (currentPayload?.mediaPlaySourceBlocklist.length ?? 0) + 1,
+        (currentPayload?.mediaPlaySourceRules.length ?? 0) + 1,
         SETTINGS_APP_LIST_PAGE_SIZE,
       ),
     )
+  }
+
+  const handleStartEditMediaSourceRule = (rule: MediaPlaySourceRule) => {
+    setEditingMediaSourceRule({ ...rule })
+  }
+
+  const handleCancelEditMediaSourceRule = () => {
+    setEditingMediaSourceRule(null)
+  }
+
+  const handleSaveEditedMediaSourceRule = () => {
+    if (!editingMediaSourceRule) return
+    const nextRule = normalizeDraftMediaPlaySourceRule(editingMediaSourceRule)
+    if (!nextRule) return
+    updateMediaSourceRules((items) => {
+      const targetIndex = items.findIndex(
+        (item) => item.source.toLowerCase() === editingMediaSourceRule.source.toLowerCase(),
+      )
+      if (targetIndex < 0) return items
+      const duplicateIndex = items.findIndex(
+        (item, index) =>
+          index !== targetIndex && item.source.toLowerCase() === nextRule.source.toLowerCase(),
+      )
+      if (duplicateIndex >= 0) return items
+      const next = [...items]
+      next[targetIndex] = nextRule
+      return next
+    })
+    setEditingMediaSourceRule(null)
+  }
+
+  const handleRemoveMediaSourceRule = (source: string) => {
+    updateMediaSourceRules((items) =>
+      items.filter((item) => item.source.toLowerCase() !== source.toLowerCase()),
+    )
+    if (editingMediaSourceRule?.source.toLowerCase() === source.toLowerCase()) {
+      setEditingMediaSourceRule(null)
+    }
   }
 
   const handleAddRuleGroup = (openEditor = false) => {
@@ -676,6 +742,10 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
     // Suggestion queries
     nameOnlySuggestionsQuery,
     mediaSourceSuggestionsQuery,
+    mediaSourceAction,
+    setMediaSourceAction,
+    mediaSourceDisplayName,
+    setMediaSourceDisplayName,
     ruleProcessSuggestionsQuery,
     // Input state
     blacklistInput,
@@ -717,6 +787,8 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
     setImportRulesInput,
     // Editing state
     editingListItem,
+    editingMediaSourceRule,
+    setEditingMediaSourceRule,
     setEditingListItem,
     selectedRuleId,
     setSelectedRuleId,
@@ -732,6 +804,10 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
     handleAddFilterItem,
     handleAddNameOnlyItem,
     handleAddMediaSourceItem,
+    handleStartEditMediaSourceRule,
+    handleCancelEditMediaSourceRule,
+    handleSaveEditedMediaSourceRule,
+    handleRemoveMediaSourceRule,
     handleAddRuleGroup,
     handleDeleteRuleGroup,
     handleMoveRuleGroup,

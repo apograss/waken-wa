@@ -20,6 +20,10 @@ import {
   normalizeHitokotoCategories,
   normalizeHitokotoEncode,
 } from '@/lib/hitokoto'
+import {
+  mediaPlaySourceBlocklistFromRules,
+  normalizeMediaPlaySourceRules,
+} from '@/lib/media-play-source-rules'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import {
@@ -202,8 +206,13 @@ export function exportAppRulesJson(cfg: {
   appWhitelist: string[]
   appNameOnlyList: string[]
   captureReportedAppsEnabled?: boolean
+  mediaPlaySourceRules?: unknown
   mediaPlaySourceBlocklist: string[]
 }): string {
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    cfg.mediaPlaySourceRules,
+    cfg.mediaPlaySourceBlocklist,
+  )
   return JSON.stringify(
     {
       version: 2,
@@ -216,7 +225,8 @@ export function exportAppRulesJson(cfg: {
         appWhitelist: cfg.appWhitelist,
         appNameOnlyList: cfg.appNameOnlyList,
         captureReportedAppsEnabled: cfg.captureReportedAppsEnabled !== false,
-        mediaPlaySourceBlocklist: cfg.mediaPlaySourceBlocklist,
+        mediaPlaySourceRules,
+        mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
       },
     },
     null,
@@ -238,6 +248,7 @@ export function parseAppRulesJson(
         appWhitelist: string[]
         appNameOnlyList: string[]
         captureReportedAppsEnabled: boolean
+        mediaPlaySourceRules: ReturnType<typeof normalizeMediaPlaySourceRules>
         mediaPlaySourceBlocklist: string[]
       }
     }
@@ -277,6 +288,10 @@ export function parseAppRulesJson(
   const mediaPlaySourceBlocklist = normalizeStringListImport(r.mediaPlaySourceBlocklist).map((s) =>
     s.toLowerCase(),
   )
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    r.mediaPlaySourceRules,
+    mediaPlaySourceBlocklist,
+  )
   return {
     ok: true,
     data: {
@@ -287,6 +302,7 @@ export function parseAppRulesJson(
       appWhitelist,
       appNameOnlyList,
       captureReportedAppsEnabled,
+      mediaPlaySourceRules,
       mediaPlaySourceBlocklist,
     },
   }
@@ -468,6 +484,12 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
   if ('mediaDisplayShowCover' in web && typeof web.mediaDisplayShowCover === 'boolean') {
     patch.mediaDisplayShowCover = web.mediaDisplayShowCover
   }
+  if ('mediaDisplayShowAppIcon' in web && typeof web.mediaDisplayShowAppIcon === 'boolean') {
+    patch.mediaDisplayShowAppIcon = web.mediaDisplayShowAppIcon
+  }
+  if ('mediaDisplayShowNcmLink' in web && typeof web.mediaDisplayShowNcmLink === 'boolean') {
+    patch.mediaDisplayShowNcmLink = web.mediaDisplayShowNcmLink
+  }
   if ('mediaCoverMaxCount' in web) {
     const maxCount = Number(web.mediaCoverMaxCount)
     if (Number.isFinite(maxCount) && maxCount >= 0) {
@@ -507,10 +529,15 @@ export function extractRuleToolsImportFromWebPayload(
     'appNameOnlyList',
     'captureReportedAppsEnabled',
     'mediaPlaySourceBlocklist',
+    'mediaPlaySourceRules',
   ].some((key) => key in web)
   if (!hasAnyField) return null
 
   const modeRaw = String(web.appFilterMode ?? 'blacklist').toLowerCase()
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    web.mediaPlaySourceRules,
+    web.mediaPlaySourceBlocklist,
+  )
   return {
     appMessageRules: normalizeRulesImport(web.appMessageRules),
     appMessageRulesShowProcessName:
@@ -525,9 +552,8 @@ export function extractRuleToolsImportFromWebPayload(
       typeof web.captureReportedAppsEnabled === 'boolean'
         ? web.captureReportedAppsEnabled
         : true,
-    mediaPlaySourceBlocklist: normalizeStringListImport(web.mediaPlaySourceBlocklist).map((s) =>
-      s.toLowerCase(),
-    ),
+    mediaPlaySourceRules,
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
   }
 }
 

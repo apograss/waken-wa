@@ -701,6 +701,7 @@ async function readRulesSettingsSnapshot(executor: any): Promise<SiteSettingsSec
     'appWhitelist',
     'appNameOnlyList',
     'mediaPlaySourceBlocklist',
+    'mediaPlaySourceRules',
   ]) {
     const items = stringListRowsByKey.get(listKey)
     if (items && items.length > 0) {

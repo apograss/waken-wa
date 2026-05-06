@@ -422,7 +422,8 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
     '`appWhitelist`: Allowed process names when filter mode is `whitelist`; if empty under whitelist mode, no app activity is shown',
     '`appNameOnlyList`: Process names that should show app name only and hide window title details',
     '`captureReportedAppsEnabled`: Controls whether new reported apps are kept for history/rule suggestion/export',
-    '`mediaPlaySourceBlocklist`: Lowercased `metadata.play_source` list whose media metadata should be hidden from feed output',
+    '`mediaPlaySourceRules`: Structured media source rules. Use `{ source, action: "block" }` to hide media or `{ source, action: "rename", displayName }` to override the shown source label',
+    '`mediaPlaySourceBlocklist`: Legacy lowercased `metadata.play_source` list. Still accepted and converted to block rules for compatibility',
   ])
 
   pushSection(lines, '### Schedule and Time')

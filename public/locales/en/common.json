@@ -30,7 +30,8 @@
       "mediaPlaying": "Playing",
       "mediaPaused": "Paused",
       "mediaStopped": "Stopped",
-      "mediaPlayback": "Playback"
+      "mediaPlayback": "Playback",
+      "viewMusic": "Open song"
     },
     "note": {
       "loadingHitokoto": "Loading quote…",

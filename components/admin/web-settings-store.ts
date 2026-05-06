@@ -88,6 +88,8 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   hideActivityMedia: false,
   mediaDisplayShowSource: false,
   mediaDisplayShowCover: false,
+  mediaDisplayShowAppIcon: false,
+  mediaDisplayShowNcmLink: false,
   mediaCoverMaxCount: 50,
   hideInspirationOnHome: false,
   activityRejectLockappSleep: false,

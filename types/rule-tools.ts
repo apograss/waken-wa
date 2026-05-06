@@ -32,6 +32,15 @@ export type RuleToolsListKey =
   | 'appNameOnlyList'
   | 'mediaPlaySourceBlocklist'
 
+export type MediaPlaySourceRuleAction = 'block' | 'rename'
+
+export type MediaPlaySourceRule = {
+  source: string
+  action: MediaPlaySourceRuleAction
+  displayName?: string
+  default?: boolean
+}
+
 export type RuleToolsConfigData = {
   appMessageRulesShowProcessName: boolean
   appFilterMode: 'blacklist' | 'whitelist'
@@ -43,6 +52,7 @@ export type RuleToolsSummary = RuleToolsConfigData & {
   appBlacklistCount: number
   appWhitelistCount: number
   appNameOnlyListCount: number
+  mediaPlaySourceRuleCount: number
   mediaPlaySourceBlocklistCount: number
 }
 
@@ -80,5 +90,6 @@ export type RuleToolsExportPayload = RuleToolsConfigData & {
   appBlacklist: string[]
   appWhitelist: string[]
   appNameOnlyList: string[]
+  mediaPlaySourceRules: MediaPlaySourceRule[]
   mediaPlaySourceBlocklist: string[]
 }

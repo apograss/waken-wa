@@ -23,6 +23,7 @@ import {
   siteSettingsV2ValueEntries,
   systemSecrets,
 } from '@/lib/drizzle-schema'
+import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { clearSiteConfigCaches } from '@/lib/site-config-cache'
@@ -88,6 +89,7 @@ const RULES_STRING_LIST_KEYS = [
   'appWhitelist',
   'appNameOnlyList',
   'mediaPlaySourceBlocklist',
+  'mediaPlaySourceRules',
 ] as const
 
 const THEME_CUSTOM_SURFACE_STRING_KEYS = [
@@ -306,8 +308,12 @@ function buildStringListEntryRows(
   }
 
   const now = sqlTimestamp()
-  return rawList
-    .map((item) => String(item ?? ''))
+  const normalizedItems =
+    settingKey === 'mediaPlaySourceRules'
+      ? normalizeMediaPlaySourceRules(rawList).map((item) => JSON.stringify(item))
+      : rawList.map((item) => String(item ?? ''))
+
+  return normalizedItems
     .filter((item) => item.length > 0)
     .map((itemValue, position) => ({
       siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,

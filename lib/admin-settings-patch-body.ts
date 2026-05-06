@@ -100,6 +100,8 @@ export function buildAdminSettingsPatchBody(
     hideActivityMedia: Boolean(data.hideActivityMedia),
     mediaDisplayShowSource: Boolean((data as Record<string, unknown>).mediaDisplayShowSource),
     mediaDisplayShowCover: Boolean((data as Record<string, unknown>).mediaDisplayShowCover),
+    mediaDisplayShowAppIcon: Boolean((data as Record<string, unknown>).mediaDisplayShowAppIcon),
+    mediaDisplayShowNcmLink: Boolean((data as Record<string, unknown>).mediaDisplayShowNcmLink),
     mediaCoverMaxCount: Number.isFinite(Number((data as Record<string, unknown>).mediaCoverMaxCount))
       ? Math.min(Math.max(Math.round(Number((data as Record<string, unknown>).mediaCoverMaxCount)), 0), 500)
       : 50,

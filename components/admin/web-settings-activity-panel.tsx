@@ -164,8 +164,26 @@ export function WebSettingsActivityPanel() {
           disabled={coreHeavyLocked}
         />
 
+        <ToggleRow
+          id="media-display-show-app-icon"
+          title={t('webSettingsActivity.mediaDisplayShowAppIconTitle')}
+          description={t('webSettingsActivity.mediaDisplayShowAppIconDescription')}
+          checked={form.mediaDisplayShowAppIcon}
+          onCheckedChange={(value) => patch('mediaDisplayShowAppIcon', value)}
+          disabled={coreHeavyLocked}
+        />
+
+        <ToggleRow
+          id="media-display-show-ncm-link"
+          title={t('webSettingsActivity.mediaDisplayShowNcmLinkTitle')}
+          description={t('webSettingsActivity.mediaDisplayShowNcmLinkDescription')}
+          checked={form.mediaDisplayShowNcmLink}
+          onCheckedChange={(value) => patch('mediaDisplayShowNcmLink', value)}
+          disabled={coreHeavyLocked}
+        />
+
         <AnimatePresence initial={false}>
-          {form.mediaDisplayShowCover ? (
+          {form.mediaDisplayShowCover || form.mediaDisplayShowAppIcon ? (
             <motion.div
               variants={sectionVariants}
               initial="initial"

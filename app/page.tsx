@@ -125,6 +125,7 @@ export default async function Home() {
   const hideActivityMedia = Boolean(cfg.hideActivityMedia)
   const mediaDisplayShowSource = cfg.mediaDisplayShowSource === true
   const mediaDisplayShowCover = cfg.mediaDisplayShowCover === true
+  const mediaDisplayShowNcmLink = cfg.mediaDisplayShowNcmLink === true
   const hideInspirationOnHome = cfg.hideInspirationOnHome === true
   const pageLoadingEnabled = cfg.pageLoadingEnabled !== false
   const smoothScrollEnabled = cfg.smoothScrollEnabled === true
@@ -243,6 +244,7 @@ export default async function Home() {
                             hideActivityMedia={hideActivityMedia}
                             showMediaSource={mediaDisplayShowSource}
                             showMediaCover={mediaDisplayShowCover}
+                            showMediaNcmLink={mediaDisplayShowNcmLink}
                           />
                         </div>
                       </section>

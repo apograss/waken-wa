@@ -20,6 +20,10 @@ import {
   normalizeAiToolMode,
   resolveColorSettings,
 } from '@/lib/llm-site-config-helpers'
+import {
+  mediaPlaySourceBlocklistFromRules,
+  normalizeMediaPlaySourceRules,
+} from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import {
   backfillCoursePeriodIdsFromTemplate,
@@ -121,6 +125,10 @@ export async function prepareSiteConfigValuesFromPayload(
   const appFilterMode = appFilterModeRaw === 'whitelist' ? 'whitelist' : 'blacklist'
   const appNameOnlyList = strArr('appNameOnlyList')
   const mediaPlaySourceBlocklist = strArr('mediaPlaySourceBlocklist')
+  const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
+    has('mediaPlaySourceRules') ? body.mediaPlaySourceRules : existing?.mediaPlaySourceRules,
+    mediaPlaySourceBlocklist,
+  )
   const historyWindowMinutes = parseHistoryWindowMinutes(
     has('historyWindowMinutes') ? body.historyWindowMinutes : existing?.historyWindowMinutes,
   )
@@ -404,6 +412,14 @@ export async function prepareSiteConfigValuesFromPayload(
   if (body.mediaDisplayShowCover !== undefined && body.mediaDisplayShowCover !== null) {
     mediaDisplayShowCover = Boolean(body.mediaDisplayShowCover)
   }
+  let mediaDisplayShowAppIcon = existing?.mediaDisplayShowAppIcon === true
+  if (body.mediaDisplayShowAppIcon !== undefined && body.mediaDisplayShowAppIcon !== null) {
+    mediaDisplayShowAppIcon = Boolean(body.mediaDisplayShowAppIcon)
+  }
+  let mediaDisplayShowNcmLink = existing?.mediaDisplayShowNcmLink === true
+  if (body.mediaDisplayShowNcmLink !== undefined && body.mediaDisplayShowNcmLink !== null) {
+    mediaDisplayShowNcmLink = Boolean(body.mediaDisplayShowNcmLink)
+  }
   let mediaCoverMaxCount = normalizeMediaCoverMaxCount(existing?.mediaCoverMaxCount)
   if (body.mediaCoverMaxCount !== undefined && body.mediaCoverMaxCount !== null) {
     mediaCoverMaxCount = normalizeMediaCoverMaxCount(body.mediaCoverMaxCount)
@@ -508,7 +524,8 @@ export async function prepareSiteConfigValuesFromPayload(
     appFilterMode,
     appNameOnlyList,
     captureReportedAppsEnabled,
-    mediaPlaySourceBlocklist,
+    mediaPlaySourceRules,
+    mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
     processStaleSeconds,
     pageLockEnabled,
     pageLockPasswordHash,
@@ -533,6 +550,8 @@ export async function prepareSiteConfigValuesFromPayload(
     hideActivityMedia,
     mediaDisplayShowSource,
     mediaDisplayShowCover,
+    mediaDisplayShowAppIcon,
+    mediaDisplayShowNcmLink,
     mediaCoverMaxCount,
     hideInspirationOnHome,
     hcaptchaEnabled,

@@ -110,6 +110,7 @@ export async function GET(request: Request) {
         appNameOnlyList: cfg.appNameOnlyList,
         captureReportedAppsEnabled: cfg.captureReportedAppsEnabled !== false,
         mediaPlaySourceBlocklist: cfg.mediaPlaySourceBlocklist,
+        mediaPlaySourceRules: cfg.mediaPlaySourceRules,
         pageLockEnabled: cfg.pageLockEnabled,
         currentlyText: cfg.currentlyText,
         earlierText: cfg.earlierText,
@@ -146,6 +147,8 @@ export async function GET(request: Request) {
         hideActivityMedia: cfg.hideActivityMedia === true,
         mediaDisplayShowSource: cfg.mediaDisplayShowSource === true,
         mediaDisplayShowCover: cfg.mediaDisplayShowCover === true,
+        mediaDisplayShowAppIcon: cfg.mediaDisplayShowAppIcon === true,
+        mediaDisplayShowNcmLink: cfg.mediaDisplayShowNcmLink === true,
         mediaCoverMaxCount: Number.isFinite(Number(cfg.mediaCoverMaxCount))
           ? Math.min(Math.max(Math.round(Number(cfg.mediaCoverMaxCount)), 0), 500)
           : 50,

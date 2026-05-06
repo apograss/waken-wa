@@ -21,6 +21,8 @@ type ParseActivityReportOptions = {
   stripMetadataKeysAfterNormalize?: string[]
   /** When true, extract coverDataUrl from media object instead of keeping in metadata */
   extractMediaCoverDataUrl?: boolean
+  /** When true, extract playback app icon data URL from media object instead of keeping it in metadata */
+  extractMediaAppIconDataUrl?: boolean
 }
 
 type ParseActivityReportSuccess = {
@@ -33,6 +35,8 @@ type ParseActivityReportSuccess = {
     metadata: Record<string, unknown> | null
     /** Extracted cover data URL, will be null if not present or extraction disabled */
     mediaCoverDataUrl: string | null
+    /** Extracted playback app icon data URL, will be null if not present or extraction disabled */
+    mediaAppIconDataUrl: string | null
   }
 }
 
@@ -77,6 +81,47 @@ function extractMediaCoverDataUrl(metadata: Record<string, unknown> | null): str
   return coverDataUrlRaw
 }
 
+const MEDIA_APP_ICON_DATA_URL_KEYS = [
+  'appIconDataUrl',
+  'app_icon_data_url',
+  'iconDataUrl',
+  'icon_data_url',
+  'sourceIconDataUrl',
+  'playSourceIconDataUrl',
+  'playerIconDataUrl',
+  'programIconDataUrl',
+] as const
+
+const MEDIA_APP_ICON_AMBIGUOUS_KEYS = ['appIcon', 'icon'] as const
+
+function extractMediaAppIconDataUrl(metadata: Record<string, unknown> | null): string | null {
+  if (!metadata?.media || typeof metadata.media !== 'object' || Array.isArray(metadata.media)) {
+    return null
+  }
+
+  const media = { ...(metadata.media as Record<string, unknown>) }
+  let dataUrl: string | null = null
+  for (const key of MEDIA_APP_ICON_DATA_URL_KEYS) {
+    const raw = media[key]
+    if (typeof raw === 'string' && raw.trim().startsWith('data:image/')) {
+      dataUrl = raw
+    }
+    if (raw !== undefined) {
+      delete media[key]
+    }
+  }
+  for (const key of MEDIA_APP_ICON_AMBIGUOUS_KEYS) {
+    const raw = media[key]
+    if (typeof raw === 'string' && raw.trim().startsWith('data:image/')) {
+      dataUrl = raw
+      delete media[key]
+    }
+  }
+
+  metadata.media = media
+  return dataUrl
+}
+
 export function parseActivityReportBody(
   body: Record<string, unknown>,
   options: ParseActivityReportOptions = {},
@@ -109,6 +154,7 @@ export function parseActivityReportBody(
 
   let metadata: Record<string, unknown> | null = null
   let mediaCoverDataUrl: string | null = null
+  let mediaAppIconDataUrl: string | null = null
   if (metadataRaw && typeof metadataRaw === 'object' && !Array.isArray(metadataRaw)) {
     metadata = { ...(metadataRaw as Record<string, unknown>) }
     metadata = removeMetadataKeys(metadata, options.stripMetadataKeysBeforeValidate)
@@ -123,6 +169,15 @@ export function parseActivityReportBody(
         mediaCoverDataUrl.length > ACTIVITY_MEDIA_COVER_DATA_URL_MAX_LENGTH
       ) {
         return { ok: false, error: '媒体封面图片过大', status: 400 }
+      }
+    }
+    if (options.extractMediaAppIconDataUrl) {
+      mediaAppIconDataUrl = extractMediaAppIconDataUrl(metadata)
+      if (
+        mediaAppIconDataUrl &&
+        mediaAppIconDataUrl.length > ACTIVITY_MEDIA_COVER_DATA_URL_MAX_LENGTH
+      ) {
+        return { ok: false, error: '媒体程序图标过大', status: 400 }
       }
     }
 
@@ -184,6 +239,7 @@ export function parseActivityReportBody(
       processTitle,
       metadata,
       mediaCoverDataUrl,
+      mediaAppIconDataUrl,
     },
   }
 }
