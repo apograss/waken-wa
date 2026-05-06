@@ -47,7 +47,9 @@ import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
 } from '@/lib/site-config-constants'
+import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
+import { unsanitizeSiteConfigImageInputs } from '@/lib/site-image-urls'
 import { persistCompatibilitySiteConfigValues } from '@/lib/site-settings-write'
 import { normalizeCustomCss } from '@/lib/theme-css'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
@@ -69,8 +71,11 @@ export async function prepareSiteConfigValuesFromPayload(
   assertAllowedLlmFields(body, options)
 
   const existing = await getNormalizedExistingSiteConfig()
+  const normalizedBody = await storeSiteConfigInlineImageSources(
+    unsanitizeSiteConfigImageInputs(body, existing),
+  )
 
-  const { has, strField, trimStr, strArr } = createSiteConfigFieldReaders(body, existing)
+  const { has, strField, trimStr, strArr } = createSiteConfigFieldReaders(normalizedBody, existing)
 
   const pageTitle = strField('pageTitle', DEFAULT_PAGE_TITLE).slice(0, PAGE_TITLE_MAX_LEN)
   const siteIconUrl = normalizeSiteIconUrl(trimStr('siteIconUrl'))
@@ -79,77 +84,95 @@ export async function prepareSiteConfigValuesFromPayload(
   const avatarUrl = trimStr('avatarUrl')
   let avatarFetchByServerEnabled =
     isRemoteAvatarUrl(avatarUrl) && existing?.avatarFetchByServerEnabled === true
-  if (body.avatarFetchByServerEnabled !== undefined && body.avatarFetchByServerEnabled !== null) {
+  if (
+    normalizedBody.avatarFetchByServerEnabled !== undefined &&
+    normalizedBody.avatarFetchByServerEnabled !== null
+  ) {
     avatarFetchByServerEnabled =
-      isRemoteAvatarUrl(avatarUrl) && Boolean(body.avatarFetchByServerEnabled)
+      isRemoteAvatarUrl(avatarUrl) && Boolean(normalizedBody.avatarFetchByServerEnabled)
   }
   const userNote = trimStr('userNote')
   const themePreset = strField('themePreset', 'basic')
   const themeCustomSurface = parseThemeCustomSurface(
-    has('themeCustomSurface') ? body.themeCustomSurface : existing?.themeCustomSurface,
+    has('themeCustomSurface') ? normalizedBody.themeCustomSurface : existing?.themeCustomSurface,
   )
   const publicFontOptionsEnabled = has('publicFontOptionsEnabled')
-    ? Boolean(body.publicFontOptionsEnabled)
+    ? Boolean(normalizedBody.publicFontOptionsEnabled)
     : existing?.publicFontOptionsEnabled === true
   const publicFontOptions = normalizePublicPageFontOptions(
-    has('publicFontOptions') ? body.publicFontOptions : existing?.publicFontOptions,
+    has('publicFontOptions') ? normalizedBody.publicFontOptions : existing?.publicFontOptions,
   )
-  const customCss = normalizeCustomCss(has('customCss') ? body.customCss : existing?.customCss)
-  const aiToolMode = normalizeAiToolMode(has('aiToolMode') ? body.aiToolMode : existing?.aiToolMode)
+  const customCss = normalizeCustomCss(
+    has('customCss') ? normalizedBody.customCss : existing?.customCss,
+  )
+  const aiToolMode = normalizeAiToolMode(
+    has('aiToolMode') ? normalizedBody.aiToolMode : existing?.aiToolMode,
+  )
   const mcpThemeToolsEnabled =
     aiToolMode === 'mcp' &&
     (has('mcpThemeToolsEnabled')
-      ? Boolean(body.mcpThemeToolsEnabled)
+      ? Boolean(normalizedBody.mcpThemeToolsEnabled)
       : Boolean(existing?.mcpThemeToolsEnabled))
   const openApiDocsEnabled = has('openApiDocsEnabled')
-    ? Boolean(body.openApiDocsEnabled)
+    ? Boolean(normalizedBody.openApiDocsEnabled)
     : existing?.openApiDocsEnabled !== false
   const currentlyText = strField('currentlyText', '当前状态')
   const earlierText = strField('earlierText', '最近的随想录')
   const adminText = strField('adminText', 'admin')
   const pageLockEnabled = has('pageLockEnabled')
-    ? Boolean(body.pageLockEnabled)
+    ? Boolean(normalizedBody.pageLockEnabled)
     : Boolean(existing?.pageLockEnabled)
   const autoAcceptNewDevices = has('autoAcceptNewDevices')
-    ? Boolean(body.autoAcceptNewDevices)
+    ? Boolean(normalizedBody.autoAcceptNewDevices)
     : Boolean(existing?.autoAcceptNewDevices)
-  const rawPageLockPassword = has('pageLockPassword') ? String(body.pageLockPassword ?? '') : ''
+  const rawPageLockPassword = has('pageLockPassword')
+    ? String(normalizedBody.pageLockPassword ?? '')
+    : ''
   const appMessageRules = has('appMessageRules')
-    ? (Array.isArray(body.appMessageRules) ? body.appMessageRules : [])
+    ? (Array.isArray(normalizedBody.appMessageRules) ? normalizedBody.appMessageRules : [])
     : (Array.isArray(existing?.appMessageRules) ? existing.appMessageRules : [])
   const appBlacklist = strArr('appBlacklist')
   const appWhitelist = strArr('appWhitelist')
   const appFilterModeRaw = has('appFilterMode')
-    ? String(body.appFilterMode ?? 'blacklist').trim().toLowerCase()
+    ? String(normalizedBody.appFilterMode ?? 'blacklist').trim().toLowerCase()
     : String(existing?.appFilterMode ?? 'blacklist').trim().toLowerCase()
   const appFilterMode = appFilterModeRaw === 'whitelist' ? 'whitelist' : 'blacklist'
   const appNameOnlyList = strArr('appNameOnlyList')
   const mediaPlaySourceBlocklist = strArr('mediaPlaySourceBlocklist')
   const mediaPlaySourceRules = normalizeMediaPlaySourceRules(
-    has('mediaPlaySourceRules') ? body.mediaPlaySourceRules : existing?.mediaPlaySourceRules,
+    has('mediaPlaySourceRules')
+      ? normalizedBody.mediaPlaySourceRules
+      : existing?.mediaPlaySourceRules,
     mediaPlaySourceBlocklist,
   )
   const historyWindowMinutes = parseHistoryWindowMinutes(
-    has('historyWindowMinutes') ? body.historyWindowMinutes : existing?.historyWindowMinutes,
+    has('historyWindowMinutes')
+      ? normalizedBody.historyWindowMinutes
+      : existing?.historyWindowMinutes,
   )
   const processStaleSeconds = parseProcessStaleSeconds(
-    has('processStaleSeconds') ? body.processStaleSeconds : existing?.processStaleSeconds,
+    has('processStaleSeconds')
+      ? normalizedBody.processStaleSeconds
+      : existing?.processStaleSeconds,
   )
 
   let captureReportedAppsEnabled = existing?.captureReportedAppsEnabled !== false
-  if (body.captureReportedAppsEnabled !== undefined && body.captureReportedAppsEnabled !== null) {
-    captureReportedAppsEnabled = Boolean(body.captureReportedAppsEnabled)
+  if (
+    normalizedBody.captureReportedAppsEnabled !== undefined &&
+    normalizedBody.captureReportedAppsEnabled !== null
+  ) {
+    captureReportedAppsEnabled = Boolean(normalizedBody.captureReportedAppsEnabled)
   }
 
   let inspirationAllowedDeviceHashes: string[] | null = normalizeInspirationAllowedHashes(
     existing?.inspirationAllowedDeviceHashes ?? null,
   )
-  if ('inspirationAllowedDeviceHashes' in body) {
-    if (body.inspirationAllowedDeviceHashes === null) {
+  if ('inspirationAllowedDeviceHashes' in normalizedBody) {
+    if (normalizedBody.inspirationAllowedDeviceHashes === null) {
       inspirationAllowedDeviceHashes = null
-    } else if (Array.isArray(body.inspirationAllowedDeviceHashes)) {
+    } else if (Array.isArray(normalizedBody.inspirationAllowedDeviceHashes)) {
       inspirationAllowedDeviceHashes =
-        normalizeInspirationAllowedHashes(body.inspirationAllowedDeviceHashes) ?? []
+        normalizeInspirationAllowedHashes(normalizedBody.inspirationAllowedDeviceHashes) ?? []
     }
   }
 
@@ -163,8 +186,8 @@ export async function prepareSiteConfigValuesFromPayload(
   let schedulePeriodTemplate = existingTemplateParsed.ok
     ? existingTemplateParsed.data
     : defaultSchedulePeriodTemplate()
-  if (body.schedulePeriodTemplate !== undefined) {
-    const parsedTemplate = parseSchedulePeriodTemplateJson(body.schedulePeriodTemplate)
+  if (normalizedBody.schedulePeriodTemplate !== undefined) {
+    const parsedTemplate = parseSchedulePeriodTemplateJson(normalizedBody.schedulePeriodTemplate)
     if (!parsedTemplate.ok) {
       const error = new Error(parsedTemplate.error)
       ;(error as any).status = 400
@@ -174,12 +197,12 @@ export async function prepareSiteConfigValuesFromPayload(
   }
   let scheduleGridByWeekday: unknown = existing?.scheduleGridByWeekday ?? null
 
-  const slotInBody = body.scheduleSlotMinutes !== undefined && body.scheduleSlotMinutes !== null
+  const slotInBody = normalizedBody.scheduleSlotMinutes !== undefined && normalizedBody.scheduleSlotMinutes !== null
   const gridInBody =
-    body.scheduleGridByWeekday !== undefined && body.scheduleGridByWeekday !== null
+    normalizedBody.scheduleGridByWeekday !== undefined && normalizedBody.scheduleGridByWeekday !== null
 
   if (slotInBody) {
-    const s = Number(body.scheduleSlotMinutes)
+    const s = Number(normalizedBody.scheduleSlotMinutes)
     if (!isAllowedSlotMinutes(s)) {
       const error = new Error('Invalid schedule slot (use 15, 30, 45, or 60 minutes)')
       ;(error as any).status = 400
@@ -190,7 +213,7 @@ export async function prepareSiteConfigValuesFromPayload(
 
   if (gridInBody) {
     const normalized = normalizeScheduleGridByWeekday(
-      body.scheduleGridByWeekday,
+      normalizedBody.scheduleGridByWeekday,
       scheduleSlotMinutes,
     )
     if (!normalized.ok) {
@@ -209,8 +232,8 @@ export async function prepareSiteConfigValuesFromPayload(
     scheduleCoursesParsed = { ok: true, data: [] }
   }
   let scheduleCourses = scheduleCoursesParsed.data
-  if (body.scheduleCourses !== undefined) {
-    const parsed = parseScheduleCoursesJson(body.scheduleCourses)
+  if (normalizedBody.scheduleCourses !== undefined) {
+    const parsed = parseScheduleCoursesJson(normalizedBody.scheduleCourses)
     if (!parsed.ok) {
       const error = new Error(parsed.error)
       ;(error as any).status = 400
@@ -234,8 +257,8 @@ export async function prepareSiteConfigValuesFromPayload(
     typeof existing?.scheduleIcs === 'string' && existing.scheduleIcs.length > 0
       ? existing.scheduleIcs
       : null
-  if (body.scheduleIcs !== undefined) {
-    const raw = body.scheduleIcs === null || body.scheduleIcs === undefined ? '' : String(body.scheduleIcs)
+  if (normalizedBody.scheduleIcs !== undefined) {
+    const raw = normalizedBody.scheduleIcs === null || normalizedBody.scheduleIcs === undefined ? '' : String(normalizedBody.scheduleIcs)
     if (raw.length > MAX_SCHEDULE_ICS_BYTES) {
       const error = new Error(`scheduleIcs exceeds ${MAX_SCHEDULE_ICS_BYTES} bytes`)
       ;(error as any).status = 400
@@ -245,23 +268,23 @@ export async function prepareSiteConfigValuesFromPayload(
   }
 
   let scheduleInClassOnHome = Boolean(existing?.scheduleInClassOnHome)
-  if (body.scheduleInClassOnHome !== undefined && body.scheduleInClassOnHome !== null) {
-    scheduleInClassOnHome = Boolean(body.scheduleInClassOnHome)
+  if (normalizedBody.scheduleInClassOnHome !== undefined && normalizedBody.scheduleInClassOnHome !== null) {
+    scheduleInClassOnHome = Boolean(normalizedBody.scheduleInClassOnHome)
   }
   let scheduleHomeShowLocation = Boolean(existing?.scheduleHomeShowLocation)
-  if (body.scheduleHomeShowLocation !== undefined && body.scheduleHomeShowLocation !== null) {
-    scheduleHomeShowLocation = Boolean(body.scheduleHomeShowLocation)
+  if (normalizedBody.scheduleHomeShowLocation !== undefined && normalizedBody.scheduleHomeShowLocation !== null) {
+    scheduleHomeShowLocation = Boolean(normalizedBody.scheduleHomeShowLocation)
   }
   let scheduleHomeShowTeacher = Boolean(existing?.scheduleHomeShowTeacher)
-  if (body.scheduleHomeShowTeacher !== undefined && body.scheduleHomeShowTeacher !== null) {
-    scheduleHomeShowTeacher = Boolean(body.scheduleHomeShowTeacher)
+  if (normalizedBody.scheduleHomeShowTeacher !== undefined && normalizedBody.scheduleHomeShowTeacher !== null) {
+    scheduleHomeShowTeacher = Boolean(normalizedBody.scheduleHomeShowTeacher)
   }
   let scheduleHomeShowNextUpcoming = Boolean(existing?.scheduleHomeShowNextUpcoming)
   if (
-    body.scheduleHomeShowNextUpcoming !== undefined &&
-    body.scheduleHomeShowNextUpcoming !== null
+    normalizedBody.scheduleHomeShowNextUpcoming !== undefined &&
+    normalizedBody.scheduleHomeShowNextUpcoming !== null
   ) {
-    scheduleHomeShowNextUpcoming = Boolean(body.scheduleHomeShowNextUpcoming)
+    scheduleHomeShowNextUpcoming = Boolean(normalizedBody.scheduleHomeShowNextUpcoming)
   }
 
   let scheduleHomeAfterClassesLabel = SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT
@@ -272,10 +295,10 @@ export async function prepareSiteConfigValuesFromPayload(
       .slice(0, SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN)
   }
   if (
-    body.scheduleHomeAfterClassesLabel !== undefined &&
-    body.scheduleHomeAfterClassesLabel !== null
+    normalizedBody.scheduleHomeAfterClassesLabel !== undefined &&
+    normalizedBody.scheduleHomeAfterClassesLabel !== null
   ) {
-    const raw = String(body.scheduleHomeAfterClassesLabel).trim()
+    const raw = String(normalizedBody.scheduleHomeAfterClassesLabel).trim()
     scheduleHomeAfterClassesLabel = (
       raw.length > 0 ? raw : SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT
     ).slice(0, SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN)
@@ -283,64 +306,64 @@ export async function prepareSiteConfigValuesFromPayload(
 
   let appMessageRulesShowProcessName = existing?.appMessageRulesShowProcessName !== false
   if (
-    body.appMessageRulesShowProcessName !== undefined &&
-    body.appMessageRulesShowProcessName !== null
+    normalizedBody.appMessageRulesShowProcessName !== undefined &&
+    normalizedBody.appMessageRulesShowProcessName !== null
   ) {
-    appMessageRulesShowProcessName = Boolean(body.appMessageRulesShowProcessName)
+    appMessageRulesShowProcessName = Boolean(normalizedBody.appMessageRulesShowProcessName)
   }
 
   let userNoteHitokotoEnabled = Boolean(existing?.userNoteHitokotoEnabled)
-  if (body.userNoteHitokotoEnabled !== undefined && body.userNoteHitokotoEnabled !== null) {
-    userNoteHitokotoEnabled = Boolean(body.userNoteHitokotoEnabled)
+  if (normalizedBody.userNoteHitokotoEnabled !== undefined && normalizedBody.userNoteHitokotoEnabled !== null) {
+    userNoteHitokotoEnabled = Boolean(normalizedBody.userNoteHitokotoEnabled)
   }
   let userNoteTypewriterEnabled = Boolean(existing?.userNoteTypewriterEnabled)
-  if (body.userNoteTypewriterEnabled !== undefined && body.userNoteTypewriterEnabled !== null) {
-    userNoteTypewriterEnabled = Boolean(body.userNoteTypewriterEnabled)
+  if (normalizedBody.userNoteTypewriterEnabled !== undefined && normalizedBody.userNoteTypewriterEnabled !== null) {
+    userNoteTypewriterEnabled = Boolean(normalizedBody.userNoteTypewriterEnabled)
   }
   let userNoteSignatureFontEnabled = Boolean(existing?.userNoteSignatureFontEnabled)
   if (
-    body.userNoteSignatureFontEnabled !== undefined &&
-    body.userNoteSignatureFontEnabled !== null
+    normalizedBody.userNoteSignatureFontEnabled !== undefined &&
+    normalizedBody.userNoteSignatureFontEnabled !== null
   ) {
-    userNoteSignatureFontEnabled = Boolean(body.userNoteSignatureFontEnabled)
+    userNoteSignatureFontEnabled = Boolean(normalizedBody.userNoteSignatureFontEnabled)
   }
   let userNoteSignatureFontFamily =
     typeof existing?.userNoteSignatureFontFamily === 'string'
       ? existing.userNoteSignatureFontFamily.trim().slice(0, 160)
       : ''
-  if (body.userNoteSignatureFontFamily !== undefined && body.userNoteSignatureFontFamily !== null) {
-    userNoteSignatureFontFamily = String(body.userNoteSignatureFontFamily).trim().slice(0, 160)
+  if (normalizedBody.userNoteSignatureFontFamily !== undefined && normalizedBody.userNoteSignatureFontFamily !== null) {
+    userNoteSignatureFontFamily = String(normalizedBody.userNoteSignatureFontFamily).trim().slice(0, 160)
   }
   let pageLoadingEnabled = existing?.pageLoadingEnabled !== false
-  if (body.pageLoadingEnabled !== undefined && body.pageLoadingEnabled !== null) {
-    pageLoadingEnabled = Boolean(body.pageLoadingEnabled)
+  if (normalizedBody.pageLoadingEnabled !== undefined && normalizedBody.pageLoadingEnabled !== null) {
+    pageLoadingEnabled = Boolean(normalizedBody.pageLoadingEnabled)
   }
   let searchEngineIndexingEnabled = existing?.searchEngineIndexingEnabled !== false
   if (
-    body.searchEngineIndexingEnabled !== undefined &&
-    body.searchEngineIndexingEnabled !== null
+    normalizedBody.searchEngineIndexingEnabled !== undefined &&
+    normalizedBody.searchEngineIndexingEnabled !== null
   ) {
-    searchEngineIndexingEnabled = Boolean(body.searchEngineIndexingEnabled)
+    searchEngineIndexingEnabled = Boolean(normalizedBody.searchEngineIndexingEnabled)
   }
 
   let userNoteHitokotoCategories = normalizeHitokotoCategories(
     existing?.userNoteHitokotoCategories ?? [],
   )
-  if (body.userNoteHitokotoCategories !== undefined) {
-    userNoteHitokotoCategories = normalizeHitokotoCategories(body.userNoteHitokotoCategories)
+  if (normalizedBody.userNoteHitokotoCategories !== undefined) {
+    userNoteHitokotoCategories = normalizeHitokotoCategories(normalizedBody.userNoteHitokotoCategories)
   }
 
   let userNoteHitokotoEncode = normalizeHitokotoEncode(existing?.userNoteHitokotoEncode)
-  if (body.userNoteHitokotoEncode !== undefined && body.userNoteHitokotoEncode !== null) {
-    userNoteHitokotoEncode = normalizeHitokotoEncode(body.userNoteHitokotoEncode)
+  if (normalizedBody.userNoteHitokotoEncode !== undefined && normalizedBody.userNoteHitokotoEncode !== null) {
+    userNoteHitokotoEncode = normalizeHitokotoEncode(normalizedBody.userNoteHitokotoEncode)
   }
 
   let userNoteHitokotoFallbackToNote = existing?.userNoteHitokotoFallbackToNote === true
   if (
-    body.userNoteHitokotoFallbackToNote !== undefined &&
-    body.userNoteHitokotoFallbackToNote !== null
+    normalizedBody.userNoteHitokotoFallbackToNote !== undefined &&
+    normalizedBody.userNoteHitokotoFallbackToNote !== null
   ) {
-    userNoteHitokotoFallbackToNote = Boolean(body.userNoteHitokotoFallbackToNote)
+    userNoteHitokotoFallbackToNote = Boolean(normalizedBody.userNoteHitokotoFallbackToNote)
   }
 
   if (!userName || !userBio || !avatarUrl) {
@@ -361,21 +384,21 @@ export async function prepareSiteConfigValuesFromPayload(
   }
 
   let hcaptchaEnabled = Boolean(existing?.hcaptchaEnabled)
-  if (body.hcaptchaEnabled !== undefined && body.hcaptchaEnabled !== null) {
-    hcaptchaEnabled = Boolean(body.hcaptchaEnabled)
+  if (normalizedBody.hcaptchaEnabled !== undefined && normalizedBody.hcaptchaEnabled !== null) {
+    hcaptchaEnabled = Boolean(normalizedBody.hcaptchaEnabled)
   }
   let hcaptchaSiteKey: string | null = existing?.hcaptchaSiteKey ?? null
-  if (body.hcaptchaSiteKey !== undefined) {
+  if (normalizedBody.hcaptchaSiteKey !== undefined) {
     hcaptchaSiteKey =
-      typeof body.hcaptchaSiteKey === 'string' && body.hcaptchaSiteKey.trim()
-        ? body.hcaptchaSiteKey.trim()
+      typeof normalizedBody.hcaptchaSiteKey === 'string' && normalizedBody.hcaptchaSiteKey.trim()
+        ? normalizedBody.hcaptchaSiteKey.trim()
         : null
   }
   let hcaptchaSecretKey: string | null = existing?.hcaptchaSecretKey ?? null
-  if (body.hcaptchaSecretKey !== undefined) {
+  if (normalizedBody.hcaptchaSecretKey !== undefined) {
     hcaptchaSecretKey =
-      typeof body.hcaptchaSecretKey === 'string' && body.hcaptchaSecretKey.trim()
-        ? body.hcaptchaSecretKey.trim()
+      typeof normalizedBody.hcaptchaSecretKey === 'string' && normalizedBody.hcaptchaSecretKey.trim()
+        ? normalizedBody.hcaptchaSecretKey.trim()
         : null
   }
 
@@ -386,66 +409,66 @@ export async function prepareSiteConfigValuesFromPayload(
   }
 
   let globalMouseTiltEnabled = existing?.globalMouseTiltEnabled === true
-  if (body.globalMouseTiltEnabled !== undefined && body.globalMouseTiltEnabled !== null) {
-    globalMouseTiltEnabled = Boolean(body.globalMouseTiltEnabled)
+  if (normalizedBody.globalMouseTiltEnabled !== undefined && normalizedBody.globalMouseTiltEnabled !== null) {
+    globalMouseTiltEnabled = Boolean(normalizedBody.globalMouseTiltEnabled)
   }
 
   let globalMouseTiltGyroEnabled = existing?.globalMouseTiltGyroEnabled === true
-  if (body.globalMouseTiltGyroEnabled !== undefined && body.globalMouseTiltGyroEnabled !== null) {
-    globalMouseTiltGyroEnabled = Boolean(body.globalMouseTiltGyroEnabled)
+  if (normalizedBody.globalMouseTiltGyroEnabled !== undefined && normalizedBody.globalMouseTiltGyroEnabled !== null) {
+    globalMouseTiltGyroEnabled = Boolean(normalizedBody.globalMouseTiltGyroEnabled)
   }
 
   let smoothScrollEnabled = existing?.smoothScrollEnabled === true
-  if (body.smoothScrollEnabled !== undefined && body.smoothScrollEnabled !== null) {
-    smoothScrollEnabled = Boolean(body.smoothScrollEnabled)
+  if (normalizedBody.smoothScrollEnabled !== undefined && normalizedBody.smoothScrollEnabled !== null) {
+    smoothScrollEnabled = Boolean(normalizedBody.smoothScrollEnabled)
   }
 
   let hideActivityMedia = existing?.hideActivityMedia === true
-  if (body.hideActivityMedia !== undefined && body.hideActivityMedia !== null) {
-    hideActivityMedia = Boolean(body.hideActivityMedia)
+  if (normalizedBody.hideActivityMedia !== undefined && normalizedBody.hideActivityMedia !== null) {
+    hideActivityMedia = Boolean(normalizedBody.hideActivityMedia)
   }
   let mediaDisplayShowSource = existing?.mediaDisplayShowSource === true
-  if (body.mediaDisplayShowSource !== undefined && body.mediaDisplayShowSource !== null) {
-    mediaDisplayShowSource = Boolean(body.mediaDisplayShowSource)
+  if (normalizedBody.mediaDisplayShowSource !== undefined && normalizedBody.mediaDisplayShowSource !== null) {
+    mediaDisplayShowSource = Boolean(normalizedBody.mediaDisplayShowSource)
   }
   let mediaDisplayShowCover = existing?.mediaDisplayShowCover === true
-  if (body.mediaDisplayShowCover !== undefined && body.mediaDisplayShowCover !== null) {
-    mediaDisplayShowCover = Boolean(body.mediaDisplayShowCover)
+  if (normalizedBody.mediaDisplayShowCover !== undefined && normalizedBody.mediaDisplayShowCover !== null) {
+    mediaDisplayShowCover = Boolean(normalizedBody.mediaDisplayShowCover)
   }
   let mediaDisplayShowAppIcon = existing?.mediaDisplayShowAppIcon === true
-  if (body.mediaDisplayShowAppIcon !== undefined && body.mediaDisplayShowAppIcon !== null) {
-    mediaDisplayShowAppIcon = Boolean(body.mediaDisplayShowAppIcon)
+  if (normalizedBody.mediaDisplayShowAppIcon !== undefined && normalizedBody.mediaDisplayShowAppIcon !== null) {
+    mediaDisplayShowAppIcon = Boolean(normalizedBody.mediaDisplayShowAppIcon)
   }
   let mediaDisplayShowNcmLink = existing?.mediaDisplayShowNcmLink === true
-  if (body.mediaDisplayShowNcmLink !== undefined && body.mediaDisplayShowNcmLink !== null) {
-    mediaDisplayShowNcmLink = Boolean(body.mediaDisplayShowNcmLink)
+  if (normalizedBody.mediaDisplayShowNcmLink !== undefined && normalizedBody.mediaDisplayShowNcmLink !== null) {
+    mediaDisplayShowNcmLink = Boolean(normalizedBody.mediaDisplayShowNcmLink)
   }
   let mediaCoverMaxCount = normalizeMediaCoverMaxCount(existing?.mediaCoverMaxCount)
-  if (body.mediaCoverMaxCount !== undefined && body.mediaCoverMaxCount !== null) {
-    mediaCoverMaxCount = normalizeMediaCoverMaxCount(body.mediaCoverMaxCount)
+  if (normalizedBody.mediaCoverMaxCount !== undefined && normalizedBody.mediaCoverMaxCount !== null) {
+    mediaCoverMaxCount = normalizeMediaCoverMaxCount(normalizedBody.mediaCoverMaxCount)
   }
 
   let hideInspirationOnHome = existing?.hideInspirationOnHome === true
-  if (body.hideInspirationOnHome !== undefined && body.hideInspirationOnHome !== null) {
-    hideInspirationOnHome = Boolean(body.hideInspirationOnHome)
+  if (normalizedBody.hideInspirationOnHome !== undefined && normalizedBody.hideInspirationOnHome !== null) {
+    hideInspirationOnHome = Boolean(normalizedBody.hideInspirationOnHome)
   }
 
   let displayTimezone = existing?.displayTimezone ?? 'Asia/Shanghai'
-  if (body.displayTimezone !== undefined && body.displayTimezone !== null) {
-    displayTimezone = normalizeTimezone(body.displayTimezone)
+  if (normalizedBody.displayTimezone !== undefined && normalizedBody.displayTimezone !== null) {
+    displayTimezone = normalizeTimezone(normalizedBody.displayTimezone)
   }
   let forceDisplayTimezone = existing?.forceDisplayTimezone === true
-  if (body.forceDisplayTimezone !== undefined && body.forceDisplayTimezone !== null) {
-    forceDisplayTimezone = Boolean(body.forceDisplayTimezone)
+  if (normalizedBody.forceDisplayTimezone !== undefined && normalizedBody.forceDisplayTimezone !== null) {
+    forceDisplayTimezone = Boolean(normalizedBody.forceDisplayTimezone)
   }
 
   let activityUpdateMode = existing?.activityUpdateMode ?? 'sse'
-  if (body.activityUpdateMode !== undefined && body.activityUpdateMode !== null) {
-    activityUpdateMode = normalizeActivityUpdateMode(body.activityUpdateMode)
+  if (normalizedBody.activityUpdateMode !== undefined && normalizedBody.activityUpdateMode !== null) {
+    activityUpdateMode = normalizeActivityUpdateMode(normalizedBody.activityUpdateMode)
   }
   let useNoSqlAsCacheRedis = existing?.useNoSqlAsCacheRedis === true
-  if (body.useNoSqlAsCacheRedis !== undefined && body.useNoSqlAsCacheRedis !== null) {
-    useNoSqlAsCacheRedis = Boolean(body.useNoSqlAsCacheRedis)
+  if (normalizedBody.useNoSqlAsCacheRedis !== undefined && normalizedBody.useNoSqlAsCacheRedis !== null) {
+    useNoSqlAsCacheRedis = Boolean(normalizedBody.useNoSqlAsCacheRedis)
   }
   if (isRedisCacheForcedOnServerless()) {
     useNoSqlAsCacheRedis = true
@@ -453,31 +476,31 @@ export async function prepareSiteConfigValuesFromPayload(
   let redisCacheTtlSeconds = parseRedisCacheTtlSeconds(
     existing?.redisCacheTtlSeconds ?? REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   )
-  if (body.redisCacheTtlSeconds !== undefined && body.redisCacheTtlSeconds !== null) {
-    redisCacheTtlSeconds = parseRedisCacheTtlSeconds(body.redisCacheTtlSeconds)
+  if (normalizedBody.redisCacheTtlSeconds !== undefined && normalizedBody.redisCacheTtlSeconds !== null) {
+    redisCacheTtlSeconds = parseRedisCacheTtlSeconds(normalizedBody.redisCacheTtlSeconds)
   }
 
   let steamEnabled = existing?.steamEnabled ?? false
-  if (body.steamEnabled !== undefined) {
-    steamEnabled = Boolean(body.steamEnabled)
+  if (normalizedBody.steamEnabled !== undefined) {
+    steamEnabled = Boolean(normalizedBody.steamEnabled)
   }
   let steamId = existing?.steamId ?? null
-  if (body.steamId !== undefined) {
-    steamId = body.steamId ? String(body.steamId).trim() : null
+  if (normalizedBody.steamId !== undefined) {
+    steamId = normalizedBody.steamId ? String(normalizedBody.steamId).trim() : null
   }
 
   const STEAM_API_KEY_MAX_LEN = 128
   let steamApiKey: string | null = existing?.steamApiKey ?? null
-  if (body.steamApiKey !== undefined) {
+  if (normalizedBody.steamApiKey !== undefined) {
     steamApiKey =
-      typeof body.steamApiKey === 'string' && body.steamApiKey.trim()
-        ? body.steamApiKey.trim().slice(0, STEAM_API_KEY_MAX_LEN)
+      typeof normalizedBody.steamApiKey === 'string' && normalizedBody.steamApiKey.trim()
+        ? normalizedBody.steamApiKey.trim().slice(0, STEAM_API_KEY_MAX_LEN)
         : null
   }
 
   let activityRejectLockappSleep = existing?.activityRejectLockappSleep === true
-  if (body.activityRejectLockappSleep !== undefined && body.activityRejectLockappSleep !== null) {
-    activityRejectLockappSleep = Boolean(body.activityRejectLockappSleep)
+  if (normalizedBody.activityRejectLockappSleep !== undefined && normalizedBody.activityRejectLockappSleep !== null) {
+    activityRejectLockappSleep = Boolean(normalizedBody.activityRejectLockappSleep)
   }
 
   const {
@@ -485,7 +508,7 @@ export async function prepareSiteConfigValuesFromPayload(
     profileOnlinePulseEnabled,
     adminThemeColor,
     adminBackgroundColor,
-  } = resolveColorSettings(body, existing)
+  } = resolveColorSettings(normalizedBody, existing)
 
   const siteConfigValues = {
     adminThemeColor,
@@ -578,3 +601,4 @@ export async function updateSiteConfigFromPayload(
   const siteConfigValues = await prepareSiteConfigValuesFromPayload(body, options)
   return persistCompatibilitySiteConfigValues(siteConfigValues, body)
 }
+

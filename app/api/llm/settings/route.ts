@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   try {
     return NextResponse.json({
       success: true,
-      data: await getSafeSiteConfig(),
+      data: await getSafeSiteConfig('admin'),
     })
   } catch (error) {
     console.error('读取 LLM 站点配置失败:', error)

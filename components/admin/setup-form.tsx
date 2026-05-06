@@ -6,7 +6,11 @@ import { useT } from 'next-i18next/client'
 import { useEffect, useState } from 'react'
 
 import { AdminLanguageToggle } from '@/components/admin/admin-language-toggle'
-import { loginAdmin, setupAdminSite } from '@/components/admin/admin-query-mutations'
+import {
+  loginAdmin,
+  setupAdminSite,
+  uploadImageSource,
+} from '@/components/admin/admin-query-mutations'
 import { FileSelectTrigger } from '@/components/admin/file-select-trigger'
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import { Switch } from '@/components/ui/switch'
@@ -399,7 +403,9 @@ export function SetupForm({ needAdminSetup, initialConfig }: SetupFormProps) {
         title={t('setup.cropAvatarTitle')}
         description={t('setup.cropAvatarDescription')}
         onComplete={(dataUrl) => {
-          setAvatarUrl(dataUrl)
+          void uploadImageSource(dataUrl, 'site.avatar')
+            .then((url) => setAvatarUrl(url))
+            .catch(() => setAvatarUrl(dataUrl))
         }}
       />
     </div>

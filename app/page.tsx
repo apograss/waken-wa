@@ -26,6 +26,7 @@ import {
   normalizeHitokotoCategories,
   normalizeHitokotoEncode,
 } from '@/lib/hitokoto'
+import { inspirationEntryImageUrl } from '@/lib/inspiration-inline-images'
 import { resolvePublicPageControlFontOptions } from '@/lib/public-page-font'
 import {
   parseScheduleCoursesJson,
@@ -99,6 +100,8 @@ export default async function Home() {
   const displayTimezoneForEntries = normalizeTimezone(cfg.displayTimezone)
   const inspirationHomeEntries = inspirationRows.map((row: (typeof inspirationRows)[number]) => ({
     ...row,
+    imageDataUrl: row.imageDataUrl ? inspirationEntryImageUrl(row.id) : null,
+    imageUrl: row.imageDataUrl ? inspirationEntryImageUrl(row.id) : null,
     createdAt: coerceDbTimestampToIsoUtc(row.createdAt),
     displayTimezone: displayTimezoneForEntries,
   }))

@@ -323,7 +323,15 @@ export function InspirationManager() {
         description={t('inspirationManager.crop.description')}
         onComplete={(dataUrl) => {
           if (cropTarget === 'cover') {
-            draft.setImageDataUrl(dataUrl)
+            void (async () => {
+              draft.setBodyImageBusy(true)
+              try {
+                const url = await uploadAssetMutation.mutateAsync(dataUrl)
+                draft.setImageDataUrl(url)
+              } finally {
+                draft.setBodyImageBusy(false)
+              }
+            })()
             return
           }
           void (async () => {

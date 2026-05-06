@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
+import { extractImageSourcePublicKey, readImageSourceDataUrl } from '@/lib/image-source-store'
+import { decodeInlineImageDataUrl, inlineImageBody } from '@/lib/inline-image-data'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 
 export const dynamic = 'force-dynamic'
@@ -83,6 +85,34 @@ export async function GET(request: NextRequest) {
 
   const config = await getSiteConfigMemoryFirst()
   const configuredUrl = String(config?.avatarUrl ?? '').trim()
+  if (/^data:image\//i.test(configuredUrl)) {
+    const decoded = decodeInlineImageDataUrl(configuredUrl)
+    if (!decoded) {
+      return NextResponse.json({ success: false, error: 'Invalid avatar image data' }, { status: 404 })
+    }
+    return new NextResponse(inlineImageBody(decoded.buffer), {
+      status: 200,
+      headers: {
+        'Content-Type': decoded.contentType,
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      },
+    })
+  }
+  const imageSourceKey = extractImageSourcePublicKey(configuredUrl)
+  if (imageSourceKey) {
+    const dataUrl = await readImageSourceDataUrl(imageSourceKey)
+    const decoded = dataUrl ? decodeInlineImageDataUrl(dataUrl) : null
+    if (!decoded) {
+      return NextResponse.json({ success: false, error: 'Invalid avatar image source' }, { status: 404 })
+    }
+    return new NextResponse(inlineImageBody(decoded.buffer), {
+      status: 200,
+      headers: {
+        'Content-Type': decoded.contentType,
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      },
+    })
+  }
   if (!config?.avatarFetchByServerEnabled || !isRemoteAvatarUrl(configuredUrl)) {
     return NextResponse.json({ success: false, error: 'Avatar proxy is disabled' }, { status: 404 })
   }

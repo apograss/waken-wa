@@ -235,6 +235,24 @@ export async function uploadInspirationAsset(dataUrl: string): Promise<string> {
   return String(data.data.url)
 }
 
+export async function uploadImageSource(
+  imageDataUrl: string,
+  usageKey: string,
+): Promise<string> {
+  const res = await fetch('/api/image-src', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageDataUrl, usageKey }),
+  })
+  const data = await readJson<SuccessResponse<{ url?: string }>>(res)
+  if (!res.ok || !data?.success || !data.data?.url) {
+    throw new Error(
+      typeof data?.error === 'string' ? data.error : tAdminClient('mutation.uploadBodyImageFailed'),
+    )
+  }
+  return String(data.data.url)
+}
+
 export async function createInspirationEntry(body: Record<string, unknown>): Promise<void> {
   const res = await fetch('/api/inspiration/entries', {
     method: 'POST',

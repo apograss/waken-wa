@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await getSafeSiteConfig()
+    const data = await getSafeSiteConfig('admin')
     return NextResponse.json({
       success: true,
       data: data ? omitRuleToolsFields(data as Record<string, unknown>) : null,

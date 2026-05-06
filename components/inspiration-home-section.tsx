@@ -117,8 +117,9 @@ export function InspirationHomeSection({
         <AnimatePresence initial={false}>
           {entries.map((entry) => {
             const detailHref = `/inspiration/${entry.id}`
-            const inlineLead = !entry.imageDataUrl ? extractInspirationLeadImage(entry.content) : null
-            const cardImageSrc = entry.imageDataUrl ?? inlineLead?.imageSrc ?? null
+            const entryImageSrc = entry.imageUrl ?? entry.imageDataUrl ?? null
+            const inlineLead = !entryImageSrc ? extractInspirationLeadImage(entry.content) : null
+            const cardImageSrc = entryImageSrc ?? inlineLead?.imageSrc ?? null
             const preview = inlineLead?.imageSrc
               ? inspirationPlainPreview(inlineLead.contentWithoutImage, 96).text
               : inspirationPlainPreviewAny(entry.content, entry.contentLexical, 96).text

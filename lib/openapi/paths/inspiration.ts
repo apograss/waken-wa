@@ -70,6 +70,13 @@ export function buildInspirationPaths() {
                   imageDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
                 },
               },
+              uploadedAssetUrl: {
+                value: {
+                  title: 'Snapshot',
+                  content: 'Attached with a previously uploaded inspiration asset URL.',
+                  imageDataUrl: `${'${baseUrl}'}/api/inspiration/img/00000000-0000-0000-0000-000000000000`,
+                },
+              },
               adminStatusSnapshot: {
                 value: {
                   title: 'What I am doing',

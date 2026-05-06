@@ -205,7 +205,10 @@ export function WebSettingsBasicPanel() {
 
       <div className="space-y-2">
         <Label>{t('webSettingsBasic.avatarUrlLabel')}</Label>
-        <Input value={form.avatarUrl} onChange={(event) => patch('avatarUrl', event.target.value)} />
+        <Input
+          value={form.avatarUrl}
+          onChange={(event) => patch('avatarUrl', event.target.value)}
+        />
         <p className="text-xs text-muted-foreground">{t('webSettingsBasic.avatarUrlHint')}</p>
         <FileSelectTrigger
           accept="image/*"

@@ -16,7 +16,7 @@ export async function GET() {
   }
 
   try {
-    const data = await getSafeSiteConfig()
+    const data = await getSafeSiteConfig('admin')
     return NextResponse.json({
       success: true,
       data: data ? pickScheduleSettingsFromConfig(data as Record<string, unknown>) : null,

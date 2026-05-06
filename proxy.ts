@@ -30,7 +30,11 @@ const ADMIN_SETUP_PREFIX = '/api/admin/setup'
 const HCAPTCHA_CSP_SOURCES = ['https://hcaptcha.com', 'https://*.hcaptcha.com']
 const SCALAR_SCRIPT_CSP_SOURCES = ['https://cdn.jsdelivr.net']
 const FONT_STYLE_CSP_SOURCES = ['https://fonts.googleapis.com', 'https://fonts.loli.net']
-const FONT_FILE_CSP_SOURCES = ['https://fonts.gstatic.com', 'https://gstatic.loli.net']
+const FONT_FILE_CSP_SOURCES = [
+  'https://fonts.gstatic.com',
+  'https://gstatic.loli.net',
+  'https://fonts.scalar.com',
+]
 
 function getClientIp(request: NextRequest): string {
   return (

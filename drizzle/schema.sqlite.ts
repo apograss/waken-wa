@@ -638,6 +638,26 @@ export const activityPlaySourceHistory = sqliteTable(
   },
 )
 
+export const imageSources = sqliteTable(
+  'image_sources',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    publicKey: text('public_key')
+      .notNull()
+      .unique()
+      .$defaultFn(() => crypto.randomUUID()),
+    usageKey: text('usage_key').unique(),
+    contentHash: text('content_hash').notNull(),
+    imageDataUrl: text('image_data_url').notNull(),
+    createdAt: ts('created_at'),
+    updatedAt: ts('updated_at'),
+  },
+  (t) => [
+    index('image_sources_usage_key_idx').on(t.usageKey),
+    index('image_sources_content_hash_idx').on(t.contentHash),
+  ],
+)
+
 export const systemSecrets = sqliteTable('system_secrets', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
@@ -732,6 +752,7 @@ export const sqliteSchema = {
   siteSettingsV2RuleTitleRules,
   activityAppHistory,
   activityPlaySourceHistory,
+  imageSources,
   systemSecrets,
   skillsOauthTokens,
   skillsOauthAuthorizeCodes,

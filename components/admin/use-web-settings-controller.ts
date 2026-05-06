@@ -22,6 +22,7 @@ import {
   patchAdminSettingsSchedule,
   patchAdminSettingsTheme,
   patchAdminSkills,
+  uploadImageSource,
 } from '@/components/admin/admin-query-mutations'
 import {
   webSettingsBaselineFormAtom,
@@ -100,6 +101,46 @@ function hasKeyDiff(
   keys: readonly string[],
 ): boolean {
   return JSON.stringify(pickRecordKeys(left, keys)) !== JSON.stringify(pickRecordKeys(right, keys))
+}
+
+function isInlineImageDataUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^data:image\//i.test(value.trim())
+}
+
+async function uploadImportedImageSources(
+  patch: Partial<SiteConfig>,
+): Promise<Partial<SiteConfig>> {
+  const next: Partial<SiteConfig> = { ...patch }
+
+  if (isInlineImageDataUrl(next.avatarUrl)) {
+    next.avatarUrl = await uploadImageSource(next.avatarUrl, 'site.avatar')
+  }
+  if (isInlineImageDataUrl(next.siteIconUrl)) {
+    next.siteIconUrl = await uploadImageSource(next.siteIconUrl, 'site.icon')
+  }
+  if (next.themeCustomSurface) {
+    const surface = { ...next.themeCustomSurface }
+    if (isInlineImageDataUrl(surface.backgroundImageUrl)) {
+      surface.backgroundImageUrl = await uploadImageSource(
+        surface.backgroundImageUrl,
+        'theme.background',
+      )
+    }
+    if (isInlineImageDataUrl(surface.paletteSeedImageUrl)) {
+      surface.paletteSeedImageUrl = await uploadImageSource(
+        surface.paletteSeedImageUrl,
+        'theme.palette-seed',
+      )
+    }
+    surface.backgroundImagePool = await Promise.all(
+      surface.backgroundImagePool.map((item, index) =>
+        isInlineImageDataUrl(item) ? uploadImageSource(item, `theme.pool.${index}`) : item,
+      ),
+    )
+    next.themeCustomSurface = surface
+  }
+
+  return next
 }
 
 export function useWebSettingsController() {
@@ -835,7 +876,7 @@ export function useWebSettingsController() {
       toast.error(t('webSettings.importDialog.invalid'))
       return
     }
-    const partial = webPayloadToFormPatch(parsed.web)
+    const partial = await uploadImportedImageSources(webPayloadToFormPatch(parsed.web))
     const ruleToolsPayload = extractRuleToolsImportFromWebPayload(parsed.web)
     setForm((prev) => ({
       ...prev,

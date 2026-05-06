@@ -38,6 +38,18 @@ export function inspirationInlineImageUrl(publicKey: string): string {
   return `${INSPIRATION_IMG_URL_PREFIX}${publicKey}`
 }
 
+export function inspirationEntryImageUrl(entryId: number): string {
+  return `/api/inspiration/entry-img/${entryId}`
+}
+
+export function extractInspirationEntryIdFromImageUrl(input: string): number | null {
+  const trimmed = String(input ?? '').trim()
+  if (!trimmed) return null
+  const match = /\/api\/inspiration\/entry-img\/(\d+)(?:[/?#]|$)/i.exec(trimmed)
+  const id = Number.parseInt(String(match?.[1] ?? ''), 10)
+  return Number.isFinite(id) && id > 0 ? id : null
+}
+
 export function parseDataImagePayload(dataUrl: string): { mime: string; buffer: Buffer } | null {
   const raw = dataUrl.trim().replace(/\s/g, '')
   const m = /^data:([^;]+);base64,(.+)$/i.exec(raw)
@@ -67,6 +79,14 @@ export function validateInlineImageDataUrl(dataUrl: string): { ok: true } | { ok
     return { ok: false, error: `Image too large (max ${MAX_INLINE_IMAGE_BYTES / (1024 * 1024)}MB)` }
   }
   return { ok: true }
+}
+
+export function extractInspirationPublicKeyFromUrl(input: string): string | null {
+  const trimmed = String(input ?? '').trim()
+  if (!trimmed) return null
+  const match = new RegExp(`${INSPIRATION_IMG_URL_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([0-9a-f-]{36})`, 'i').exec(trimmed)
+  const publicKey = String(match?.[1] ?? '').trim().toLowerCase()
+  return publicKey || null
 }
 
 /** Attach unlinked assets referenced in markdown to a newly created inspiration entry. */

@@ -146,8 +146,9 @@ export function InspirationArchiveList({ displayTimezone }: { displayTimezone: s
         <AnimatePresence initial={false}>
           {items.map((entry) => {
             const href = `/inspiration/${entry.id}`
-            const inlineLead = !entry.imageDataUrl ? extractInspirationLeadImage(entry.content) : null
-            const cardImageSrc = entry.imageDataUrl ?? inlineLead?.imageSrc ?? null
+            const entryImageSrc = entry.imageUrl ?? entry.imageDataUrl ?? null
+            const inlineLead = !entryImageSrc ? extractInspirationLeadImage(entry.content) : null
+            const cardImageSrc = entryImageSrc ?? inlineLead?.imageSrc ?? null
             const preview = inlineLead?.imageSrc
               ? inspirationPlainPreview(inlineLead.contentWithoutImage, 120).text
               : inspirationPlainPreviewAny(entry.content, entry.contentLexical, 120).text

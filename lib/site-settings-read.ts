@@ -27,6 +27,7 @@ import {
   readLegacySiteConfigRow,
   readSiteConfigV2Record,
 } from '@/lib/site-config-v2'
+import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
 import {
   isSiteSettingsMigrationState,
   omitRecordKeys,
@@ -852,7 +853,10 @@ export function serializeSiteSettingsMigrationSnapshot(
 export function pickThemeSettingsFromConfig(
   config: SiteSettingsRecord,
 ): Record<string, unknown> {
-  return pickRecordKeys(config, SITE_SETTINGS_THEME_CATEGORY_KEYS)
+  return sanitizeSiteConfigImagesForClient(
+    pickRecordKeys(config, SITE_SETTINGS_THEME_CATEGORY_KEYS),
+    'admin',
+  )
 }
 
 export function pickScheduleSettingsFromConfig(
@@ -870,9 +874,12 @@ export function pickRulesSettingsFromConfig(
 export function pickCoreSettingsFromConfig(
   config: SiteSettingsRecord,
 ): Record<string, unknown> {
-  return omitRecordKeys(pickSiteConfigBodyFields(config), [
-    ...SITE_SETTINGS_THEME_CATEGORY_KEYS,
-    ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-    ...SITE_SETTINGS_RULES_KEYS,
-  ])
+  return sanitizeSiteConfigImagesForClient(
+    omitRecordKeys(pickSiteConfigBodyFields(config), [
+      ...SITE_SETTINGS_THEME_CATEGORY_KEYS,
+      ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
+      ...SITE_SETTINGS_RULES_KEYS,
+    ]),
+    'admin',
+  )
 }

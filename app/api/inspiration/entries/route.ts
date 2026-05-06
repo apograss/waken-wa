@@ -9,12 +9,15 @@ import {
 } from '@/lib/admin-list-constants'
 import { getBearerApiTokenRecord, getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { devices, inspirationEntries } from '@/lib/drizzle-schema'
+import { devices, inspirationAssets, inspirationEntries } from '@/lib/drizzle-schema'
 import {
   extractInspirationDeviceKey,
   gateInspirationApiForDevice,
 } from '@/lib/inspiration-device-allowlist'
 import {
+  extractInspirationEntryIdFromImageUrl,
+  extractInspirationPublicKeyFromUrl,
+  inspirationEntryImageUrl,
   linkInspirationAssetsToEntry,
   syncInspirationAssetsForEntry,
   validateInlineImageDataUrl,
@@ -67,6 +70,58 @@ function formatDeviceSuffix(options: {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+function toEntryResponseItem<T extends { id: number; imageDataUrl?: string | null }>(item: T) {
+  const imageDataUrl = typeof item.imageDataUrl === 'string' ? item.imageDataUrl.trim() : ''
+  const imageUrl = imageDataUrl ? inspirationEntryImageUrl(item.id) : null
+  return {
+    ...item,
+    imageDataUrl: imageUrl,
+    imageUrl,
+  }
+}
+
+type InspirationEntryRow = {
+  id: number
+  imageDataUrl?: string | null
+}
+
+async function resolveEntryImageDataUrl(input: unknown): Promise<string | null> {
+  const raw = typeof input === 'string' ? input.trim() : ''
+  if (typeof input === 'undefined') return null
+  if (!raw) return null
+  if (raw.startsWith('data:image/')) {
+    return raw
+  }
+
+  const entryId = extractInspirationEntryIdFromImageUrl(raw)
+  if (entryId) {
+    const [entry] = await db
+      .select({ imageDataUrl: inspirationEntries.imageDataUrl })
+      .from(inspirationEntries)
+      .where(eq(inspirationEntries.id, entryId))
+      .limit(1)
+
+    return typeof entry?.imageDataUrl === 'string' && entry.imageDataUrl.trim()
+      ? entry.imageDataUrl.trim()
+      : null
+  }
+
+  const publicKey = extractInspirationPublicKeyFromUrl(raw)
+  if (!publicKey) {
+    return null
+  }
+
+  const [asset] = await db
+    .select({ imageDataUrl: inspirationAssets.imageDataUrl })
+    .from(inspirationAssets)
+    .where(sql`lower(cast(${inspirationAssets.publicKey} as text)) = ${publicKey}`)
+    .limit(1)
+
+  return typeof asset?.imageDataUrl === 'string' && asset.imageDataUrl.trim()
+    ? asset.imageDataUrl.trim()
+    : null
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!(await isSiteLockSatisfied())) {
@@ -102,7 +157,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: items,
+      data: (items as InspirationEntryRow[]).map((item) => toEntryResponseItem(item)),
       displayTimezone,
       pagination: { limit, offset, total: Number(totalRow?.c ?? 0) },
     })
@@ -202,10 +257,7 @@ export async function POST(request: NextRequest) {
     }
 
     const imageDataUrlRaw = body?.imageDataUrl ?? body?.dataUrl ?? body?.image_data_url
-    const imageDataUrl =
-      typeof imageDataUrlRaw === 'string' && imageDataUrlRaw.trim().length > 0
-        ? imageDataUrlRaw.trim()
-        : null
+    const imageDataUrl = await resolveEntryImageDataUrl(imageDataUrlRaw)
 
     if (imageDataUrl) {
       const imgCheck = validateInlineImageDataUrl(imageDataUrl)
@@ -326,7 +378,7 @@ export async function POST(request: NextRequest) {
 
     await linkInspirationAssetsToEntry(entry!.id, content, contentLexical)
 
-    return NextResponse.json({ success: true, data: entry }, { status: 201 })
+    return NextResponse.json({ success: true, data: toEntryResponseItem(entry) }, { status: 201 })
   } catch (error) {
     console.error('提交灵感条目失败:', error)
     return NextResponse.json({ success: false, error: '提交失败' }, { status: 500 })
@@ -415,13 +467,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: '缺少 content' }, { status: 400 })
     }
 
+    const hasImageField =
+      'imageDataUrl' in body || 'dataUrl' in body || 'image_data_url' in body
     const imageDataUrlRaw = body?.imageDataUrl ?? body?.dataUrl ?? body?.image_data_url
-    const imageDataUrl =
-      typeof imageDataUrlRaw === 'string' && imageDataUrlRaw.trim().length > 0
-        ? imageDataUrlRaw.trim()
-        : null
-    if (imageDataUrl) {
-      const imgCheck = validateInlineImageDataUrl(imageDataUrl)
+    const resolvedImageDataUrl = hasImageField
+      ? await resolveEntryImageDataUrl(imageDataUrlRaw)
+      : undefined
+    if (resolvedImageDataUrl) {
+      const imgCheck = validateInlineImageDataUrl(resolvedImageDataUrl)
       if (!imgCheck.ok) {
         return NextResponse.json({ success: false, error: imgCheck.error }, { status: 400 })
       }
@@ -528,7 +581,8 @@ export async function PATCH(request: NextRequest) {
         title: titleFinal,
         content,
         contentLexical,
-        imageDataUrl,
+        imageDataUrl:
+          typeof resolvedImageDataUrl === 'undefined' ? undefined : resolvedImageDataUrl,
         statusSnapshot,
         updatedAt: now,
       })
@@ -537,7 +591,7 @@ export async function PATCH(request: NextRequest) {
 
     await syncInspirationAssetsForEntry(id, content, contentLexical)
 
-    return NextResponse.json({ success: true, data: entry })
+    return NextResponse.json({ success: true, data: toEntryResponseItem(entry) })
   } catch (error) {
     console.error('更新灵感条目失败:', error)
     return NextResponse.json({ success: false, error: '保存失败' }, { status: 500 })

@@ -38,7 +38,7 @@ const mcpHandler = createMcpHandler(
             text: JSON.stringify(
               {
                 success: true,
-                data: await getSafeSiteConfig(),
+                data: await getSafeSiteConfig('admin'),
               },
               null,
               2,

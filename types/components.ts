@@ -49,6 +49,7 @@ export type InspirationHomeItem = {
   content: string
   contentLexical?: string | null
   imageDataUrl: string | null
+  imageUrl?: string | null
   statusSnapshot: string | null
   createdAt: string
   displayTimezone?: string

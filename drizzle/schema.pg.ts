@@ -661,6 +661,27 @@ export const activityPlaySourceHistory = pgTable('activity_play_source_history',
     .defaultNow(),
 })
 
+export const imageSources = pgTable(
+  'image_sources',
+  {
+    id: serial('id').primaryKey(),
+    publicKey: uuid('public_key').notNull().unique().defaultRandom(),
+    usageKey: varchar('usage_key', { length: 160 }).unique(),
+    contentHash: varchar('content_hash', { length: 64 }).notNull(),
+    imageDataUrl: text('image_data_url').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('image_sources_usage_key_idx').on(t.usageKey),
+    index('image_sources_content_hash_idx').on(t.contentHash),
+  ],
+)
+
 export const systemSecrets = pgTable('system_secrets', {
   key: varchar('key', { length: 64 }).primaryKey(),
   value: varchar('value', { length: 512 }).notNull(),
@@ -768,6 +789,7 @@ export const pgSchema = {
   siteSettingsV2RuleTitleRules,
   activityAppHistory,
   activityPlaySourceHistory,
+  imageSources,
   systemSecrets,
   skillsOauthTokens,
   skillsOauthAuthorizeCodes,

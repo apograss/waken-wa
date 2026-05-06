@@ -10,6 +10,7 @@ import {
   getAdminPanelTransition,
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
+import { uploadImageSource } from '@/components/admin/admin-query-mutations'
 import { FileSelectTrigger } from '@/components/admin/file-select-trigger'
 import { WebSettingsInset } from '@/components/admin/web-settings-layout'
 import {
@@ -227,22 +228,33 @@ export function WebSettingsCustomSurface() {
   const onThemeBackgroundFileSelected = (file?: File) => {
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
       if (!result) {
         toast.error(t('webSettingsCustomSurface.toasts.readImageFailed'))
         return
       }
+      const usageKey =
+        value.backgroundImageMode === 'randomPool'
+          ? `theme.pool.${value.backgroundImagePool.length}`
+          : 'theme.background'
+      let imageUrl = ''
+      try {
+        imageUrl = await uploadImageSource(result, usageKey)
+      } catch {
+        toast.error(t('webSettingsCustomSurface.toasts.readImageFailed'))
+        return
+      }
       if (value.backgroundImageMode === 'randomPool') {
         patchThemeSurfaceImageAware({
-          backgroundImagePool: [...value.backgroundImagePool, result],
+          backgroundImagePool: [...value.backgroundImagePool, imageUrl],
         })
       } else {
-        patchThemeSurfaceImageAware({ backgroundImageUrl: result })
+        patchThemeSurfaceImageAware({ backgroundImageUrl: imageUrl })
       }
       setBackgroundImageInput('')
       clearThemePreviewAsset()
-      setThemePreviewImageUrl(result)
+      setThemePreviewImageUrl(imageUrl)
     }
     reader.onerror = () => {
       toast.error(t('webSettingsCustomSurface.toasts.readImageFailed'))
@@ -572,9 +584,9 @@ export function WebSettingsCustomSurface() {
                 </Select>
               </div>
             </div>
-            <p className="break-all text-xs text-muted-foreground leading-relaxed">
-              {t('webSettingsCustomSurface.lastPaletteSeedImage', {
-                value: value.paletteSeedImageUrl || t('webSettingsCustomSurface.none'),
+                <p className="break-all text-xs text-muted-foreground leading-relaxed">
+                  {t('webSettingsCustomSurface.lastPaletteSeedImage', {
+                    value: value.paletteSeedImageUrl || t('webSettingsCustomSurface.none'),
               })}
             </p>
           </div>

@@ -3,6 +3,9 @@ import { mergeRedisCacheAdminFields } from '@/lib/cache-runtime-toggle'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
+import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
+
+export type SiteConfigClientMode = 'public' | 'admin' | 'masked'
 
 export const LLM_DENIED_SITE_CONFIG_KEYS = [
   'adminThemeColor',
@@ -56,10 +59,13 @@ export function normalizeAiToolMode(raw: unknown): 'skills' | 'mcp' {
   return String(raw ?? '').trim().toLowerCase() === 'mcp' ? 'mcp' : 'skills'
 }
 
-export function redactSiteConfigForClient(config: SiteConfigRecord) {
+export function redactSiteConfigForClient(
+  config: SiteConfigRecord,
+  mode: SiteConfigClientMode = 'public',
+) {
   const normalized = normalizeSiteConfigShape(config) as SiteConfigRecord
   const redisAdmin = mergeRedisCacheAdminFields(normalized)
-  return {
+  const redacted = {
     ...normalized,
     pageLockPasswordHash: undefined,
     hcaptchaSecretKey: normalized.hcaptchaSecretKey ? '••••••••' : null,
@@ -67,12 +73,16 @@ export function redactSiteConfigForClient(config: SiteConfigRecord) {
     useNoSqlAsCacheRedis: redisAdmin.useNoSqlAsCacheRedis,
     redisCacheServerlessForced: redisAdmin.redisCacheServerlessForced,
   }
+  if (mode === 'masked') {
+    return redacted
+  }
+  return sanitizeSiteConfigImagesForClient(redacted, mode)
 }
 
-export async function getSafeSiteConfig() {
+export async function getSafeSiteConfig(mode: SiteConfigClientMode = 'public') {
   const config = await getSiteConfigMemoryFirst()
   if (!config) return null
-  return redactSiteConfigForClient(config as SiteConfigRecord)
+  return redactSiteConfigForClient(config as SiteConfigRecord, mode)
 }
 
 export async function getNormalizedExistingSiteConfig(): Promise<SiteConfigRecord | null> {

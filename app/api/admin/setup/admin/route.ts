@@ -13,6 +13,7 @@ import { getT } from '@/lib/i18n/server'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { parseHistoryWindowMinutes, parseProcessStaleSeconds } from '@/lib/site-config-constants'
+import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
 import { bootstrapSiteSettingsSplitStorage } from '@/lib/site-settings-write'
 import { normalizeCustomCss } from '@/lib/theme-css'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
@@ -67,16 +68,22 @@ export async function POST(request: NextRequest) {
       adminText,
       pageTitle,
     } = await request.json()
+    const imageSourceBody = await storeSiteConfigInlineImageSources({
+      avatarUrl,
+      themeCustomSurface,
+    })
     const normalizedUsername = String(username ?? '').trim()
     const rawPassword = String(password ?? '')
     const normalizedUserName = String(userName ?? '').trim()
     const normalizedUserBio = String(userBio ?? '').trim()
-    const normalizedAvatarUrl = String(avatarUrl ?? '').trim()
+    const normalizedAvatarUrl = String(imageSourceBody.avatarUrl ?? '').trim()
     const normalizedAvatarFetchByServerEnabled =
       isRemoteAvatarUrl(normalizedAvatarUrl) && avatarFetchByServerEnabled === true
     const normalizedUserNote = String(userNote ?? '').trim()
     const normalizedThemePreset = String(themePreset ?? 'basic').trim() || 'basic'
-    const normalizedThemeCustomSurface = parseThemeCustomSurface(themeCustomSurface ?? {})
+    const normalizedThemeCustomSurface = parseThemeCustomSurface(
+      imageSourceBody.themeCustomSurface ?? {},
+    )
     const normalizedCustomCss = normalizeCustomCss(customCss)
     const normalizedHistoryWindowMinutes = parseHistoryWindowMinutes(historyWindowMinutes)
     const normalizedProcessStaleSeconds = parseProcessStaleSeconds(processStaleSeconds)

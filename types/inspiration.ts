@@ -23,6 +23,7 @@ export interface AdminInspirationEntry {
   content: string
   contentLexical?: string | null
   imageDataUrl: string | null
+  imageUrl?: string | null
   statusSnapshot: string | null
   createdAt: string
   updatedAt: string

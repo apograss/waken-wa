@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 
+import { extractImageSourcePublicKey, readImageSourceDataUrl } from '@/lib/image-source-store'
+import { decodeInlineImageDataUrl } from '@/lib/inline-image-data'
 import { getPublicOrigin } from '@/lib/public-request-url'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { createDefaultSiteIconResponse } from '@/lib/site-default-icon'
@@ -128,6 +130,15 @@ export async function GET(request: NextRequest) {
 
     if (isDataSiteIconUrl(configuredUrl)) {
       const decoded = decodeDataSiteIconUrl(configuredUrl)
+      return decoded
+        ? createBinarySiteIconResponse(decoded.buffer, decoded.contentType)
+        : createFallbackSiteIconResponse()
+    }
+
+    const imageSourceKey = extractImageSourcePublicKey(configuredUrl)
+    if (imageSourceKey) {
+      const dataUrl = await readImageSourceDataUrl(imageSourceKey)
+      const decoded = dataUrl ? decodeInlineImageDataUrl(dataUrl) : null
       return decoded
         ? createBinarySiteIconResponse(decoded.buffer, decoded.contentType)
         : createFallbackSiteIconResponse()

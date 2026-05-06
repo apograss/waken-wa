@@ -11,6 +11,7 @@ import { SiteReveal } from '@/components/site-reveal'
 import { db } from '@/lib/db'
 import { inspirationEntries } from '@/lib/drizzle-schema'
 import { getT } from '@/lib/i18n/server'
+import { inspirationEntryImageUrl } from '@/lib/inspiration-inline-images'
 import { inspirationLooksLikeMarkdown } from '@/lib/inspiration-preview'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { coerceDbTimestampToIsoUtc, normalizeTimezone } from '@/lib/timezone'
@@ -80,7 +81,7 @@ export default async function InspirationDetailPage({
             <SiteReveal delay={0.08}>
               <div className="mb-6 rounded-md overflow-hidden border border-border bg-muted/30">
                 <Image
-                  src={entry.imageDataUrl}
+                  src={inspirationEntryImageUrl(entry.id)}
                   alt=""
                   width={1200}
                   height={900}

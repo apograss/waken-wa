@@ -5,11 +5,13 @@ import { createStore } from 'jotai/vanilla'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useT } from 'next-i18next/client'
 import { useMemo } from 'react'
+import { toast } from 'sonner'
 
 import {
   getAdminPanelTransition,
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
+import { uploadImageSource } from '@/components/admin/admin-query-mutations'
 import { AdminThemeColorControl } from '@/components/admin/admin-theme-color-control'
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import { SiteSettingsMigrationCard } from '@/components/admin/site-settings-migration-card'
@@ -290,14 +292,20 @@ function WebSettingsContent() {
               ? t('setup.cropSiteIconDescription')
               : t('setup.cropAvatarDescription')
           }
-          onComplete={(dataUrl) =>
-            setForm((prev) => ({
-              ...prev,
-              ...(cropTarget === 'siteIcon'
-                ? { siteIconUrl: dataUrl }
-                : { avatarUrl: dataUrl }),
-            }))
-          }
+          onComplete={(dataUrl) => {
+            const target = cropTarget
+            const usageKey = target === 'siteIcon' ? 'site.icon' : 'site.avatar'
+            void uploadImageSource(dataUrl, usageKey)
+              .then((url) => {
+                setForm((prev) => ({
+                  ...prev,
+                  ...(target === 'siteIcon'
+                    ? { siteIconUrl: url }
+                    : { avatarUrl: url }),
+                }))
+              })
+              .catch(() => toast.error(t('mutation.uploadBodyImageFailed')))
+          }}
         />
       </div>
 

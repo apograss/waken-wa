@@ -33,6 +33,7 @@ import {
   readLegacySiteConfigRow,
   upsertSiteConfigV2Entries,
 } from '@/lib/site-config-v2'
+import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
 import {
   hasAnyRecordKey,
   omitRecordKeys,
@@ -806,7 +807,8 @@ export async function persistThemeSettingsFromPrepared(
   })
 
   await clearSiteSettingsCaches()
-  return readEffectiveSiteConfig()
+  const data = await readEffectiveSiteConfig()
+  return data ? sanitizeSiteConfigImagesForClient(data, 'admin') : null
 }
 
 export async function persistCompatibilitySiteConfigValues(
@@ -832,7 +834,8 @@ export async function persistCompatibilitySiteConfigValues(
   }
 
   await clearSiteSettingsCaches()
-  return readEffectiveSiteConfig()
+  const data = await readEffectiveSiteConfig()
+  return data ? sanitizeSiteConfigImagesForClient(data, 'admin') : null
 }
 
 export async function persistScheduleSettingsFromPrepared(
@@ -847,7 +850,8 @@ export async function persistScheduleSettingsFromPrepared(
   })
 
   await clearSiteSettingsCaches()
-  return readEffectiveSiteConfig()
+  const data = await readEffectiveSiteConfig()
+  return data ? sanitizeSiteConfigImagesForClient(data, 'admin') : null
 }
 
 export async function persistCoreSettingsFromPrepared(
@@ -873,7 +877,8 @@ export async function persistCoreSettingsFromPrepared(
   }
 
   await clearSiteSettingsCaches()
-  return readEffectiveSiteConfig()
+  const data = await readEffectiveSiteConfig()
+  return data ? sanitizeSiteConfigImagesForClient(data, 'admin') : null
 }
 
 export async function persistRulesSettingsValues(
