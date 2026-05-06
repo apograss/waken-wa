@@ -21,6 +21,7 @@ export function AdminToaster() {
       position="bottom-center"
       offset="1rem"
       className="z-[100]"
+      style={{ fontFamily: 'var(--font-noto-sans-sc), sans-serif' }}
     />,
     document.body,
   )

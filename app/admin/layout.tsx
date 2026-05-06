@@ -48,7 +48,7 @@ export default async function AdminLayout({
         initialThemeColor={initialThemeColor}
         initialBackgroundColor={initialBackgroundColor}
       />
-      <div>{children}</div>
+      <div className="admin-font-scope">{children}</div>
       <div className="bg-background px-4 pb-5 pt-2 sm:px-6 sm:pb-6 lg:hidden">
         <div className="flex justify-center">
           <div className="inline-flex items-center gap-1.5 rounded-[28px] border border-border/70 bg-background/78 px-2 py-2 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur-xl">

@@ -81,6 +81,11 @@
   isolation: isolate;
 }
 
+.admin-font-scope,
+.admin-font-scope :where(button, input, select, textarea) {
+  font-family: var(--font-noto-sans-sc), sans-serif;
+}
+
 .admin-shell-backdrop {
   position: fixed;
   inset: 0;
