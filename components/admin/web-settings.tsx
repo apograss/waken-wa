@@ -310,14 +310,14 @@ function WebSettingsContent() {
       </div>
 
       <Dialog open={importConfigDialogOpen} onOpenChange={setImportConfigDialogOpen}>
-        <DialogContent>
+        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t('webSettings.importDialog.title')}</DialogTitle>
             <DialogDescription>
               {t('webSettings.importDialog.description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto pr-1">
             <Label htmlFor="import-config-input">{t('webSettings.importDialog.bundleLabel')}</Label>
             <Input
               id="import-config-input"

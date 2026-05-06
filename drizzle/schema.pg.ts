@@ -49,9 +49,11 @@ export const devices = pgTable(
     customOfflineStatus: text('custom_offline_status'),
     customOfflineStatusEnabled: boolean('custom_offline_status_enabled').default(false),
     customOfflineStatusUpdatedAt: timestamp('custom_offline_status_updated_at', { mode: 'date', withTimezone: true }),
+    customOfflineStatusBypassOnlineDeviceKeys: jsonb('custom_offline_status_bypass_online_device_keys'),
     customLockStatus: text('custom_lock_status'),
     customLockStatusEnabled: boolean('custom_lock_status_enabled').default(false),
     customLockStatusUpdatedAt: timestamp('custom_lock_status_updated_at', { mode: 'date', withTimezone: true }),
+    customLockStatusBypassOnlineDeviceKeys: jsonb('custom_lock_status_bypass_online_device_keys'),
     createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
       .notNull()
       .defaultNow(),

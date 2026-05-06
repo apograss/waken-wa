@@ -49,9 +49,15 @@ export const devices = sqliteTable(
     customOfflineStatus: text('custom_offline_status'),
     customOfflineStatusEnabled: integer('custom_offline_status_enabled', { mode: 'boolean' }).default(false),
     customOfflineStatusUpdatedAt: tsOpt('custom_offline_status_updated_at'),
+    customOfflineStatusBypassOnlineDeviceKeys: text('custom_offline_status_bypass_online_device_keys', {
+      mode: 'json',
+    }),
     customLockStatus: text('custom_lock_status'),
     customLockStatusEnabled: integer('custom_lock_status_enabled', { mode: 'boolean' }).default(false),
     customLockStatusUpdatedAt: tsOpt('custom_lock_status_updated_at'),
+    customLockStatusBypassOnlineDeviceKeys: text('custom_lock_status_bypass_online_device_keys', {
+      mode: 'json',
+    }),
     createdAt: ts('created_at'),
     updatedAt: ts('updated_at'),
   },

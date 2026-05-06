@@ -18,6 +18,7 @@ import {
 } from '@/components/admin/admin-motion'
 import {
   fetchAdminDevicesPage,
+  fetchAdminDeviceSummaries,
   fetchAdminTokenOptions,
 } from '@/components/admin/admin-query-fetchers'
 import { adminQueryKeys as keys } from '@/components/admin/admin-query-keys'
@@ -59,6 +60,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { toastSwitchLabel } from '@/lib/admin-switch-toast'
 import { cn } from '@/lib/utils'
+import type { AdminDeviceSummary } from '@/types'
 import type { AdminDeviceItem, AdminTokenOption } from '@/types'
 
 function DeviceListItemActions({
@@ -147,13 +149,23 @@ export function DeviceManager({
   const [editCustomStatusDeviceId, setEditCustomStatusDeviceId] = useState<number | null>(null)
   const [customOfflineStatus, setCustomOfflineStatus] = useState('')
   const [customOfflineStatusEnabled, setCustomOfflineStatusEnabled] = useState(false)
+  const [customOfflineStatusBypassOnlineDeviceKeys, setCustomOfflineStatusBypassOnlineDeviceKeys] =
+    useState<string[]>([])
   const [customLockStatus, setCustomLockStatus] = useState('')
   const [customLockStatusEnabled, setCustomLockStatusEnabled] = useState(false)
+  const [customLockStatusBypassOnlineDeviceKeys, setCustomLockStatusBypassOnlineDeviceKeys] =
+    useState<string[]>([])
+  const [customStatusBypassSearch, setCustomStatusBypassSearch] = useState('')
   const highlightHandledRef = useRef(false)
 
   const tokensQuery = useQuery({
     queryKey: keys.tokens.options(),
     queryFn: fetchAdminTokenOptions,
+  })
+
+  const deviceSummaryQuery = useQuery({
+    queryKey: keys.devices.list({ limit: 500, status: 'active' }),
+    queryFn: () => fetchAdminDeviceSummaries({ limit: 500, status: 'active' }),
   })
 
   const devicesQuery = useQuery({
@@ -319,14 +331,18 @@ export function DeviceManager({
       id,
       customOfflineStatus,
       customOfflineStatusEnabled,
+      customOfflineStatusBypassOnlineDeviceKeys,
       customLockStatus,
       customLockStatusEnabled,
+      customLockStatusBypassOnlineDeviceKeys,
     }: {
       id: number
       customOfflineStatus?: string | null
       customOfflineStatusEnabled?: boolean
+      customOfflineStatusBypassOnlineDeviceKeys?: string[]
       customLockStatus?: string | null
       customLockStatusEnabled?: boolean
+      customLockStatusBypassOnlineDeviceKeys?: string[]
     }) => {
       const response = await fetch(`/api/admin/devices/${id}/custom-status`, {
         method: 'PATCH',
@@ -334,8 +350,10 @@ export function DeviceManager({
         body: JSON.stringify({
           customOfflineStatus,
           customOfflineStatusEnabled,
+          customOfflineStatusBypassOnlineDeviceKeys,
           customLockStatus,
           customLockStatusEnabled,
+          customLockStatusBypassOnlineDeviceKeys,
         }),
       })
       if (!response.ok) {
@@ -403,15 +421,28 @@ export function DeviceManager({
         const data = result.data
         setCustomOfflineStatus(data.customOfflineStatus || '')
         setCustomOfflineStatusEnabled(data.customOfflineStatusEnabled || false)
+        setCustomOfflineStatusBypassOnlineDeviceKeys(
+          Array.isArray(data.customOfflineStatusBypassOnlineDeviceKeys)
+            ? data.customOfflineStatusBypassOnlineDeviceKeys
+            : [],
+        )
         setCustomLockStatus(data.customLockStatus || '')
         setCustomLockStatusEnabled(data.customLockStatusEnabled || false)
+        setCustomLockStatusBypassOnlineDeviceKeys(
+          Array.isArray(data.customLockStatusBypassOnlineDeviceKeys)
+            ? data.customLockStatusBypassOnlineDeviceKeys
+            : [],
+        )
       }
     } catch {
       // Use defaults if fetch fails
       setCustomOfflineStatus('')
       setCustomOfflineStatusEnabled(false)
+      setCustomOfflineStatusBypassOnlineDeviceKeys([])
       setCustomLockStatus('')
       setCustomLockStatusEnabled(false)
+      setCustomLockStatusBypassOnlineDeviceKeys([])
+      setCustomStatusBypassSearch('')
     }
   }
 
@@ -420,10 +451,88 @@ export function DeviceManager({
       id,
       customOfflineStatus: customOfflineStatus.trim() || null,
       customOfflineStatusEnabled,
+      customOfflineStatusBypassOnlineDeviceKeys,
       customLockStatus: customLockStatus.trim() || null,
       customLockStatusEnabled,
+      customLockStatusBypassOnlineDeviceKeys,
     })
   }
+
+  const availableBypassDevices = useMemo(
+    () =>
+      (deviceSummaryQuery.data ?? []).filter(
+        (item: AdminDeviceSummary) => item.id !== editCustomStatusDeviceId,
+      ),
+    [deviceSummaryQuery.data, editCustomStatusDeviceId],
+  )
+
+  const filteredBypassDevices = useMemo(() => {
+    const search = customStatusBypassSearch.trim().toLowerCase()
+    if (!search) return availableBypassDevices
+    return availableBypassDevices.filter((item: AdminDeviceSummary) => {
+      const displayName = item.displayName.toLowerCase()
+      const hashKey = item.generatedHashKey.toLowerCase()
+      return displayName.includes(search) || hashKey.includes(search)
+    })
+  }, [availableBypassDevices, customStatusBypassSearch])
+
+  const renderBypassDeviceOptions = (
+    selectedKeys: string[],
+    onChange: (keys: string[]) => void,
+    title: string,
+    description: string,
+  ) => (
+    <div className="space-y-2 rounded-md border border-dashed border-border/60 bg-background/70 p-3">
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Input
+        value={customStatusBypassSearch}
+        onChange={(event) => setCustomStatusBypassSearch(event.target.value)}
+        placeholder={t('devices.customStatus.bypassSearchPlaceholder')}
+        className="h-8"
+      />
+      <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
+        {availableBypassDevices.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t('devices.customStatus.noBypassDevices')}</p>
+        ) : filteredBypassDevices.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t('devices.customStatus.noBypassDevicesMatched')}
+          </p>
+        ) : (
+          filteredBypassDevices.map((device) => {
+            const checked = selectedKeys.includes(device.generatedHashKey)
+            return (
+              <label
+                key={device.id}
+                className="flex cursor-pointer items-start gap-3 rounded-md border border-border/50 px-3 py-2 text-sm hover:bg-muted/30"
+              >
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={checked}
+                  onChange={(event) => {
+                    if (event.target.checked) {
+                      onChange([...selectedKeys, device.generatedHashKey])
+                    } else {
+                      onChange(selectedKeys.filter((key) => key !== device.generatedHashKey))
+                    }
+                  }}
+                />
+                <span className="min-w-0">
+                  <span className="block break-words font-medium">{device.displayName}</span>
+                  <span className="block break-all text-[11px] text-muted-foreground">
+                    {device.generatedHashKey}
+                  </span>
+                </span>
+              </label>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
 
   const updateBinding = async (id: number, apiTokenId: number | null) => {
     await updateBindingMutation.mutateAsync({ id, apiTokenId })
@@ -966,19 +1075,22 @@ export function DeviceManager({
             setEditCustomStatusDeviceId(null)
             setCustomOfflineStatus('')
             setCustomOfflineStatusEnabled(false)
+            setCustomOfflineStatusBypassOnlineDeviceKeys([])
             setCustomLockStatus('')
             setCustomLockStatusEnabled(false)
+            setCustomLockStatusBypassOnlineDeviceKeys([])
+            setCustomStatusBypassSearch('')
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg" showCloseButton>
+        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden sm:max-w-lg" showCloseButton>
           <DialogHeader>
             <DialogTitle>{t('devices.customStatus.title')}</DialogTitle>
             <DialogDescription>
               {t('devices.customStatus.description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
             <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="custom-offline-enabled" className="text-sm font-medium cursor-pointer">
@@ -1005,6 +1117,12 @@ export function DeviceManager({
                   {t('devices.customStatus.maxLength', { max: 100 })} ({customOfflineStatus.length}/100)
                 </p>
               </div>
+              {renderBypassDeviceOptions(
+                customOfflineStatusBypassOnlineDeviceKeys,
+                setCustomOfflineStatusBypassOnlineDeviceKeys,
+                t('devices.customStatus.offlineBypassTitle'),
+                t('devices.customStatus.offlineBypassDescription'),
+              )}
             </div>
 
             <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
@@ -1033,6 +1151,12 @@ export function DeviceManager({
                   {t('devices.customStatus.maxLength', { max: 100 })} ({customLockStatus.length}/100)
                 </p>
               </div>
+              {renderBypassDeviceOptions(
+                customLockStatusBypassOnlineDeviceKeys,
+                setCustomLockStatusBypassOnlineDeviceKeys,
+                t('devices.customStatus.lockBypassTitle'),
+                t('devices.customStatus.lockBypassDescription'),
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -1043,8 +1167,11 @@ export function DeviceManager({
                 setEditCustomStatusDeviceId(null)
                 setCustomOfflineStatus('')
                 setCustomOfflineStatusEnabled(false)
+                setCustomOfflineStatusBypassOnlineDeviceKeys([])
                 setCustomLockStatus('')
                 setCustomLockStatusEnabled(false)
+                setCustomLockStatusBypassOnlineDeviceKeys([])
+                setCustomStatusBypassSearch('')
               }}
             >
               {t('common.cancel')}

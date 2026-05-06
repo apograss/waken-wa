@@ -44,6 +44,19 @@ export interface AdminDeviceItem {
   approvalUrl?: string
 }
 
+export interface AdminDeviceCustomStatusConfig {
+  id: number
+  displayName: string
+  customOfflineStatus: string | null
+  customOfflineStatusEnabled: boolean
+  customOfflineStatusUpdatedAt: string | null
+  customOfflineStatusBypassOnlineDeviceKeys?: string[]
+  customLockStatus: string | null
+  customLockStatusEnabled: boolean
+  customLockStatusUpdatedAt: string | null
+  customLockStatusBypassOnlineDeviceKeys?: string[]
+}
+
 export interface AdminDeviceSummary {
   id: number
   displayName: string

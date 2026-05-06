@@ -223,7 +223,7 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
   return (
     <div className="space-y-6">
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t('tokens.createTitle')}</DialogTitle>
             <DialogDescription>
@@ -235,7 +235,7 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
             {newToken ? (
               <motion.div
                 key="token-created"
-                className="space-y-4"
+                className="space-y-4 overflow-y-auto pr-1"
                 variants={sectionVariants}
                 initial="initial"
                 animate="animate"
@@ -312,7 +312,7 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
             ) : (
               <motion.div
                 key="token-create-form"
-                className="space-y-4"
+                className="space-y-4 overflow-y-auto pr-1"
                 variants={sectionVariants}
                 initial="initial"
                 animate="animate"
@@ -579,14 +579,14 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t('tokens.qrTitle')}</DialogTitle>
             <DialogDescription>
               {t('tokens.qrDescription')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-y-auto pr-1">
             <p className="text-sm">
               {t('tokens.tokenPrefix')} <span className="font-medium">{qrTitle || '-'}</span>
             </p>

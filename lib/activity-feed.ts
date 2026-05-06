@@ -411,14 +411,32 @@ export async function getActivityFeedData(
       customOfflineStatus: devices.customOfflineStatus,
       customOfflineStatusEnabled: devices.customOfflineStatusEnabled,
       customOfflineStatusUpdatedAt: devices.customOfflineStatusUpdatedAt,
+      customOfflineStatusBypassOnlineDeviceKeys: devices.customOfflineStatusBypassOnlineDeviceKeys,
       customLockStatus: devices.customLockStatus,
       customLockStatusEnabled: devices.customLockStatusEnabled,
       customLockStatusUpdatedAt: devices.customLockStatusUpdatedAt,
+      customLockStatusBypassOnlineDeviceKeys: devices.customLockStatusBypassOnlineDeviceKeys,
     })
     .from(devices)
     .where(eq(devices.status, 'active'))
 
   const activeDeviceHashKeys = new Set(activeStatuses.map((s) => s.generatedHashKey).filter(Boolean))
+
+  function normalizeBypassDeviceKeys(value: unknown): string[] {
+    try {
+      const raw = typeof value === 'string' ? JSON.parse(value) : value
+      if (!Array.isArray(raw)) return []
+      return raw
+        .map((item) => String(item ?? '').trim())
+        .filter((item) => item.length > 0)
+    } catch {
+      return []
+    }
+  }
+
+  function isBypassedByOnlineDevice(value: unknown): boolean {
+    return normalizeBypassDeviceKeys(value).some((key) => activeDeviceHashKeys.has(key))
+  }
 
   // Replace lock-screen activities with custom lock status
   for (let i = 0; i < activeStatuses.length; i++) {
@@ -427,7 +445,11 @@ export async function getActivityFeedData(
 
     if (isLockScreenReporterProcessName(item.processName)) {
       const device = allDevicesWithCustomStatus.find((d: { generatedHashKey: string | null }) => d.generatedHashKey === item.generatedHashKey)
-      if (device?.customLockStatusEnabled && device.customLockStatus) {
+      if (
+        device?.customLockStatusEnabled &&
+        device.customLockStatus &&
+        !isBypassedByOnlineDevice(device.customLockStatusBypassOnlineDeviceKeys)
+      ) {
         activeStatuses[i] = {
           ...item,
           statusText: device.customLockStatus,
@@ -443,6 +465,7 @@ export async function getActivityFeedData(
     if (!device.generatedHashKey) continue
     if (activeDeviceHashKeys.has(device.generatedHashKey)) continue
     if (!device.customOfflineStatusEnabled || !device.customOfflineStatus) continue
+    if (isBypassedByOnlineDevice(device.customOfflineStatusBypassOnlineDeviceKeys)) continue
 
     const timestampValue = device.customOfflineStatusUpdatedAt || device.lastSeenAt || new Date()
     const timestamp = typeof timestampValue === 'string' ? timestampValue : timestampValue.toISOString()

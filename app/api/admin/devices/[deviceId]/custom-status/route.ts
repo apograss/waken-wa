@@ -7,6 +7,7 @@ import { db } from '@/lib/db'
 import { devices } from '@/lib/drizzle-schema'
 import { readJsonObject } from '@/lib/request-json'
 import { sqlTimestamp } from '@/lib/sql-timestamp'
+import type { AdminDeviceCustomStatusConfig } from '@/types/admin'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -14,8 +15,57 @@ export const revalidate = 0
 interface CustomStatusUpdateBody {
   customOfflineStatus?: string | null
   customOfflineStatusEnabled?: boolean
+  customOfflineStatusBypassOnlineDeviceKeys?: string[] | null
   customLockStatus?: string | null
   customLockStatusEnabled?: boolean
+  customLockStatusBypassOnlineDeviceKeys?: string[] | null
+}
+
+function normalizeDeviceKeyList(value: unknown): string[] {
+  try {
+    const raw = typeof value === 'string' ? JSON.parse(value) : value
+    if (!Array.isArray(raw)) return []
+    return Array.from(
+      new Set(
+        raw
+          .map((item) => String(item ?? '').trim())
+          .filter((item) => item.length > 0)
+          .slice(0, 100),
+      ),
+    )
+  } catch {
+    return []
+  }
+}
+
+function serializeCustomStatusDevice(device: Record<string, unknown>): AdminDeviceCustomStatusConfig {
+  return {
+    id: Number(device.id),
+    displayName: String(device.displayName ?? ''),
+    customOfflineStatus:
+      typeof device.customOfflineStatus === 'string' ? device.customOfflineStatus : null,
+    customOfflineStatusEnabled: device.customOfflineStatusEnabled === true,
+    customOfflineStatusUpdatedAt:
+      device.customOfflineStatusUpdatedAt instanceof Date
+        ? device.customOfflineStatusUpdatedAt.toISOString()
+        : typeof device.customOfflineStatusUpdatedAt === 'string'
+        ? device.customOfflineStatusUpdatedAt
+        : null,
+    customOfflineStatusBypassOnlineDeviceKeys: normalizeDeviceKeyList(
+      device.customOfflineStatusBypassOnlineDeviceKeys,
+    ),
+    customLockStatus: typeof device.customLockStatus === 'string' ? device.customLockStatus : null,
+    customLockStatusEnabled: device.customLockStatusEnabled === true,
+    customLockStatusUpdatedAt:
+      device.customLockStatusUpdatedAt instanceof Date
+        ? device.customLockStatusUpdatedAt.toISOString()
+        : typeof device.customLockStatusUpdatedAt === 'string'
+        ? device.customLockStatusUpdatedAt
+        : null,
+    customLockStatusBypassOnlineDeviceKeys: normalizeDeviceKeyList(
+      device.customLockStatusBypassOnlineDeviceKeys,
+    ),
+  }
 }
 
 export async function GET(
@@ -42,9 +92,11 @@ export async function GET(
         customOfflineStatus: true,
         customOfflineStatusEnabled: true,
         customOfflineStatusUpdatedAt: true,
+        customOfflineStatusBypassOnlineDeviceKeys: true,
         customLockStatus: true,
         customLockStatusEnabled: true,
         customLockStatusUpdatedAt: true,
+        customLockStatusBypassOnlineDeviceKeys: true,
       },
     })
 
@@ -54,24 +106,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: device.id,
-        displayName: device.displayName,
-        customOfflineStatus: device.customOfflineStatus,
-        customOfflineStatusEnabled: device.customOfflineStatusEnabled ?? false,
-        customOfflineStatusUpdatedAt: device.customOfflineStatusUpdatedAt
-          ? (device.customOfflineStatusUpdatedAt instanceof Date
-              ? device.customOfflineStatusUpdatedAt.toISOString()
-              : device.customOfflineStatusUpdatedAt)
-          : null,
-        customLockStatus: device.customLockStatus,
-        customLockStatusEnabled: device.customLockStatusEnabled ?? false,
-        customLockStatusUpdatedAt: device.customLockStatusUpdatedAt
-          ? (device.customLockStatusUpdatedAt instanceof Date
-              ? device.customLockStatusUpdatedAt.toISOString()
-              : device.customLockStatusUpdatedAt)
-          : null,
-      },
+      data: serializeCustomStatusDevice(device as Record<string, unknown>),
     })
   } catch (error) {
     console.error('Error fetching device custom status:', error)
@@ -120,6 +155,12 @@ export async function PATCH(
       updateData.customOfflineStatusEnabled = Boolean(body.customOfflineStatusEnabled)
     }
 
+    if (body.customOfflineStatusBypassOnlineDeviceKeys !== undefined) {
+      updateData.customOfflineStatusBypassOnlineDeviceKeys = JSON.stringify(
+        normalizeDeviceKeyList(body.customOfflineStatusBypassOnlineDeviceKeys),
+      )
+    }
+
     if (body.customLockStatus !== undefined) {
       if (body.customLockStatus === null || body.customLockStatus === '') {
         updateData.customLockStatus = null
@@ -141,6 +182,12 @@ export async function PATCH(
       updateData.customLockStatusEnabled = Boolean(body.customLockStatusEnabled)
     }
 
+    if (body.customLockStatusBypassOnlineDeviceKeys !== undefined) {
+      updateData.customLockStatusBypassOnlineDeviceKeys = JSON.stringify(
+        normalizeDeviceKeyList(body.customLockStatusBypassOnlineDeviceKeys),
+      )
+    }
+
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
     }
@@ -155,9 +202,11 @@ export async function PATCH(
         customOfflineStatus: devices.customOfflineStatus,
         customOfflineStatusEnabled: devices.customOfflineStatusEnabled,
         customOfflineStatusUpdatedAt: devices.customOfflineStatusUpdatedAt,
+        customOfflineStatusBypassOnlineDeviceKeys: devices.customOfflineStatusBypassOnlineDeviceKeys,
         customLockStatus: devices.customLockStatus,
         customLockStatusEnabled: devices.customLockStatusEnabled,
         customLockStatusUpdatedAt: devices.customLockStatusUpdatedAt,
+        customLockStatusBypassOnlineDeviceKeys: devices.customLockStatusBypassOnlineDeviceKeys,
       })
 
     if (!updatedDevice) {
@@ -168,24 +217,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: updatedDevice.id,
-        displayName: updatedDevice.displayName,
-        customOfflineStatus: updatedDevice.customOfflineStatus,
-        customOfflineStatusEnabled: updatedDevice.customOfflineStatusEnabled ?? false,
-        customOfflineStatusUpdatedAt: updatedDevice.customOfflineStatusUpdatedAt
-          ? (updatedDevice.customOfflineStatusUpdatedAt instanceof Date
-              ? updatedDevice.customOfflineStatusUpdatedAt.toISOString()
-              : updatedDevice.customOfflineStatusUpdatedAt)
-          : null,
-        customLockStatus: updatedDevice.customLockStatus,
-        customLockStatusEnabled: updatedDevice.customLockStatusEnabled ?? false,
-        customLockStatusUpdatedAt: updatedDevice.customLockStatusUpdatedAt
-          ? (updatedDevice.customLockStatusUpdatedAt instanceof Date
-              ? updatedDevice.customLockStatusUpdatedAt.toISOString()
-              : updatedDevice.customLockStatusUpdatedAt)
-          : null,
-      },
+      data: serializeCustomStatusDevice(updatedDevice as Record<string, unknown>),
     })
   } catch (error) {
     console.error('Error updating device custom status:', error)

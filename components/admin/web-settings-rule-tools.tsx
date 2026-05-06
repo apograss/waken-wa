@@ -1322,14 +1322,14 @@ export function WebSettingsRuleTools() {
       </Dialog>
 
       <Dialog open={importRulesDialogOpen} onOpenChange={setImportRulesDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t('webSettingsRuleTools.importDialog.title')}</DialogTitle>
             <DialogDescription>
               {t('webSettingsRuleTools.importDialog.description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto pr-1">
             <Label htmlFor="import-rules-input">{t('webSettingsRuleTools.importDialog.label')}</Label>
             <Textarea
               id="import-rules-input"
