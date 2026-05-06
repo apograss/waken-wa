@@ -391,16 +391,6 @@ export async function getActivityFeedData(
       return a.index - b.index
     })
 
-  const activeStatuses: ActivityFeedItem[] = []
-  for (const { hashKey, row } of sortedActivePending) {
-    const sp = steamByHash.get(hashKey)
-    if (sp) row.steamNowPlaying = sp
-    const item = options?.includeGeneratedHashKey
-      ? (row as unknown as ActivityFeedItem)
-      : (redactGeneratedHashKeyForClient(row) as unknown as ActivityFeedItem)
-    activeStatuses.push(item)
-  }
-
   // Handle custom statuses for lock-screen and offline devices
   const allDevicesWithCustomStatus = await db
     .select({
@@ -420,7 +410,11 @@ export async function getActivityFeedData(
     .from(devices)
     .where(eq(devices.status, 'active'))
 
-  const activeDeviceHashKeys = new Set(activeStatuses.map((s) => s.generatedHashKey).filter(Boolean))
+  const activeDeviceHashKeys = new Set(
+    sortedActivePending
+      .map((entry) => entry.hashKey)
+      .filter((hashKey) => typeof hashKey === 'string' && hashKey.length > 0),
+  )
 
   function normalizeBypassDeviceKeys(value: unknown): string[] {
     try {
@@ -438,26 +432,31 @@ export async function getActivityFeedData(
     return normalizeBypassDeviceKeys(value).some((key) => activeDeviceHashKeys.has(key))
   }
 
-  // Replace lock-screen activities with custom lock status
-  for (let i = 0; i < activeStatuses.length; i++) {
-    const item = activeStatuses[i]
-    if (!item.processName) continue
+  const activeStatuses: ActivityFeedItem[] = []
+  for (const { hashKey, row } of sortedActivePending) {
+    const sp = steamByHash.get(hashKey)
+    if (sp) row.steamNowPlaying = sp
 
-    if (isLockScreenReporterProcessName(item.processName)) {
-      const device = allDevicesWithCustomStatus.find((d: { generatedHashKey: string | null }) => d.generatedHashKey === item.generatedHashKey)
+    const processName = String(row.processName ?? '')
+    if (processName && isLockScreenReporterProcessName(processName)) {
+      const device = allDevicesWithCustomStatus.find(
+        (candidate: { generatedHashKey: string | null }) => candidate.generatedHashKey === hashKey,
+      )
       if (
         device?.customLockStatusEnabled &&
         device.customLockStatus &&
         !isBypassedByOnlineDevice(device.customLockStatusBypassOnlineDeviceKeys)
       ) {
-        activeStatuses[i] = {
-          ...item,
-          statusText: device.customLockStatus,
-          processTitle: null,
-          isCustomLockStatus: true,
-        }
+        row.statusText = device.customLockStatus
+        row.processTitle = null
+        row.isCustomLockStatus = true
       }
     }
+
+    const item = options?.includeGeneratedHashKey
+      ? (row as unknown as ActivityFeedItem)
+      : (redactGeneratedHashKeyForClient(row) as unknown as ActivityFeedItem)
+    activeStatuses.push(item)
   }
 
   // Add custom offline status for offline devices
