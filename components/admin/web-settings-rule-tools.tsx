@@ -657,6 +657,9 @@ export function WebSettingsRuleTools() {
                             }
                             placeholder={t('webSettingsRuleTools.appRules.titleRuleTextPlaceholder')}
                           />
+                          <p className="text-xs leading-6 text-muted-foreground">
+                            {t('webSettingsRuleTools.appRules.titleRuleTextDescription')}
+                          </p>
                         </div>
                       </div>
                     </motion.li>

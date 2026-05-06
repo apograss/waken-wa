@@ -558,7 +558,8 @@
       "titleRulePatternRegexPlaceholder": "例如：\\.tsx$",
       "titleRuleTextLabel": "展示文案",
       "titleRuleTextPlaceholder": "例如：正在写前端：{title}",
-      "helpText": "说明：{process} 始终取进程名，{title} 会使用已脱敏后的标题；如果该应用启用了“仅显示应用名”，则 {title} 会为空。",
+      "titleRuleTextDescription": "可使用 {process}、{title}；Regex 命中时还可使用 {match}、{match1}、{match2} 或命名捕获 {match:name}。",
+      "helpText": "说明：{process} 始终取进程名，{title} 会使用已脱敏后的标题；Regex 子规则可用 {match} 取完整命中，{match1}/{match2} 取捕获组，{match:name} 取命名捕获。如果该应用启用了“仅显示应用名”，则 {title} 会为空。",
       "emptyEditorTitle": "先创建一个应用分组",
       "emptyEditorDescription": "创建后即可为该应用设置默认文案和多个窗口标题规则。",
       "invalidRegex": "第 {{group}} 个应用的第 {{rule}} 条标题规则 Regex 无效：{{message}}"

@@ -415,7 +415,7 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
 
   pushSection(lines, '### Activity Filtering and Cute Message Rules')
   pushBullets(lines, [
-    '`appMessageRules`: Array of grouped app rules like `{ id?, processMatch, defaultText?, titleRules }`. The server auto-generates `id` (string) for each group and each title rule if omitted; when reading back, every group and title rule will always include an `id`. Top level matches `processName` by case-insensitive substring; `titleRules` match `processTitle` using `mode: "plain" | "regex"` with `{ id?, mode, pattern, text }`, first match wins, and `text` may use `{process}` / `{title}` placeholders',
+    '`appMessageRules`: Array of grouped app rules like `{ id?, processMatch, defaultText?, titleRules }`. The server auto-generates `id` (string) for each group and each title rule if omitted; when reading back, every group and title rule will always include an `id`. Top level matches `processName` by case-insensitive substring; `titleRules` match `processTitle` using `mode: "plain" | "regex"` with `{ id?, mode, pattern, text }`, first match wins. `text` may use `{process}` / `{title}`; regex title rules may also use `{match}` for the full match, `{match1}` / `{match2}` for capture groups, and `{match:name}` for named captures',
     '`appMessageRulesShowProcessName`: If `true`, append the real process name after a matched cute rule; if `false`, show only the custom text',
     '`appFilterMode`: `blacklist` or `whitelist`',
     '`appBlacklist`: Hidden process names when filter mode is `blacklist`',

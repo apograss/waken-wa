@@ -558,7 +558,8 @@
       "titleRulePatternRegexPlaceholder": "Example: \\.tsx$",
       "titleRuleTextLabel": "Display text",
       "titleRuleTextPlaceholder": "Example: Writing frontend: {title}",
-      "helpText": "Notes: {process} always uses the process name, and {title} uses the already-redacted title. If the app is in “show app name only”, {title} becomes empty.",
+      "titleRuleTextDescription": "Supports {process} and {title}. Regex matches can also use {match}, {match1}, {match2}, or named captures like {match:name}.",
+      "helpText": "Notes: {process} always uses the process name, and {title} uses the already-redacted title. Regex subrules can use {match} for the full match, {match1}/{match2} for capture groups, and {match:name} for named captures. If the app is in “show app name only”, {title} becomes empty.",
       "emptyEditorTitle": "Create an app group first",
       "emptyEditorDescription": "Once created, you can add fallback text and multiple window-title rules for that app.",
       "invalidRegex": "Invalid regex in app {{group}}, title rule {{rule}}: {{message}}"

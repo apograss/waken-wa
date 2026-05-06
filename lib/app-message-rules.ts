@@ -13,6 +13,12 @@ export type {
   ExportableAppMessageRuleGroup,
 } from '@/types/rule-tools'
 
+export type AppMessageRuleMatchContext = {
+  fullMatch?: string
+  groups?: string[]
+  namedGroups?: Record<string, string | undefined>
+}
+
 type LegacyAppMessageRule = {
   match?: unknown
   text?: unknown
@@ -190,8 +196,18 @@ export function renderAppMessageRuleText(
   template: string,
   processName: string,
   processTitle: string | null,
+  match?: AppMessageRuleMatchContext | null,
 ): string {
   return template
     .replaceAll('{process}', processName)
     .replaceAll('{title}', processTitle || '')
+    .replace(/\{match(?::([A-Za-z_$][A-Za-z0-9_$]*))?\}/g, (_raw, name: string | undefined) => {
+      if (!name) return match?.fullMatch ?? ''
+      return match?.namedGroups?.[name] ?? ''
+    })
+    .replace(/\{match(\d+)\}/g, (_raw, indexText: string) => {
+      const index = Number.parseInt(indexText, 10)
+      if (!Number.isFinite(index) || index <= 0) return ''
+      return match?.groups?.[index - 1] ?? ''
+    })
 }

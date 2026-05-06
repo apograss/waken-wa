@@ -42,7 +42,11 @@ export function buildSchemas(baseUrl: string) {
       id: { type: 'string', description: 'Auto-generated identifier; omit when creating new rules' },
       mode: { type: 'string', enum: ['plain', 'regex'] },
       pattern: { type: 'string' },
-      text: { type: 'string', description: 'May use {process} and {title} placeholders' },
+      text: {
+        type: 'string',
+        description:
+          'May use {process} and {title}. Regex title rules may also use {match}, {match1}, {match2}, or named captures such as {match:name}.',
+      },
     },
   }
 

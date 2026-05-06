@@ -9,6 +9,7 @@ import { clearCachedActivityFeedData, getCachedActivityFeedData, setCachedActivi
 import { redactGeneratedHashKeyForClient } from '@/lib/activity-store'
 import {
   type AppMessageRuleGroup,
+  type AppMessageRuleMatchContext,
   type AppMessageTitleRule,
   renderAppMessageRuleText,
 } from '@/lib/app-message-rules'
@@ -133,20 +134,26 @@ function applyMessageRule(
 ): string | null {
   const processLower = processName.toLowerCase()
 
-  const matchesTitleRule = (
+  const matchTitleRule = (
     processTitle: string | null,
     titleRule: AppMessageTitleRule,
-  ): boolean => {
+  ): AppMessageRuleMatchContext | null => {
     const title = String(processTitle ?? '')
-    if (!title) return false
+    if (!title) return null
     if (titleRule.mode === 'regex') {
       try {
-        return new RegExp(titleRule.pattern, 'i').test(title)
+        const match = new RegExp(titleRule.pattern, 'i').exec(title)
+        if (!match) return null
+        return {
+          fullMatch: match[0] ?? '',
+          groups: match.slice(1).map((item) => item ?? ''),
+          namedGroups: match.groups ?? undefined,
+        }
       } catch {
-        return false
+        return null
       }
     }
-    return title.toLowerCase().includes(titleRule.pattern.toLowerCase())
+    return title.toLowerCase().includes(titleRule.pattern.toLowerCase()) ? {} : null
   }
 
   for (const rule of rules) {
@@ -156,8 +163,14 @@ function applyMessageRule(
 
     const titleRules = Array.isArray(rule.titleRules) ? rule.titleRules : []
     for (const titleRule of titleRules) {
-      if (!matchesTitleRule(processTitleForMatch, titleRule)) continue
-      return renderAppMessageRuleText(titleRule.text, processName, processTitleForTemplate)
+      const match = matchTitleRule(processTitleForMatch, titleRule)
+      if (!match) continue
+      return renderAppMessageRuleText(
+        titleRule.text,
+        processName,
+        processTitleForTemplate,
+        match,
+      )
     }
 
     const template = String(rule.defaultText || '').trim()
