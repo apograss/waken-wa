@@ -45,6 +45,7 @@ export type RuleToolsConfigData = {
   appMessageRulesShowProcessName: boolean
   appFilterMode: 'blacklist' | 'whitelist'
   captureReportedAppsEnabled: boolean
+  captureReportedAppTitleLimit: number
 }
 
 export type RuleToolsSummary = RuleToolsConfigData & {

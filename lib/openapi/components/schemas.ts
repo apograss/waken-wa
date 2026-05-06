@@ -121,6 +121,7 @@ export function buildSchemas(baseUrl: string) {
       appWhitelist: { type: 'array', items: { type: 'string' } },
       appNameOnlyList: { type: 'array', items: { type: 'string' } },
       captureReportedAppsEnabled: { type: 'boolean' },
+      captureReportedAppTitleLimit: { type: 'integer', minimum: 0, maximum: 10 },
       mediaPlaySourceBlocklist: { type: 'array', items: { type: 'string' } },
       mediaPlaySourceRules: {
         type: 'array',
@@ -373,6 +374,7 @@ export function buildSchemas(baseUrl: string) {
         appWhitelist: { type: 'array', items: { type: 'string' } },
         appNameOnlyList: { type: 'array', items: { type: 'string' } },
         captureReportedAppsEnabled: { type: 'boolean' },
+        captureReportedAppTitleLimit: { type: 'integer', minimum: 0, maximum: 10 },
         mediaPlaySourceBlocklist: { type: 'array', items: { type: 'string' } },
         mediaPlaySourceRules: {
           type: 'array',

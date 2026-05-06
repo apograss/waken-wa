@@ -3,6 +3,8 @@ import { desc } from 'drizzle-orm'
 import { flushPendingReportedAppHistory } from '@/lib/activity-app-history'
 import { db } from '@/lib/db'
 import { activityAppHistory } from '@/lib/drizzle-schema'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
+import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 
 type Bucket = { titles: string[]; lastSeenAt: string | null }
 type Buckets = { pc?: Bucket; mobile?: Bucket }
@@ -39,6 +41,8 @@ export async function exportActivityAppsSnapshot() {
     .from(activityAppHistory)
     .orderBy(desc(activityAppHistory.lastSeenAt))
     .limit(5000)
+  const cfg = await getSiteConfigMemoryFirst()
+  const titleLimit = normalizeReportedAppTitleLimit(cfg?.captureReportedAppTitleLimit)
 
   const pc: Array<{ appName: string; titles: string[]; lastSeenAt: string | null }> = []
   const mobile: Array<{ appName: string; titles: string[]; lastSeenAt: string | null }> = []
@@ -52,14 +56,14 @@ export async function exportActivityAppsSnapshot() {
     if (pcBucket) {
       pc.push({
         appName,
-        titles: Array.isArray(pcBucket.titles) ? pcBucket.titles.slice(0, 3) : [],
+        titles: Array.isArray(pcBucket.titles) ? pcBucket.titles.slice(0, titleLimit) : [],
         lastSeenAt: pcBucket.lastSeenAt ?? null,
       })
     }
     if (mobBucket) {
       mobile.push({
         appName,
-        titles: Array.isArray(mobBucket.titles) ? mobBucket.titles.slice(0, 3) : [],
+        titles: Array.isArray(mobBucket.titles) ? mobBucket.titles.slice(0, titleLimit) : [],
         lastSeenAt: mobBucket.lastSeenAt ?? null,
       })
     }

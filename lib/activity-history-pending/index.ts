@@ -20,8 +20,8 @@ import {
   platformFromDeviceType,
 } from '@/lib/activity-history-pending/helpers'
 import {
-  captureEnabled,
   flushEntriesToDb,
+  getCaptureReportedActivityHistorySettings,
 } from '@/lib/activity-history-pending/persistence'
 import { memoryPending } from '@/lib/activity-history-pending/state'
 import type {
@@ -95,7 +95,8 @@ export async function recordReportedActivityHistory(input: {
   deviceType?: unknown
   playSource?: unknown
 }): Promise<void> {
-  if (!(await captureEnabled())) return
+  const captureSettings = await getCaptureReportedActivityHistorySettings()
+  if (!captureSettings.enabled) return
 
   const now = Date.now()
   const seenAtIso = new Date(now).toISOString()
@@ -116,7 +117,7 @@ export async function recordReportedActivityHistory(input: {
       seenAt: seenAtIso,
       sourceInstanceId: ACTIVITY_HISTORY_INSTANCE_ID,
       expiresAt: expiresAtIso,
-      titles: bumpRecentTitles(prevTitles, title),
+      titles: bumpRecentTitles(prevTitles, title, captureSettings.appTitleLimit),
     })
   }
 

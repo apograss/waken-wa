@@ -66,6 +66,7 @@ export const SITE_SETTINGS_RULES_KEYS = [
   'appWhitelist',
   'appNameOnlyList',
   'captureReportedAppsEnabled',
+  'captureReportedAppTitleLimit',
   'mediaPlaySourceBlocklist',
   'mediaPlaySourceRules',
 ] as const
@@ -109,6 +110,7 @@ export const SITE_SETTINGS_CLEAR_LEGACY_VALUES: Record<string, unknown> = {
   appWhitelist: null,
   appNameOnlyList: null,
   captureReportedAppsEnabled: true,
+  captureReportedAppTitleLimit: 3,
   mediaPlaySourceBlocklist: null,
   mediaPlaySourceRules: null,
   scheduleSlotMinutes: SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,

@@ -83,6 +83,7 @@ const RULES_SCALAR_KEYS = [
   'appMessageRulesShowProcessName',
   'appFilterMode',
   'captureReportedAppsEnabled',
+  'captureReportedAppTitleLimit',
 ] as const
 
 const RULES_STRING_LIST_KEYS = [

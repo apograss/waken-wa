@@ -12,17 +12,29 @@ import type {
 } from '@/lib/activity-history-pending/types'
 import { db } from '@/lib/db'
 import { activityAppHistory, activityPlaySourceHistory } from '@/lib/drizzle-schema'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 import { toDbJsonValue } from '@/lib/sqlite-json'
 
-export async function captureEnabled(): Promise<boolean> {
+export async function getCaptureReportedActivityHistorySettings(): Promise<{
+  enabled: boolean
+  appTitleLimit: number
+}> {
   const cfg = await getSiteConfigMemoryFirst()
-  return cfg?.captureReportedAppsEnabled !== false
+  return {
+    enabled: cfg?.captureReportedAppsEnabled !== false,
+    appTitleLimit: normalizeReportedAppTitleLimit(cfg?.captureReportedAppTitleLimit),
+  }
+}
+
+export async function captureEnabled(): Promise<boolean> {
+  return (await getCaptureReportedActivityHistorySettings()).enabled
 }
 
 export async function writeAppPendingsToDb(entries: PendingAppHistory[]): Promise<number> {
   if (entries.length === 0) return 0
+  const titleLimit = (await getCaptureReportedActivityHistorySettings()).appTitleLimit
 
   const uniqueProcessNames = Array.from(new Set(entries.map((entry) => entry.processName)))
   const existingRows =
@@ -57,6 +69,7 @@ export async function writeAppPendingsToDb(entries: PendingAppHistory[]): Promis
       entry.platform,
       entry.titles,
       seenAtIso,
+      titleLimit,
     )
     const platformBucketsValue = toDbJsonValue(merged)
     const firstSeenAt = existing?.firstSeenAt ?? now

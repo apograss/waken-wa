@@ -607,7 +607,9 @@
     },
     "captureReportedApps": {
       "title": "保存上报行为的应用记录（用于规则选择/导出）",
-      "description": "关闭后不会再新增历史记录，但会保留已保存的历史数据。"
+      "description": "关闭后不会再新增历史记录，但会保留已保存的历史数据。",
+      "titleLimitTitle": "应用标题保存数量",
+      "titleLimitDescription": "每个应用、每个平台最多保存 {{max}} 条最近标题；填 0 则只保存应用名。"
     },
     "actions": {
       "exportUsedAppsJson": "导出已使用应用（JSON）",

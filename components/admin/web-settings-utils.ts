@@ -26,6 +26,7 @@ import {
 } from '@/lib/media-play-source-rules'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import {
   isAllowedSlotMinutes,
   resolveSchedulePeriodTemplate,
@@ -206,6 +207,7 @@ export function exportAppRulesJson(cfg: {
   appWhitelist: string[]
   appNameOnlyList: string[]
   captureReportedAppsEnabled?: boolean
+  captureReportedAppTitleLimit?: number
   mediaPlaySourceRules?: unknown
   mediaPlaySourceBlocklist: string[]
 }): string {
@@ -225,6 +227,9 @@ export function exportAppRulesJson(cfg: {
         appWhitelist: cfg.appWhitelist,
         appNameOnlyList: cfg.appNameOnlyList,
         captureReportedAppsEnabled: cfg.captureReportedAppsEnabled !== false,
+        captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+          cfg.captureReportedAppTitleLimit,
+        ),
         mediaPlaySourceRules,
         mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
       },
@@ -248,6 +253,7 @@ export function parseAppRulesJson(
         appWhitelist: string[]
         appNameOnlyList: string[]
         captureReportedAppsEnabled: boolean
+        captureReportedAppTitleLimit: number
         mediaPlaySourceRules: ReturnType<typeof normalizeMediaPlaySourceRules>
         mediaPlaySourceBlocklist: string[]
       }
@@ -285,6 +291,9 @@ export function parseAppRulesJson(
     typeof r.captureReportedAppsEnabled === 'boolean'
       ? r.captureReportedAppsEnabled
       : true
+  const captureReportedAppTitleLimit = normalizeReportedAppTitleLimit(
+    r.captureReportedAppTitleLimit,
+  )
   const mediaPlaySourceBlocklist = normalizeStringListImport(r.mediaPlaySourceBlocklist).map((s) =>
     s.toLowerCase(),
   )
@@ -302,6 +311,7 @@ export function parseAppRulesJson(
       appWhitelist,
       appNameOnlyList,
       captureReportedAppsEnabled,
+      captureReportedAppTitleLimit,
       mediaPlaySourceRules,
       mediaPlaySourceBlocklist,
     },
@@ -528,6 +538,7 @@ export function extractRuleToolsImportFromWebPayload(
     'appWhitelist',
     'appNameOnlyList',
     'captureReportedAppsEnabled',
+    'captureReportedAppTitleLimit',
     'mediaPlaySourceBlocklist',
     'mediaPlaySourceRules',
   ].some((key) => key in web)
@@ -552,6 +563,9 @@ export function extractRuleToolsImportFromWebPayload(
       typeof web.captureReportedAppsEnabled === 'boolean'
         ? web.captureReportedAppsEnabled
         : true,
+    captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+      web.captureReportedAppTitleLimit,
+    ),
     mediaPlaySourceRules,
     mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
   }

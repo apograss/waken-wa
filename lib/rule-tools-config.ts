@@ -13,6 +13,7 @@ import {
   mediaPlaySourceBlocklistFromRules,
   normalizeMediaPlaySourceRules,
 } from '@/lib/media-play-source-rules'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
 import { persistRulesSettingsValues } from '@/lib/site-settings-write'
@@ -43,6 +44,7 @@ export const RULE_TOOLS_SITE_CONFIG_KEYS = [
   'appWhitelist',
   'appNameOnlyList',
   'captureReportedAppsEnabled',
+  'captureReportedAppTitleLimit',
   'mediaPlaySourceBlocklist',
   'mediaPlaySourceRules',
 ] as const
@@ -150,6 +152,9 @@ async function readRuleToolsState(): Promise<RuleToolsState> {
       appFilterMode: normalizeFilterMode((normalized as Record<string, unknown>).appFilterMode),
       captureReportedAppsEnabled:
         (normalized as Record<string, unknown>).captureReportedAppsEnabled !== false,
+      captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+        (normalized as Record<string, unknown>).captureReportedAppTitleLimit,
+      ),
     },
   }
 }
@@ -289,6 +294,10 @@ export async function patchRuleToolsConfig(
       'captureReportedAppsEnabled' in body
         ? body.captureReportedAppsEnabled !== false
         : state.config.captureReportedAppsEnabled,
+    captureReportedAppTitleLimit:
+      'captureReportedAppTitleLimit' in body
+        ? normalizeReportedAppTitleLimit(body.captureReportedAppTitleLimit)
+        : state.config.captureReportedAppTitleLimit,
   }
 
   await persistRuleToolsValues(next)
@@ -661,6 +670,9 @@ export async function importRuleToolsPayload(
       appMessageRulesShowProcessName: body.appMessageRulesShowProcessName !== false,
       appFilterMode: normalizeFilterMode(body.appFilterMode),
       captureReportedAppsEnabled: body.captureReportedAppsEnabled !== false,
+      captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+        body.captureReportedAppTitleLimit,
+      ),
     },
   }
 
@@ -672,6 +684,7 @@ export async function importRuleToolsPayload(
     appWhitelist: nextState.appWhitelist,
     appNameOnlyList: nextState.appNameOnlyList,
     captureReportedAppsEnabled: nextState.config.captureReportedAppsEnabled,
+    captureReportedAppTitleLimit: nextState.config.captureReportedAppTitleLimit,
     mediaPlaySourceRules: nextState.mediaPlaySourceRules,
     mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(nextState.mediaPlaySourceRules),
   })

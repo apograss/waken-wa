@@ -607,7 +607,9 @@
     },
     "captureReportedApps": {
       "title": "Save reported app history (for rule selection/export)",
-      "description": "When disabled, no new history records are added, but existing saved data is kept."
+      "description": "When disabled, no new history records are added, but existing saved data is kept.",
+      "titleLimitTitle": "Saved app title count",
+      "titleLimitDescription": "Keep up to {{max}} recent titles per app and platform. Use 0 to save app names only."
     },
     "actions": {
       "exportUsedAppsJson": "Export used apps (JSON)",

@@ -109,6 +109,7 @@ export async function GET(request: Request) {
         appFilterMode: cfg.appFilterMode,
         appNameOnlyList: cfg.appNameOnlyList,
         captureReportedAppsEnabled: cfg.captureReportedAppsEnabled !== false,
+        captureReportedAppTitleLimit: cfg.captureReportedAppTitleLimit,
         mediaPlaySourceBlocklist: cfg.mediaPlaySourceBlocklist,
         mediaPlaySourceRules: cfg.mediaPlaySourceRules,
         pageLockEnabled: cfg.pageLockEnabled,

@@ -3,6 +3,7 @@ import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { parseJsonString } from '@/lib/json-parse'
 import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
 
@@ -45,6 +46,9 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     appBlacklist: normalizeStringArrayField(config.appBlacklist),
     appWhitelist: normalizeStringArrayField(config.appWhitelist),
     appNameOnlyList: normalizeStringArrayField(config.appNameOnlyList),
+    captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+      config.captureReportedAppTitleLimit,
+    ),
     mediaPlaySourceBlocklist: normalizeStringArrayField(config.mediaPlaySourceBlocklist),
     mediaPlaySourceRules: normalizeMediaPlaySourceRules(
       parseJsonString(config.mediaPlaySourceRules),

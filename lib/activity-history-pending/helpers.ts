@@ -4,6 +4,10 @@ import type {
   Platform,
   PlatformBucket,
 } from '@/lib/activity-history-pending/types'
+import {
+  normalizeReportedAppTitleLimit,
+  REPORTED_APP_TITLE_LIMIT_MAX,
+} from '@/lib/reported-app-title-limit'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 
 export function normalizeProcessName(raw: string): string {
@@ -24,15 +28,21 @@ export function normalizePlaySource(raw: unknown): string {
   return String(raw ?? '').trim().toLowerCase()
 }
 
-export function bumpRecentTitles(existing: string[], nextTitle: string): string[] {
+export function bumpRecentTitles(
+  existing: string[],
+  nextTitle: string,
+  titleLimit = REPORTED_APP_TITLE_LIMIT_MAX,
+): string[] {
+  const limit = normalizeReportedAppTitleLimit(titleLimit, REPORTED_APP_TITLE_LIMIT_MAX)
+  if (limit <= 0) return []
   const title = nextTitle.trim()
-  if (!title) return existing.slice(0, 3)
+  if (!title) return existing.slice(0, limit)
   const out: string[] = [title]
   for (const current of existing) {
     if (!current) continue
     if (current.toLowerCase() === title.toLowerCase()) continue
     out.push(current)
-    if (out.length >= 3) break
+    if (out.length >= limit) break
   }
   return out
 }
@@ -42,12 +52,14 @@ export function mergeBuckets(
   platform: Platform,
   titles: string[],
   seenAtIso: string,
+  titleLimit = REPORTED_APP_TITLE_LIMIT_MAX,
 ): AppHistoryBuckets {
+  const limit = normalizeReportedAppTitleLimit(titleLimit, REPORTED_APP_TITLE_LIMIT_MAX)
   const safePrev = prev && typeof prev === 'object' && !Array.isArray(prev) ? prev : {}
   const currentBucket =
     (platform === 'pc' ? safePrev.pc : safePrev.mobile) ?? { titles: [], lastSeenAt: null }
   const nextBucket: PlatformBucket = {
-    titles: titles.length > 0 ? titles.slice(0, 3) : currentBucket.titles.slice(0, 3),
+    titles: titles.length > 0 ? titles.slice(0, limit) : currentBucket.titles.slice(0, limit),
     lastSeenAt: seenAtIso || currentBucket.lastSeenAt || null,
   }
   return {
@@ -138,7 +150,10 @@ export function parsePendingEntry(
       const processName = normalizeProcessName(String(parsed.processName ?? parsedField.key))
       if (!processName) return { entry: null, expired }
       const titles = Array.isArray(parsed.titles)
-        ? parsed.titles.map((title) => normalizeTitle(title)).filter(Boolean).slice(0, 3)
+        ? parsed.titles
+            .map((title) => normalizeTitle(title))
+            .filter(Boolean)
+            .slice(0, REPORTED_APP_TITLE_LIMIT_MAX)
         : []
       return {
         entry: expired

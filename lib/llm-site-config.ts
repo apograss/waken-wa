@@ -25,6 +25,7 @@ import {
   normalizeMediaPlaySourceRules,
 } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import {
   backfillCoursePeriodIdsFromTemplate,
   defaultSchedulePeriodTemplate,
@@ -163,6 +164,11 @@ export async function prepareSiteConfigValuesFromPayload(
   ) {
     captureReportedAppsEnabled = Boolean(normalizedBody.captureReportedAppsEnabled)
   }
+  const captureReportedAppTitleLimit = normalizeReportedAppTitleLimit(
+    has('captureReportedAppTitleLimit')
+      ? normalizedBody.captureReportedAppTitleLimit
+      : existing?.captureReportedAppTitleLimit,
+  )
 
   let inspirationAllowedDeviceHashes: string[] | null = normalizeInspirationAllowedHashes(
     existing?.inspirationAllowedDeviceHashes ?? null,
@@ -547,6 +553,7 @@ export async function prepareSiteConfigValuesFromPayload(
     appFilterMode,
     appNameOnlyList,
     captureReportedAppsEnabled,
+    captureReportedAppTitleLimit,
     mediaPlaySourceRules,
     mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
     processStaleSeconds,

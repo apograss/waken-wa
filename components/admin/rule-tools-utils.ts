@@ -6,6 +6,7 @@ import {
   mediaPlaySourceBlocklistFromRules,
   normalizeMediaPlaySourceRules,
 } from '@/lib/media-play-source-rules'
+import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import type {
   AppMessageRuleGroup,
   MediaPlaySourceRule,
@@ -57,6 +58,9 @@ export function cloneRuleToolsPayload(payload: RuleToolsExportPayload): RuleTool
     appWhitelist: [...payload.appWhitelist],
     appNameOnlyList: [...payload.appNameOnlyList],
     captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
+    captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+      payload.captureReportedAppTitleLimit,
+    ),
     mediaPlaySourceRules,
     mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
   }
@@ -71,6 +75,9 @@ export function buildRuleToolsSummary(payload: RuleToolsExportPayload): RuleTool
     appMessageRulesShowProcessName: payload.appMessageRulesShowProcessName !== false,
     appFilterMode: payload.appFilterMode === 'whitelist' ? 'whitelist' : 'blacklist',
     captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
+    captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+      payload.captureReportedAppTitleLimit,
+    ),
     ruleGroupCount: payload.appMessageRules.length,
     appBlacklistCount: payload.appBlacklist.length,
     appWhitelistCount: payload.appWhitelist.length,
@@ -169,6 +176,9 @@ export function normalizePayloadForSave(
       appWhitelist: dedupeDraftList('appWhitelist', payload.appWhitelist),
       appNameOnlyList: dedupeDraftList('appNameOnlyList', payload.appNameOnlyList),
       captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
+      captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+        payload.captureReportedAppTitleLimit,
+      ),
       mediaPlaySourceRules: dedupeMediaPlaySourceRules(
         payload.mediaPlaySourceRules,
         payload.mediaPlaySourceBlocklist,

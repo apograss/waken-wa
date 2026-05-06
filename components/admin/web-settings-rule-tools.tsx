@@ -39,6 +39,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { AppTitleRuleMode } from '@/lib/app-message-rules'
+import {
+  normalizeReportedAppTitleLimit,
+  REPORTED_APP_TITLE_LIMIT_MAX,
+} from '@/lib/reported-app-title-limit'
 import { cn } from '@/lib/utils'
 
 export function WebSettingsRuleTools() {
@@ -761,6 +765,32 @@ export function WebSettingsRuleTools() {
                     void commitSinglePayloadChange((current) => ({
                       ...current,
                       captureReportedAppsEnabled: value,
+                    }))
+                  }}
+                />
+              }
+            />
+            <WebSettingsRow
+              htmlFor="rule-tools-capture-reported-app-title-limit"
+              title={t('webSettingsRuleTools.captureReportedApps.titleLimitTitle')}
+              description={t('webSettingsRuleTools.captureReportedApps.titleLimitDescription', {
+                max: REPORTED_APP_TITLE_LIMIT_MAX,
+              })}
+              action={
+                <Input
+                  id="rule-tools-capture-reported-app-title-limit"
+                  type="number"
+                  min={0}
+                  max={REPORTED_APP_TITLE_LIMIT_MAX}
+                  step={1}
+                  className="w-24"
+                  value={currentPayload?.captureReportedAppTitleLimit ?? 3}
+                  disabled={!currentPayload || busy}
+                  onChange={(event) => {
+                    const nextLimit = normalizeReportedAppTitleLimit(event.target.value)
+                    updateDraftPayload((current) => ({
+                      ...current,
+                      captureReportedAppTitleLimit: nextLimit,
                     }))
                   }}
                 />
