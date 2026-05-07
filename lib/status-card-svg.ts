@@ -845,7 +845,7 @@ function renderAuroraStatusCardSvg({
     ? getDeviceType(deviceLine, activity?.metadata)
     : 'desktop'
   const detailRows: StatusCardDetailRow[] = [
-    { label: 'Device', value: deviceLine, icon: deviceIcon },
+    { label: '', value: deviceLine, icon: deviceIcon },
   ]
   if (mediaLine) {
     detailRows.push({ label: 'Now playing', value: mediaLine, icon: 'music' })
@@ -963,6 +963,10 @@ function renderAuroraStatusCardSvg({
 
   const heroY = cursorY
   const heroHeight = 94
+  const heroIconX = padding + 20
+  const heroIconY = heroY + 35
+  const heroTextX = padding + 58
+  const heroTextWidth = innerWidth - 76
   const statusTextMaxUnits = Math.max(18, Math.floor((innerWidth - 76) / 9.2))
   nodes.push(
     `<rect x="${padding}" y="${heroY}" width="${innerWidth}" height="${heroHeight}" rx="22" fill="#FFFFFF" opacity="0.48" stroke="${options.border}" stroke-opacity="0.5" filter="url(#auroraShadow)"/>`,
@@ -971,29 +975,29 @@ function renderAuroraStatusCardSvg({
     `<rect x="${padding + 1}" y="${heroY + 1}" width="${innerWidth - 2}" height="${Math.floor(heroHeight * 0.52)}" rx="21" fill="url(#auroraSheen)" opacity="0.75"/>`,
   )
   nodes.push(
-    `<circle cx="${padding + 31}" cy="${heroY + 47}" r="21" fill="${options.accent}" opacity="0.15"/>`,
+    `<rect x="${heroIconX - 4}" y="${heroIconY - 4}" width="28" height="28" rx="10" fill="${options.accent}" opacity="0.12"/>`,
   )
   nodes.push(iconElement({
     type: statusIcon,
-    x: padding + 19,
-    y: heroY + 35,
-    size: 24,
+    x: heroIconX,
+    y: heroIconY,
+    size: 20,
     stroke: options.accent,
-    opacity: 0.95,
+    opacity: 0.88,
   }))
   nodes.push(textElement({
-    x: padding + 64,
-    y: heroY + 31,
+    x: heroTextX,
+    y: heroY + 35,
     fill: options.muted,
     className: 'auroraKicker',
     text: sectionTitle,
   }))
   nodes.push(multilineTextElement({
-    x: padding + 64,
+    x: heroTextX,
     y: heroY + 62,
     fill: options.fg,
     className: 'auroraStatus',
-    lines: [truncateTextByUnits(statusLine, statusTextMaxUnits)],
+    lines: [truncateTextByUnits(statusLine, Math.max(18, Math.floor(heroTextWidth / 9.2)))],
     lineHeight: 22,
     dominantBaseline: 'middle',
   }))
@@ -1006,8 +1010,10 @@ function renderAuroraStatusCardSvg({
   const detailBottom = height - padding - footerHeight
   for (const row of detailRows) {
     if (detailY + detailHeight > detailBottom) break
-    const labelWidth = Math.min(104, Math.max(60, row.label.length * 6.8 + 34))
-    const valueMaxUnits = Math.max(12, Math.floor((innerWidth - labelWidth - 52) / 8))
+    const showLabel = row.label.length > 0
+    const labelWidth = showLabel ? Math.min(104, Math.max(60, row.label.length * 6.8 + 34)) : 0
+    const valueX = showLabel ? padding + labelWidth + 18 : padding + 38
+    const valueMaxUnits = Math.max(12, Math.floor((innerWidth - labelWidth - (showLabel ? 52 : 44)) / 8))
     nodes.push(
       `<rect x="${padding}" y="${detailY}" width="${innerWidth}" height="${detailHeight}" rx="18" fill="${options.bg}" opacity="0.58" stroke="${options.border}" stroke-opacity="0.42"/>`,
     )
@@ -1019,15 +1025,17 @@ function renderAuroraStatusCardSvg({
       stroke: row.icon === 'music' || row.icon === 'gamepad' ? options.accent : options.muted,
       opacity: 0.82,
     }))
+    if (showLabel) {
+      nodes.push(textElement({
+        x: padding + 38,
+        y: detailY + 23,
+        fill: options.muted,
+        className: 'auroraPillLabel',
+        text: row.label,
+      }))
+    }
     nodes.push(textElement({
-      x: padding + 38,
-      y: detailY + 23,
-      fill: options.muted,
-      className: 'auroraPillLabel',
-      text: row.label,
-    }))
-    nodes.push(textElement({
-      x: padding + labelWidth + 18,
+      x: valueX,
       y: detailY + 23,
       fill: options.fg,
       className: 'auroraPillValue',
@@ -1051,7 +1059,7 @@ function renderAuroraStatusCardSvg({
     }),
   ))
   nodes.push(
-    `<circle cx="${width - padding - 5}" cy="${footerY - 4}" r="4" fill="${state === 'active' ? options.accent : options.muted}" opacity="0.72"/>`,
+    `<circle cx="${padding + 126}" cy="${footerY - 4}" r="3.5" fill="${state === 'active' ? options.accent : options.muted}" opacity="0.72"/>`,
   )
 
   const ariaLabel = state === 'active'
@@ -1244,18 +1252,18 @@ function renderCoverStatusCardSvg({
   const panelY = contentTop
   const panelHeight = 76
   nodes.push(
-    `<rect x="${padding}" y="${panelY}" width="${innerWidth}" height="${panelHeight}" rx="18" fill="${options.bg}" stroke="${options.border}" stroke-width="1.2" filter="url(#coverPanelShadow)"/>`,
+    `<rect x="${padding}" y="${panelY}" width="${innerWidth}" height="${panelHeight}" rx="16" fill="${options.bg}" stroke="${options.border}" stroke-width="1.1" filter="url(#coverPanelShadow)"/>`,
   )
   nodes.push(
-    `<rect x="${padding}" y="${panelY}" width="4" height="${panelHeight}" rx="2" fill="${options.accent}" opacity="0.86"/>`,
+    `<rect x="${padding}" y="${panelY}" width="5" height="${panelHeight}" rx="2.5" fill="${options.accent}" opacity="0.9"/>`,
   )
   nodes.push(iconElement({
     type: statusIcon,
-    x: padding + 18,
+    x: padding + 22,
     y: panelY + 44,
-    size: 18,
+    size: 16,
     stroke: options.accent,
-    opacity: 0.9,
+    opacity: 0.72,
   }))
   nodes.push(textElement({
     x: padding + 48,
@@ -1274,38 +1282,38 @@ function renderCoverStatusCardSvg({
     dominantBaseline: 'middle',
   }))
 
-  const metaY = panelY + panelHeight + 14
+  const metaY = panelY + panelHeight + 10
   const metaItems = [
     { icon: deviceIcon, text: deviceLine },
     ...(mediaLine ? [{ icon: 'music' as const, text: mediaLine }] : []),
     ...(steamLine && !shouldPrioritizeGame ? [{ icon: 'gamepad' as const, text: steamLine }] : []),
   ]
   const requiredMetaBottom = metaItems.length > 0
-    ? metaY + (metaItems.length - 1) * 42 + 34
+    ? metaY + metaItems.length * 31
     : metaY
   height = Math.max(height, requiredMetaBottom + padding + 28)
   let cursorY = metaY
   for (const item of metaItems) {
-    if (cursorY + 34 > height - padding - 28) break
+    if (cursorY + 31 > height - padding - 28) break
     nodes.push(
-      `<rect x="${padding}" y="${cursorY}" width="${innerWidth}" height="34" rx="13" fill="${options.bg}" stroke="${options.border}" stroke-opacity="0.64"/>`,
+      `<line x1="${padding}" y1="${cursorY}" x2="${width - padding}" y2="${cursorY}" stroke="${options.border}" stroke-width="1" opacity="0.58"/>`,
     )
     nodes.push(iconElement({
       type: item.icon,
-      x: padding + 13,
-      y: cursorY + 10,
-      size: 16,
-      stroke: item.icon === 'music' || item.icon === 'gamepad' ? options.accent : options.muted,
-      opacity: 0.82,
+      x: padding,
+      y: cursorY + 9,
+      size: 14,
+      stroke: options.muted,
+      opacity: 0.62,
     }))
     nodes.push(textElement({
-      x: padding + 38,
-      y: cursorY + 23,
+      x: padding + 22,
+      y: cursorY + 21,
       fill: options.muted,
       className: 'coverMeta',
-      text: truncateTextByUnits(item.text, Math.max(18, Math.floor((innerWidth - 54) / 8))),
+      text: truncateTextByUnits(item.text, Math.max(18, Math.floor((innerWidth - 28) / 7.4))),
     }))
-    cursorY += 42
+    cursorY += 31
   }
 
   const footerY = height - padding + 2
@@ -1335,7 +1343,7 @@ function renderCoverStatusCardSvg({
     '.coverBio,.coverNote{font-size:13px;font-weight:560}',
     '.coverKicker{font-size:11px;font-weight:780;letter-spacing:.12em;text-transform:uppercase}',
     '.coverStatus{font-size:16px;font-weight:760;letter-spacing:-.01em}',
-    '.coverMeta{font-size:13px;font-weight:650}',
+    '.coverMeta{font-size:12px;font-weight:560}',
     '.coverFooter{font-size:10.5px;font-weight:700;letter-spacing:.03em}',
     '.coverAvatarInitials{font-size:19px;font-weight:850}',
     '</style>',
