@@ -149,6 +149,8 @@ export interface SiteConfig {
   steamId: string
   /** Steam Web API key (submit non-empty to replace stored key) */
   steamApiKey: string
+  /** Enables the standalone public SVG status-card endpoint. */
+  statusCardEnabled: boolean
 }
 
 export type PatchSiteConfig = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) => void

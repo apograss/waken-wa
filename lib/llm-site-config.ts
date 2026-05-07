@@ -433,6 +433,10 @@ export async function prepareSiteConfigValuesFromPayload(
   if (normalizedBody.hideActivityMedia !== undefined && normalizedBody.hideActivityMedia !== null) {
     hideActivityMedia = Boolean(normalizedBody.hideActivityMedia)
   }
+  let statusCardEnabled = existing?.statusCardEnabled === true
+  if (normalizedBody.statusCardEnabled !== undefined && normalizedBody.statusCardEnabled !== null) {
+    statusCardEnabled = Boolean(normalizedBody.statusCardEnabled)
+  }
   let mediaDisplayShowSource = existing?.mediaDisplayShowSource === true
   if (normalizedBody.mediaDisplayShowSource !== undefined && normalizedBody.mediaDisplayShowSource !== null) {
     mediaDisplayShowSource = Boolean(normalizedBody.mediaDisplayShowSource)
@@ -578,6 +582,7 @@ export async function prepareSiteConfigValuesFromPayload(
     globalMouseTiltGyroEnabled,
     smoothScrollEnabled,
     hideActivityMedia,
+    statusCardEnabled,
     mediaDisplayShowSource,
     mediaDisplayShowCover,
     mediaDisplayShowAppIcon,

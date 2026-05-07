@@ -373,6 +373,7 @@ export function useWebSettingsController() {
       steamEnabled: Boolean(data.steamEnabled),
       steamId: String(data.steamId ?? ''),
       steamApiKey: '',
+      statusCardEnabled: data.statusCardEnabled === true,
     }
   }, [t])
 

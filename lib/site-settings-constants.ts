@@ -82,6 +82,7 @@ export const SITE_SETTINGS_MIGRATED_CORE_KEYS = [
   'mediaDisplayShowAppIcon',
   'mediaDisplayShowNcmLink',
   'mediaCoverMaxCount',
+  'statusCardEnabled',
 ] as const
 
 export const SITE_SETTINGS_HEAVY_KEYS = [
@@ -189,6 +190,7 @@ export const SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES: Record<string, unkno
   globalMouseTiltGyroEnabled: false,
   smoothScrollEnabled: false,
   hideActivityMedia: false,
+  statusCardEnabled: false,
   hideInspirationOnHome: false,
   hcaptchaEnabled: false,
   hcaptchaSiteKey: null,

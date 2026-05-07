@@ -101,6 +101,7 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   steamEnabled: false,
   steamId: '',
   steamApiKey: '',
+  statusCardEnabled: false,
 }
 
 export const webSettingsLoadingAtom = atom(true)

@@ -106,6 +106,7 @@ export function buildAdminSettingsPatchBody(
       ? Math.min(Math.max(Math.round(Number((data as Record<string, unknown>).mediaCoverMaxCount)), 0), 500)
       : 50,
     activityRejectLockappSleep: Boolean(data.activityRejectLockappSleep),
+    statusCardEnabled: Boolean((data as Record<string, unknown>).statusCardEnabled),
     scheduleSlotMinutes,
     schedulePeriodTemplate,
     scheduleGridByWeekday: resolveScheduleGridByWeekday(

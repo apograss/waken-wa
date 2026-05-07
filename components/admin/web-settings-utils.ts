@@ -506,6 +506,9 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
       patch.mediaCoverMaxCount = Math.min(Math.max(maxCount, 0), 500)
     }
   }
+  if ('statusCardEnabled' in web && typeof web.statusCardEnabled === 'boolean') {
+    patch.statusCardEnabled = web.statusCardEnabled
+  }
   if ('hideInspirationOnHome' in web && typeof web.hideInspirationOnHome === 'boolean') {
     patch.hideInspirationOnHome = web.hideInspirationOnHome
   }

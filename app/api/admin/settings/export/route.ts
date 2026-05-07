@@ -146,6 +146,7 @@ export async function GET(request: Request) {
         globalMouseTiltGyroEnabled: cfg.globalMouseTiltGyroEnabled === true,
         smoothScrollEnabled: cfg.smoothScrollEnabled === true,
         hideActivityMedia: cfg.hideActivityMedia === true,
+        statusCardEnabled: cfg.statusCardEnabled === true,
         mediaDisplayShowSource: cfg.mediaDisplayShowSource === true,
         mediaDisplayShowCover: cfg.mediaDisplayShowCover === true,
         mediaDisplayShowAppIcon: cfg.mediaDisplayShowAppIcon === true,

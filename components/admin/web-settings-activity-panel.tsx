@@ -9,6 +9,7 @@ import {
   getAdminPanelTransition,
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
+import { StatusCardPreviewPanel } from '@/components/admin/status-card-preview-panel'
 import {
   WebSettingsInset,
   WebSettingsRow,
@@ -293,6 +294,8 @@ export function WebSettingsActivityPanel() {
           </Select>
         </div>
       </WebSettingsInset>
+
+      <StatusCardPreviewPanel />
 
       <WebSettingsInset className="space-y-3">
         <Label htmlFor="activity-update-mode">{t('webSettingsActivity.updateModeLabel')}</Label>

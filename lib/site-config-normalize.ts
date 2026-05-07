@@ -27,6 +27,7 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     mediaDisplayShowCover: config.mediaDisplayShowCover === true,
     mediaDisplayShowAppIcon: config.mediaDisplayShowAppIcon === true,
     mediaDisplayShowNcmLink: config.mediaDisplayShowNcmLink === true,
+    statusCardEnabled: config.statusCardEnabled === true,
     mediaCoverMaxCount: Number.isFinite(mediaCoverMaxCount)
       ? Math.min(Math.max(Math.round(mediaCoverMaxCount), 0), 500)
       : 50,
