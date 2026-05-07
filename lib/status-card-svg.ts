@@ -874,7 +874,7 @@ function renderAuroraStatusCardSvg({
     { label: '', value: deviceLine, icon: deviceIcon },
   ]
   if (mediaLine) {
-    detailRows.push({ label: 'Now playing', value: mediaLine, icon: 'music' })
+    detailRows.push({ label: '', value: mediaLine, icon: 'music' })
   }
   if (steamLine && !shouldPrioritizeGame) {
     detailRows.push({ label: 'Game', value: steamLine, icon: 'gamepad' })
@@ -1867,9 +1867,10 @@ export function renderStatusCardSvg({
   const statusLineMaxUnits = Math.max(16, Math.floor(statusTextWidth / 8.8))
   const statusLines = [truncateTextByUnits(statusLine, statusLineMaxUnits)]
   const statusLineHeight = 18
-  const statusCardHeight = 54
-  const statusTextY = statusCardY + statusCardHeight / 2 + 2
-  const statusIconY = statusTextY + ((statusLines.length - 1) * statusLineHeight) / 2 - 9
+  const statusCardHeight = 58
+  const statusLabelY = showDeviceSection ? deviceCardY - 8 : statusCardY - 8
+  const statusTextY = statusCardY + 31
+  const statusIconY = statusTextY + ((statusLines.length - 1) * statusLineHeight) / 2 - 10
   const detailRowsHeight = detailLayouts.length > 0
     ? 16 + detailLayouts.reduce((total, item) => total + item.height + 8, 0)
     : 0
@@ -1881,14 +1882,6 @@ export function renderStatusCardSvg({
   nodes.push(
     `<line x1="${padding}" y1="${contentTop - 22}" x2="${width - padding}" y2="${contentTop - 22}" stroke="${options.border}" stroke-width="1.2" opacity="${headerEnabled ? '0.72' : '0'}"/>`,
   )
-
-  nodes.push(textElement({
-    x: padding,
-    y: sectionTitleY,
-    fill: options.fg,
-    className: 'sectionLabel',
-    text: sectionTitleText,
-  }))
 
   if (showDeviceSection) {
     nodes.push(roundedRectElement({
@@ -1934,30 +1927,31 @@ export function renderStatusCardSvg({
     `<rect x="${padding + 0.5}" y="${statusCardY + 0.5}" width="${innerWidth - 1}" height="${statusCardHeight - 1}" rx="13.5" fill="none" stroke="#0F172A" stroke-opacity="0.11" filter="url(#classicInsetShadow)"/>`,
   )
   nodes.push(
-    `<rect x="${padding}" y="${statusCardY + 10}" width="3" height="${statusCardHeight - 20}" rx="1.5" fill="${options.accent}" opacity="0.78"/>`,
+    `<rect x="${padding}" y="${statusCardY + 9}" width="3.5" height="${statusCardHeight - 18}" rx="1.75" fill="${options.accent}" opacity="0.82"/>`,
   )
   nodes.push(
-    `<circle cx="${padding + 24}" cy="${statusTextY - 2}" r="15" fill="${options.accent}" opacity="${statusIcon ? '0.1' : '0'}"/>`,
+    `<circle cx="${padding + 24}" cy="${statusTextY - 2}" r="16" fill="${options.accent}" opacity="${statusIcon ? '0.1' : '0'}"/>`,
   )
+  nodes.push(textElement({
+    x: padding + 2,
+    y: statusLabelY,
+    fill: options.muted,
+    className: 'sectionLabel',
+    text: sectionTitleText,
+  }))
   if (statusIcon) {
     nodes.push(iconElement({
       type: statusIcon,
-      x: padding + 16,
+      x: padding + 15,
       y: statusIconY,
-      size: 18,
+      size: 19,
       stroke: options.accent,
       opacity: 0.88,
     }))
   }
-  nodes.push(multilineTextElement({
-    x: statusTextX,
-    y: statusTextY,
-    fill: options.fg,
-    className: 'status',
-    lines: statusLines,
-    lineHeight: statusLineHeight,
-    dominantBaseline: 'middle',
-  }))
+  nodes.push(
+    `<text x="${statusTextX}" y="${statusTextY}" fill="${options.fg}" class="status" dominant-baseline="middle">${escapeXml(statusLines[0])}</text>`,
+  )
 
   let detailY = statusCardY + statusCardHeight + 16
   for (const layout of detailLayouts) {
