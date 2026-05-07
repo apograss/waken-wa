@@ -23,8 +23,8 @@ export type MediaCoverPayload = {
   buffer: Buffer
 }
 
-function mediaCoverUrl(deviceHashKey: string, coverHash: string): string {
-  return `/api/media/covers/${encodeURIComponent(deviceHashKey)}/${encodeURIComponent(coverHash)}`
+function mediaCoverUrl(coverHash: string): string {
+  return `/api/media/covers/${encodeURIComponent(coverHash)}`
 }
 
 function parseDataImagePayload(dataUrl: string): { mime: string; buffer: Buffer } | null {
@@ -152,7 +152,7 @@ export async function saveCoverFromDataUrl(
 
   await enforceMaxCoverCount(deviceId, maxCoverCount)
 
-  const coverUrl = mediaCoverUrl(deviceHashKey, parsed.hash)
+  const coverUrl = mediaCoverUrl(parsed.hash)
   return {
     hash: parsed.hash,
     url: baseUrl ? `${baseUrl.replace(/\/+$/, '')}${coverUrl}` : coverUrl,
@@ -180,6 +180,28 @@ export async function getCoverPayload(
         eq(mediaCovers.coverHash, coverHash),
       ),
     )
+    .limit(1)
+
+  if (!row?.mimeType || !row?.base64Data) return null
+
+  try {
+    const buffer = Buffer.from(row.base64Data, 'base64')
+    if (!buffer.length) return null
+    return { mimeType: row.mimeType, buffer }
+  } catch {
+    return null
+  }
+}
+
+export async function getCoverPayloadByHash(coverHash: string): Promise<MediaCoverPayload | null> {
+  const [row] = await db
+    .select({
+      mimeType: mediaCovers.mimeType,
+      base64Data: mediaCovers.base64Data,
+    })
+    .from(mediaCovers)
+    .where(eq(mediaCovers.coverHash, coverHash))
+    .orderBy(desc(mediaCovers.updatedAt))
     .limit(1)
 
   if (!row?.mimeType || !row?.base64Data) return null
