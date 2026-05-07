@@ -29,8 +29,10 @@ import {
 import { Switch } from '@/components/ui/switch'
 
 type DeviceMode = 'auto' | 'deviceId' | 'deviceKey'
+type StatusCardVariant = 'classic' | 'aurora'
 
 type StatusCardDraft = {
+  variant: StatusCardVariant
   deviceMode: DeviceMode
   deviceValue: string
   showHeader: boolean
@@ -51,6 +53,7 @@ type StatusCardDraft = {
 }
 
 const DEFAULT_DRAFT: StatusCardDraft = {
+  variant: 'aurora',
   deviceMode: 'auto',
   deviceValue: '',
   showHeader: true,
@@ -83,6 +86,7 @@ function clampNumber(value: number, fallback: number, min: number, max: number):
 
 function buildStatusCardPath(draft: StatusCardDraft): string {
   const params = new URLSearchParams()
+  params.set('variant', draft.variant)
   params.set('showHeader', draft.showHeader ? '1' : '0')
   if (draft.showHeader) {
     params.set('showAvatar', draft.showAvatar ? '1' : '0')
@@ -313,6 +317,27 @@ export function StatusCardPreviewPanel() {
           ) : null}
 
           <div className="grid gap-3 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="status-card-variant">
+                {t('webSettingsActivity.statusCard.variantLabel')}
+              </Label>
+              <Select
+                value={draft.variant}
+                onValueChange={(value) => patchDraft('variant', value as StatusCardVariant)}
+              >
+                <SelectTrigger id="status-card-variant" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aurora">
+                    {t('webSettingsActivity.statusCard.variants.aurora')}
+                  </SelectItem>
+                  <SelectItem value="classic">
+                    {t('webSettingsActivity.statusCard.variants.classic')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="status-card-device-mode">
                 {t('webSettingsActivity.statusCard.deviceModeLabel')}

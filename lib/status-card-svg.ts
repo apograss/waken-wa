@@ -23,6 +23,7 @@ const AVATAR_MAX_BYTES = 512 * 1024
 const AVATAR_FETCH_TIMEOUT_MS = 2500
 
 type StatusCardState = 'active' | 'empty' | 'locked' | 'disabled'
+type StatusCardVariant = 'classic' | 'aurora'
 type StatusCardIcon =
   | 'app'
   | 'bookOpen'
@@ -41,6 +42,7 @@ type StatusCardDetailRow = {
 }
 
 export type StatusCardOptions = {
+  variant: StatusCardVariant
   width: number
   height: number
   radius: number
@@ -97,6 +99,11 @@ function parseBooleanParam(
   if (['1', 'true', 'yes', 'on'].includes(value)) return true
   if (['0', 'false', 'no', 'off'].includes(value)) return false
   return fallback
+}
+
+function parseStatusCardVariant(searchParams: URLSearchParams): StatusCardVariant {
+  const value = searchParams.get('variant')?.trim().toLowerCase()
+  return value === 'aurora' ? 'aurora' : 'classic'
 }
 
 function normalizeHexColor(value: unknown): string | null {
@@ -310,6 +317,7 @@ export function parseStatusCardOptions(
     : Number(deviceIdRaw)
 
   return {
+    variant: parseStatusCardVariant(searchParams),
     width,
     height,
     radius: parseIntegerParam(searchParams, 'radius', DEFAULT_RADIUS, 0, 80),
@@ -627,11 +635,11 @@ function detailPillElement({
       y,
       width,
       height,
-      radius: 8,
-      fill: options.muted,
+      radius: 12,
+      fill: options.bg,
       stroke: options.border,
-      opacity: 0.09,
-      strokeOpacity: 0.55,
+      opacity: 0.72,
+      strokeOpacity: 0.62,
     }),
     iconElement({
       type: row.icon,
@@ -661,7 +669,7 @@ function detailPillElement({
   ]
 }
 
-export function renderStatusCardSvg({
+function renderAuroraStatusCardSvg({
   options,
   profile,
   activity,
@@ -681,6 +689,321 @@ export function renderStatusCardSvg({
   state: StatusCardState
 }): string {
   const width = options.width
+  const padding = Math.max(20, Math.min(32, Math.round(width * 0.055)))
+  const innerWidth = width - padding * 2
+  const fullTextMaxChars = Math.max(18, Math.floor(innerWidth / 8))
+  const steamLine = state === 'active' ? getSteamGameName(activity) : ''
+  const appLine = state === 'active' ? getStatusLine(activity) : ''
+  const shouldPrioritizeGame = Boolean(options.preferGame && steamLine)
+  const shouldUseInClassStatus = Boolean(
+    inClassStatusActive &&
+    options.showInClassStatus &&
+    state === 'active',
+  )
+  const statusLine = state === 'locked'
+    ? 'Status locked'
+    : state === 'disabled'
+      ? 'Status card disabled'
+    : state === 'empty'
+      ? 'No active status'
+      : shouldUseInClassStatus
+        ? getInClassStatusLine(inClassOccurrence)
+      : shouldPrioritizeGame
+        ? steamLine
+        : appLine
+  const deviceLine = state === 'active' && activity
+    ? shouldPrioritizeGame
+      ? `Steam · ${getTrimmedText(activity.device, 'Unknown device')}`
+      : getTrimmedText(activity.device, 'Unknown device')
+    : state === 'locked'
+      ? 'Unlock the site to view this card'
+      : state === 'disabled'
+        ? 'Enable the status card in admin settings'
+      : 'Waiting for the next activity report'
+  const mediaLine = state === 'active' ? getMediaLine(activity) : ''
+  const sectionTitle = state === 'locked'
+    ? 'PRIVATE STATUS'
+    : state === 'disabled'
+      ? 'STATUS CARD'
+      : truncateText(profile.currentlyText || '当前状态', fullTextMaxChars)
+  const statusIcon = shouldUseInClassStatus
+    ? 'bookOpen'
+    : shouldPrioritizeGame
+      ? 'gamepad'
+      : getStatusIcon(state, activity, statusLine) ?? (state === 'active' ? 'app' : 'hourglass')
+  const deviceIcon = state === 'active'
+    ? getDeviceType(deviceLine, activity?.metadata)
+    : 'desktop'
+  const detailRows: StatusCardDetailRow[] = [
+    { label: 'Device', value: deviceLine, icon: deviceIcon },
+  ]
+  if (mediaLine) {
+    detailRows.push({ label: 'Now playing', value: mediaLine, icon: 'music' })
+  }
+  if (steamLine && !shouldPrioritizeGame) {
+    detailRows.push({ label: 'Game', value: steamLine, icon: 'gamepad' })
+  }
+
+  const nodes: string[] = []
+  const defs: string[] = [
+    `<linearGradient id="auroraBg" x1="0" y1="0" x2="${width}" y2="${options.height}">
+      <stop offset="0%" stop-color="${options.bg}"/>
+      <stop offset="54%" stop-color="${options.bg}"/>
+      <stop offset="100%" stop-color="${options.accent}" stop-opacity="0.16"/>
+    </linearGradient>`,
+    `<radialGradient id="auroraGlowA" cx="18%" cy="10%" r="75%">
+      <stop offset="0%" stop-color="${options.accent}" stop-opacity="0.34"/>
+      <stop offset="46%" stop-color="${options.accent}" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="${options.accent}" stop-opacity="0"/>
+    </radialGradient>`,
+    `<radialGradient id="auroraGlowB" cx="88%" cy="82%" r="72%">
+      <stop offset="0%" stop-color="${options.muted}" stop-opacity="0.2"/>
+      <stop offset="58%" stop-color="${options.muted}" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="${options.muted}" stop-opacity="0"/>
+    </radialGradient>`,
+    `<linearGradient id="auroraSheen" x1="0" y1="0" x2="${width}" y2="0">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="42%" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>`,
+    '<filter id="auroraShadow" x="-16%" y="-18%" width="132%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0F172A" flood-opacity="0.14"/></filter>',
+  ]
+
+  let cursorY = padding
+  if (options.showHeader) {
+    const avatarSize = 58
+    const avatarX = padding
+    const avatarY = padding
+    const headerTextX = options.showAvatar ? avatarX + avatarSize + 16 : padding
+    const headerTextMaxChars = Math.max(16, Math.floor((width - headerTextX - padding) / 7.6))
+
+    if (options.showAvatar) {
+      defs.push(
+        `<clipPath id="auroraAvatarClip"><circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2}"/></clipPath>`,
+      )
+      nodes.push(
+        `<circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2 + 5}" fill="${options.accent}" opacity="0.13"/>`,
+      )
+      nodes.push(
+        `<circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2 + 1}" fill="#FFFFFF" opacity="0.72"/>`,
+      )
+      if (avatarDataUri) {
+        nodes.push(
+          `<image href="${escapeAttr(avatarDataUri)}" x="${avatarX}" y="${avatarY}" width="${avatarSize}" height="${avatarSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#auroraAvatarClip)"/>`,
+        )
+      } else {
+        nodes.push(
+          `<text x="${avatarX + avatarSize / 2}" y="${avatarY + 38}" fill="${options.accent}" class="auroraAvatarInitials" text-anchor="middle">${escapeXml(getInitials(profile.name))}</text>`,
+        )
+      }
+      nodes.push(
+        `<circle cx="${avatarX + avatarSize - 6}" cy="${avatarY + avatarSize - 8}" r="6.5" fill="${state === 'active' ? options.accent : options.muted}" stroke="${options.bg}" stroke-width="3"/>`,
+      )
+    }
+
+    let headerTextY = avatarY + 17
+    if (options.showName) {
+      nodes.push(textElement({
+        x: headerTextX,
+        y: headerTextY,
+        fill: options.fg,
+        className: 'auroraName',
+        text: truncateText(profile.name || 'Waken', headerTextMaxChars),
+      }))
+      headerTextY += 21
+    }
+    if (options.showBio && profile.bio) {
+      nodes.push(textElement({
+        x: headerTextX,
+        y: headerTextY,
+        fill: options.muted,
+        className: 'auroraBio',
+        text: truncateText(profile.bio, headerTextMaxChars),
+      }))
+      headerTextY += 19
+    }
+    cursorY = Math.max(avatarY + avatarSize, headerTextY) + 22
+
+    if (options.showNote && profile.note) {
+      const noteLines = wrapTextLines(profile.note, Math.max(22, Math.floor(innerWidth / 7.4)), 2)
+      nodes.push(
+        roundedRectElement({
+          x: padding,
+          y: cursorY - 4,
+          width: innerWidth,
+          height: noteLines.length > 1 ? 52 : 34,
+          radius: 14,
+          fill: '#FFFFFF',
+          stroke: options.border,
+          opacity: 0.38,
+          strokeOpacity: 0.44,
+        }),
+      )
+      nodes.push(multilineTextElement({
+        x: padding + 14,
+        y: cursorY + 17,
+        fill: options.muted,
+        className: 'auroraNote',
+        lines: noteLines,
+        lineHeight: 17,
+      }))
+      cursorY += noteLines.length > 1 ? 62 : 44
+    }
+  }
+
+  const heroY = cursorY
+  const heroHeight = 94
+  const statusTextMaxUnits = Math.max(18, Math.floor((innerWidth - 76) / 9.2))
+  nodes.push(
+    `<rect x="${padding}" y="${heroY}" width="${innerWidth}" height="${heroHeight}" rx="22" fill="#FFFFFF" opacity="0.48" stroke="${options.border}" stroke-opacity="0.5" filter="url(#auroraShadow)"/>`,
+  )
+  nodes.push(
+    `<rect x="${padding + 1}" y="${heroY + 1}" width="${innerWidth - 2}" height="${Math.floor(heroHeight * 0.52)}" rx="21" fill="url(#auroraSheen)" opacity="0.75"/>`,
+  )
+  nodes.push(
+    `<circle cx="${padding + 31}" cy="${heroY + 47}" r="21" fill="${options.accent}" opacity="0.15"/>`,
+  )
+  nodes.push(iconElement({
+    type: statusIcon,
+    x: padding + 19,
+    y: heroY + 35,
+    size: 24,
+    stroke: options.accent,
+    opacity: 0.95,
+  }))
+  nodes.push(textElement({
+    x: padding + 64,
+    y: heroY + 31,
+    fill: options.muted,
+    className: 'auroraKicker',
+    text: sectionTitle,
+  }))
+  nodes.push(multilineTextElement({
+    x: padding + 64,
+    y: heroY + 62,
+    fill: options.fg,
+    className: 'auroraStatus',
+    lines: [truncateTextByUnits(statusLine, statusTextMaxUnits)],
+    lineHeight: 22,
+    dominantBaseline: 'middle',
+  }))
+
+  let detailY = heroY + heroHeight + 14
+  const detailHeight = 36
+  const footerHeight = 28
+  const minHeight = detailY + detailRows.length * (detailHeight + 8) + footerHeight + padding
+  const height = Math.max(options.height, minHeight, options.showHeader ? 310 : 218)
+  const detailBottom = height - padding - footerHeight
+  for (const row of detailRows) {
+    if (detailY + detailHeight > detailBottom) break
+    const labelWidth = Math.min(104, Math.max(60, row.label.length * 6.8 + 34))
+    const valueMaxUnits = Math.max(12, Math.floor((innerWidth - labelWidth - 52) / 8))
+    nodes.push(
+      `<rect x="${padding}" y="${detailY}" width="${innerWidth}" height="${detailHeight}" rx="18" fill="${options.bg}" opacity="0.58" stroke="${options.border}" stroke-opacity="0.42"/>`,
+    )
+    nodes.push(iconElement({
+      type: row.icon,
+      x: padding + 14,
+      y: detailY + 10,
+      size: 16,
+      stroke: row.icon === 'music' || row.icon === 'gamepad' ? options.accent : options.muted,
+      opacity: 0.82,
+    }))
+    nodes.push(textElement({
+      x: padding + 38,
+      y: detailY + 23,
+      fill: options.muted,
+      className: 'auroraPillLabel',
+      text: row.label,
+    }))
+    nodes.push(textElement({
+      x: padding + labelWidth + 18,
+      y: detailY + 23,
+      fill: options.fg,
+      className: 'auroraPillValue',
+      text: truncateTextByUnits(row.value, valueMaxUnits),
+    }))
+    detailY += detailHeight + 8
+  }
+
+  const footerY = height - padding + 1
+  nodes.push(
+    `<line x1="${padding}" y1="${footerY - 19}" x2="${width - padding}" y2="${footerY - 19}" stroke="${options.border}" stroke-width="1" opacity="0.42"/>`,
+  )
+  nodes.push(linkElement(
+    statusPageUrl,
+    textElement({
+      x: padding,
+      y: footerY,
+      fill: options.muted,
+      className: 'auroraFooter',
+      text: truncateText(DEFAULT_FOOTER_TEXT, fullTextMaxChars),
+    }),
+  ))
+  nodes.push(
+    `<circle cx="${width - padding - 5}" cy="${footerY - 4}" r="4" fill="${state === 'active' ? options.accent : options.muted}" opacity="0.72"/>`,
+  )
+
+  const ariaLabel = state === 'active'
+    ? `${profile.currentlyText || '当前状态'}: ${statusLine}${steamLine ? `. Playing: ${steamLine}` : ''}${mediaLine ? `. Listening: ${mediaLine}` : ''}`
+    : statusLine
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(ariaLabel)}">`,
+    '<style>',
+    'text{font-family:"SF Pro Rounded","Segoe UI",ui-rounded,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:0}',
+    '.auroraKicker{font-size:11px;font-weight:780;letter-spacing:.12em;text-transform:uppercase}',
+    '.auroraStatus{font-size:17px;font-weight:760;letter-spacing:-.01em}',
+    '.auroraName{font-size:18px;font-weight:800;letter-spacing:-.01em}',
+    '.auroraBio,.auroraNote{font-size:13px;font-weight:560}',
+    '.auroraPillLabel{font-size:11px;font-weight:760;letter-spacing:.04em}',
+    '.auroraPillValue{font-size:13px;font-weight:680}',
+    '.auroraFooter{font-size:10.5px;font-weight:700;letter-spacing:.03em}',
+    '.auroraAvatarInitials{font-size:18px;font-weight:850}',
+    '</style>',
+    `<defs>${defs.join('')}</defs>`,
+    `<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="url(#auroraBg)" stroke="${options.border}" stroke-opacity="0.72"/>`,
+    `<rect x="0" y="0" width="${width}" height="${height}" rx="${options.radius}" fill="url(#auroraGlowA)"/>`,
+    `<rect x="0" y="0" width="${width}" height="${height}" rx="${options.radius}" fill="url(#auroraGlowB)"/>`,
+    `<path d="M${Math.round(width * 0.56)} -18 C ${Math.round(width * 0.76)} ${Math.round(height * 0.18)}, ${Math.round(width * 0.32)} ${Math.round(height * 0.36)}, ${width + 22} ${Math.round(height * 0.58)}" fill="none" stroke="${options.accent}" stroke-width="28" stroke-opacity="0.055" stroke-linecap="round"/>`,
+    ...nodes,
+    '</svg>',
+  ].join('')
+}
+
+export function renderStatusCardSvg({
+  options,
+  profile,
+  activity,
+  avatarDataUri,
+  inClassStatusActive = false,
+  inClassOccurrence,
+  statusPageUrl,
+  state,
+}: {
+  options: StatusCardOptions
+  profile: StatusCardProfile
+  activity: ActivityFeedItem | null
+  avatarDataUri?: string | null
+  inClassStatusActive?: boolean
+  inClassOccurrence?: ScheduleOccurrence | null
+  statusPageUrl: string
+  state: StatusCardState
+}): string {
+  if (options.variant === 'aurora') {
+    return renderAuroraStatusCardSvg({
+      options,
+      profile,
+      activity,
+      avatarDataUri,
+      inClassStatusActive,
+      inClassOccurrence,
+      statusPageUrl,
+      state,
+    })
+  }
+
+  const width = options.width
   let height = options.height
   const padding = 24
   const innerWidth = width - padding * 2
@@ -691,7 +1014,10 @@ export function renderStatusCardSvg({
   const headerTextX = options.showAvatar ? avatarX + avatarSize + 14 : padding
   const textMaxChars = Math.max(18, Math.floor((width - headerTextX - padding) / 8))
   const fullTextMaxChars = Math.max(18, Math.floor(innerWidth / 8))
-  const defs: string[] = []
+  const defs: string[] = [
+    '<filter id="classicCardShadow" x="-6%" y="-8%" width="112%" height="116%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.16"/></filter>',
+    '<filter id="classicInsetShadow" x="-8%" y="-16%" width="116%" height="132%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.11"/></filter>',
+  ]
   const nodes: string[] = []
   let headerBottom = headerEnabled ? avatarY + avatarSize : padding
 
@@ -761,7 +1087,7 @@ export function renderStatusCardSvg({
     }
   }
 
-  const contentTop = headerEnabled ? headerBottom + 18 : padding + 8
+  const contentTop = headerEnabled ? headerBottom + 34 : padding + 8
   const steamLine = state === 'active' ? getSteamGameName(activity) : ''
   const appLine = state === 'active' ? getStatusLine(activity) : ''
   const shouldPrioritizeGame = Boolean(options.preferGame && steamLine)
@@ -821,9 +1147,9 @@ export function renderStatusCardSvg({
   const sectionTitleY = contentTop
   const showDeviceSection = state === 'active' && Boolean(deviceLine)
   const deviceCardY = sectionTitleY + 14
-  const deviceCardHeight = 36
+  const deviceCardHeight = 38
   const statusCardY = showDeviceSection
-    ? deviceCardY + deviceCardHeight + 10
+    ? deviceCardY + deviceCardHeight + 8
     : sectionTitleY + 14
   const statusIcon = shouldUseInClassStatus
     ? 'bookOpen'
@@ -834,14 +1160,14 @@ export function renderStatusCardSvg({
     ? getDeviceType(deviceLine, activity?.metadata)
     : 'desktop'
   const statusDeviceLine = truncateText(deviceLine, fullTextMaxChars)
-  const statusTextX = statusIcon ? padding + 36 : padding + 12
-  const statusTextWidth = statusIcon ? innerWidth - 48 : innerWidth - 24
-  const statusLineMaxUnits = Math.max(16, Math.floor(statusTextWidth / 9))
+  const statusTextX = statusIcon ? padding + 42 : padding + 14
+  const statusTextWidth = statusIcon ? innerWidth - 58 : innerWidth - 28
+  const statusLineMaxUnits = Math.max(16, Math.floor(statusTextWidth / 8.8))
   const statusLines = [truncateTextByUnits(statusLine, statusLineMaxUnits)]
   const statusLineHeight = 18
-  const statusCardHeight = 48
+  const statusCardHeight = 54
   const statusTextY = statusCardY + statusCardHeight / 2 + 2
-  const statusIconY = statusTextY + ((statusLines.length - 1) * statusLineHeight) / 2 - 8
+  const statusIconY = statusTextY + ((statusLines.length - 1) * statusLineHeight) / 2 - 9
   const detailRowsHeight = detailLayouts.length > 0
     ? 16 + detailLayouts.reduce((total, item) => total + item.height + 8, 0)
     : 0
@@ -851,7 +1177,7 @@ export function renderStatusCardSvg({
   const detailsBottom = contentBottom - reservedFooterHeight
 
   nodes.push(
-    `<line x1="${padding}" y1="${contentTop - 18}" x2="${width - padding}" y2="${contentTop - 18}" stroke="${options.border}" stroke-width="1" opacity="${headerEnabled ? '1' : '0'}"/>`,
+    `<line x1="${padding}" y1="${contentTop - 22}" x2="${width - padding}" y2="${contentTop - 22}" stroke="${options.border}" stroke-width="1.2" opacity="${headerEnabled ? '0.72' : '0'}"/>`,
   )
 
   nodes.push(textElement({
@@ -868,23 +1194,23 @@ export function renderStatusCardSvg({
       y: deviceCardY,
       width: innerWidth,
       height: deviceCardHeight,
-      radius: 8,
-      fill: options.muted,
+      radius: 12,
+      fill: options.bg,
       stroke: options.border,
-      opacity: 0.09,
-      strokeOpacity: 0.5,
+      opacity: 0.74,
+      strokeOpacity: 0.62,
     }))
     nodes.push(iconElement({
       type: deviceIcon,
       x: padding + 12,
-      y: deviceCardY + 10,
+      y: deviceCardY + 11,
       size: 16,
       stroke: options.muted,
       opacity: 0.72,
     }))
     nodes.push(textElement({
       x: padding + 36,
-      y: deviceCardY + 24,
+      y: deviceCardY + 25,
       fill: options.muted,
       className: 'deviceLine',
       text: statusDeviceLine,
@@ -896,20 +1222,29 @@ export function renderStatusCardSvg({
     y: statusCardY,
     width: innerWidth,
     height: statusCardHeight,
-    radius: 8,
-    fill: options.muted,
-    stroke: options.border,
-    opacity: 0.12,
-    strokeOpacity: 0.55,
+    radius: 14,
+    fill: options.accent,
+    stroke: options.accent,
+    opacity: 0.075,
+    strokeOpacity: 0.36,
   }))
+  nodes.push(
+    `<rect x="${padding + 0.5}" y="${statusCardY + 0.5}" width="${innerWidth - 1}" height="${statusCardHeight - 1}" rx="13.5" fill="none" stroke="#0F172A" stroke-opacity="0.11" filter="url(#classicInsetShadow)"/>`,
+  )
+  nodes.push(
+    `<rect x="${padding}" y="${statusCardY + 10}" width="3" height="${statusCardHeight - 20}" rx="1.5" fill="${options.accent}" opacity="0.78"/>`,
+  )
+  nodes.push(
+    `<circle cx="${padding + 24}" cy="${statusTextY - 2}" r="15" fill="${options.accent}" opacity="${statusIcon ? '0.1' : '0'}"/>`,
+  )
   if (statusIcon) {
     nodes.push(iconElement({
       type: statusIcon,
-      x: padding + 12,
+      x: padding + 16,
       y: statusIconY,
-      size: 16,
+      size: 18,
       stroke: options.accent,
-      opacity: 0.82,
+      opacity: 0.88,
     }))
   }
   nodes.push(multilineTextElement({
@@ -939,7 +1274,7 @@ export function renderStatusCardSvg({
 
   if (footerText && contentBottom - 4 > contentTop + 64) {
     nodes.push(
-      `<line x1="${padding}" y1="${contentBottom - 18}" x2="${width - padding}" y2="${contentBottom - 18}" stroke="${options.border}" stroke-width="1" opacity="0.75"/>`,
+      `<line x1="${padding}" y1="${contentBottom - 18}" x2="${width - padding}" y2="${contentBottom - 18}" stroke="${options.border}" stroke-width="1.1" opacity="0.66"/>`,
     )
     nodes.push(linkElement(
       statusPageUrl,
@@ -963,7 +1298,7 @@ export function renderStatusCardSvg({
     'text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:0}',
     '.sectionLabel{font-size:12px;font-weight:760}',
     '.subLabel,.pillLabel{font-size:11px;font-weight:650}',
-    '.status{font-size:14px;font-weight:680}',
+    '.status{font-size:15px;font-weight:720;letter-spacing:-.01em}',
     '.pillValue{font-size:13px;font-weight:600}',
     '.deviceLine{font-size:13px;font-weight:600}',
     '.meta,.bio,.note{font-size:13px;font-weight:500}',
@@ -972,7 +1307,8 @@ export function renderStatusCardSvg({
     '.avatarInitials{font-size:17px;font-weight:800}',
     '</style>',
     defs.length ? `<defs>${defs.join('')}</defs>` : '',
-    `<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="${options.bg}" stroke="${options.border}"/>`,
+    `<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="${options.bg}" stroke="${options.border}" stroke-width="1.35" filter="url(#classicCardShadow)"/>`,
+    `<rect x="4.5" y="4.5" width="${width - 9}" height="${height - 9}" rx="${Math.max(0, options.radius - 5)}" fill="none" stroke="#0F172A" stroke-opacity="0.13"/>`,
     `<rect x="1" y="1" width="${width - 2}" height="${Math.max(0, height * 0.45)}" rx="${Math.max(0, options.radius - 1)}" fill="${options.accent}" opacity="0.04"/>`,
     ...nodes,
     '</svg>',

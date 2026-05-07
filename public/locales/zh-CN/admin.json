@@ -1006,6 +1006,11 @@
       "showAvatar": "头像",
       "showName": "姓名",
       "showBio": "简介",
+      "variantLabel": "视觉风格",
+      "variants": {
+        "aurora": "Aurora 光晕卡",
+        "classic": "Classic 经典卡"
+      },
       "deviceModeLabel": "设备筛选",
       "deviceModes": {
         "auto": "自动选择当前状态",

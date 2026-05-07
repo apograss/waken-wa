@@ -1006,6 +1006,11 @@
       "showAvatar": "Avatar",
       "showName": "Name",
       "showBio": "Bio",
+      "variantLabel": "Visual style",
+      "variants": {
+        "aurora": "Aurora glow",
+        "classic": "Classic card"
+      },
       "deviceModeLabel": "Device filter",
       "deviceModes": {
         "auto": "Auto-select current status",
