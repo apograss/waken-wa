@@ -16,6 +16,7 @@ import {
   parseStatusCardOptions,
   renderStatusCardSvg,
   resolveStatusCardAvatarDataUri,
+  resolveStatusCardBackgroundDataUri,
   resolveStatusCardCoverDataUri,
   resolveStatusCardProfileNote,
   selectStatusCardActivity,
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
           activity: null,
           avatarDataUri: null,
           coverDataUri: null,
+          backgroundDataUri: null,
           statusPageUrl,
           state: 'disabled',
         }),
@@ -84,6 +86,7 @@ export async function GET(request: NextRequest) {
           activity: null,
           avatarDataUri: null,
           coverDataUri: null,
+          backgroundDataUri: null,
           statusPageUrl,
           state: 'locked',
         }),
@@ -104,6 +107,10 @@ export async function GET(request: NextRequest) {
       options.variant === 'cover'
         ? await resolveStatusCardCoverDataUri(options.coverKey)
         : null
+    const backgroundDataUri =
+      options.variant === 'signature'
+        ? await resolveStatusCardBackgroundDataUri(options.backgroundKey)
+        : null
     const ongoingClassOccurrence = options.showInClassStatus ? getOngoingClassOccurrence(config) : null
     const inClassStatusActive = Boolean(
       options.showInClassStatus &&
@@ -119,6 +126,7 @@ export async function GET(request: NextRequest) {
         activity,
         avatarDataUri,
         coverDataUri,
+        backgroundDataUri,
         inClassStatusActive,
         inClassOccurrence: ongoingClassOccurrence,
         statusPageUrl,
@@ -135,6 +143,7 @@ export async function GET(request: NextRequest) {
         activity: null,
         avatarDataUri: null,
         coverDataUri: null,
+        backgroundDataUri: null,
         statusPageUrl: `${getPublicOrigin(request)}/`,
         state: 'empty',
       }),

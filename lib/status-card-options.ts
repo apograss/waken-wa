@@ -1,4 +1,4 @@
-export type StatusCardVariant = 'classic' | 'aurora' | 'cover'
+export type StatusCardVariant = 'classic' | 'aurora' | 'cover' | 'signature'
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -23,6 +23,7 @@ function normalizeHexColor(value: unknown): string | null {
 
 export function normalizeStatusCardVariant(value: unknown): StatusCardVariant {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : ''
+  if (normalized === 'signature') return 'signature'
   if (normalized === 'cover') return 'cover'
   return normalized === 'classic' ? 'classic' : 'aurora'
 }
@@ -49,4 +50,10 @@ export function normalizeStatusCardDimension(
 
 export function normalizeStatusCardCoverRev(value: unknown): string {
   return getTrimmedText(value).slice(0, 64).replace(/[^0-9a-z-]/gi, '')
+}
+
+export function normalizeStatusCardTag(value: unknown): string {
+  const normalized = getTrimmedText(value).slice(0, 32)
+  if (!normalized) return ''
+  return normalized.startsWith('#') ? normalized : `#${normalized}`
 }

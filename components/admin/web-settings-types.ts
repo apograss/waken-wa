@@ -151,7 +151,10 @@ export interface SiteConfig {
   steamApiKey: string
   /** Enables the standalone public SVG status-card endpoint. */
   statusCardEnabled: boolean
-  statusCardVariant: 'classic' | 'aurora' | 'cover'
+  statusCardVariant: 'classic' | 'aurora' | 'cover' | 'signature'
+  statusCardTag: string
+  statusCardBackgroundKey: string
+  statusCardBackgroundRev: string
   statusCardCoverKey: string
   statusCardCoverRev: string
   statusCardShowHeader: boolean

@@ -46,6 +46,7 @@ import {
   normalizeStatusCardCoverRev,
   normalizeStatusCardDimension,
   normalizeStatusCardHexColor,
+  normalizeStatusCardTag,
   normalizeStatusCardVariant,
 } from '@/lib/status-card-options'
 import {
@@ -518,6 +519,15 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
   }
   if ('statusCardVariant' in web) {
     patch.statusCardVariant = normalizeStatusCardVariant(web.statusCardVariant)
+  }
+  if ('statusCardTag' in web) {
+    patch.statusCardTag = normalizeStatusCardTag(web.statusCardTag)
+  }
+  if ('statusCardBackgroundKey' in web) {
+    patch.statusCardBackgroundKey = normalizeStatusCardCoverKey(web.statusCardBackgroundKey) ?? ''
+  }
+  if ('statusCardBackgroundRev' in web) {
+    patch.statusCardBackgroundRev = normalizeStatusCardCoverRev(web.statusCardBackgroundRev)
   }
   if ('statusCardCoverKey' in web) {
     patch.statusCardCoverKey = normalizeStatusCardCoverKey(web.statusCardCoverKey) ?? ''

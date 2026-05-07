@@ -98,6 +98,7 @@ import {
   normalizeStatusCardCoverRev,
   normalizeStatusCardDimension,
   normalizeStatusCardHexColor,
+  normalizeStatusCardTag,
   normalizeStatusCardVariant,
 } from '@/lib/status-card-options'
 import { normalizeTimezone } from '@/lib/timezone'
@@ -382,6 +383,9 @@ export function useWebSettingsController() {
       steamApiKey: '',
       statusCardEnabled: data.statusCardEnabled === true,
       statusCardVariant: normalizeStatusCardVariant(data.statusCardVariant),
+      statusCardTag: normalizeStatusCardTag(data.statusCardTag),
+      statusCardBackgroundKey: normalizeStatusCardCoverKey(data.statusCardBackgroundKey) ?? '',
+      statusCardBackgroundRev: normalizeStatusCardCoverRev(data.statusCardBackgroundRev),
       statusCardCoverKey: normalizeStatusCardCoverKey(data.statusCardCoverKey) ?? '',
       statusCardCoverRev: normalizeStatusCardCoverRev(data.statusCardCoverRev),
       statusCardShowHeader: data.statusCardShowHeader !== false,

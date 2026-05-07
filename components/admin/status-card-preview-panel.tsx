@@ -29,9 +29,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { normalizeStatusCardTag } from '@/lib/status-card-options'
 
 type DeviceMode = 'auto' | 'deviceId' | 'deviceKey'
-type StatusCardVariant = 'classic' | 'aurora' | 'cover'
+type StatusCardVariant = 'classic' | 'aurora' | 'cover' | 'signature'
 
 type StatusCardDraft = {
   deviceMode: DeviceMode
@@ -56,6 +57,9 @@ function clampNumber(value: number, fallback: number, min: number, max: number):
 
 const COVER_CROP_ASPECT_RATIO = 520 / 100
 const COVER_CROP_OUTPUT_EDGE = 1400
+const BACKGROUND_CROP_ASPECT_RATIO = 700 / 220
+const SIGNATURE_CARD_WIDTH = 700
+const SIGNATURE_CARD_HEIGHT = 220
 
 function normalizeCoverKey(value: string): string {
   const normalized = value.trim()
@@ -75,6 +79,9 @@ async function hashText(value: string): Promise<string> {
 
 function buildStatusCardPath(draft: StatusCardDraft, form: {
   statusCardVariant: StatusCardVariant
+  statusCardTag: string
+  statusCardBackgroundKey: string
+  statusCardBackgroundRev: string
   statusCardCoverKey: string
   statusCardCoverRev: string
   statusCardShowHeader: boolean
@@ -95,6 +102,15 @@ function buildStatusCardPath(draft: StatusCardDraft, form: {
 }): string {
   const params = new URLSearchParams()
   params.set('variant', form.statusCardVariant)
+  const tag = normalizeStatusCardTag(form.statusCardTag)
+  if (tag) params.set('tag', tag)
+  const backgroundKey = normalizeCoverKey(form.statusCardBackgroundKey)
+  if (form.statusCardVariant === 'signature' && backgroundKey) {
+    params.set('bgImage', backgroundKey)
+    if (form.statusCardBackgroundRev.trim()) {
+      params.set('bgRev', form.statusCardBackgroundRev.trim())
+    }
+  }
   const coverKey = normalizeCoverKey(form.statusCardCoverKey)
   if (form.statusCardVariant === 'cover' && coverKey) {
     params.set('cover', coverKey)
@@ -180,8 +196,11 @@ export function StatusCardPreviewPanel() {
     ...DEFAULT_DRAFT,
   }))
   const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [isUploadingBackground, setIsUploadingBackground] = useState(false)
   const [coverCropSourceUrl, setCoverCropSourceUrl] = useState<string | null>(null)
   const [coverCropDialogOpen, setCoverCropDialogOpen] = useState(false)
+  const [backgroundCropSourceUrl, setBackgroundCropSourceUrl] = useState<string | null>(null)
+  const [backgroundCropDialogOpen, setBackgroundCropDialogOpen] = useState(false)
 
   const selectedDevice = devices.find((device) => {
     if (draft.deviceMode === 'deviceId') return String(device.id) === draft.deviceValue
@@ -195,6 +214,19 @@ export function StatusCardPreviewPanel() {
 
   const patchForm = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const setVariant = (value: StatusCardVariant) => {
+    setForm((prev) => ({
+      ...prev,
+      statusCardVariant: value,
+      ...(value === 'signature'
+        ? {
+            statusCardWidth: SIGNATURE_CARD_WIDTH,
+            statusCardHeight: SIGNATURE_CARD_HEIGHT,
+          }
+        : {}),
+    }))
   }
 
   const patchDraft = <K extends keyof StatusCardDraft>(key: K, value: StatusCardDraft[K]) => {
@@ -221,6 +253,17 @@ export function StatusCardPreviewPanel() {
     setCoverCropDialogOpen(true)
   }
 
+  const openBackgroundCropForFile = (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('webSettingsActivity.statusCard.backgroundUploadInvalid'))
+      return
+    }
+    if (backgroundCropSourceUrl) URL.revokeObjectURL(backgroundCropSourceUrl)
+    setBackgroundCropSourceUrl(URL.createObjectURL(file))
+    setBackgroundCropDialogOpen(true)
+  }
+
   const uploadCoverDataUrl = async (dataUrl: string) => {
     setIsUploadingCover(true)
     try {
@@ -243,11 +286,36 @@ export function StatusCardPreviewPanel() {
     }
   }
 
+  const uploadBackgroundDataUrl = async (dataUrl: string) => {
+    setIsUploadingBackground(true)
+    try {
+      const [url, contentHash] = await Promise.all([
+        uploadImageSource(dataUrl, 'status-card.background'),
+        hashText(dataUrl),
+      ])
+      const backgroundKey = extractCoverKeyFromImageSourceUrl(url)
+      if (!backgroundKey) throw new Error('Missing image key')
+      setForm((prev) => ({
+        ...prev,
+        statusCardBackgroundKey: backgroundKey,
+        statusCardBackgroundRev: contentHash.slice(0, 16),
+      }))
+      toast.success(t('webSettingsActivity.statusCard.backgroundUploadSuccess'))
+    } catch {
+      toast.error(t('webSettingsActivity.statusCard.backgroundUploadFailed'))
+    } finally {
+      setIsUploadingBackground(false)
+    }
+  }
+
   const reset = () => {
     setDraft({ ...DEFAULT_DRAFT })
     setForm((prev) => ({
       ...prev,
       statusCardVariant: 'aurora',
+      statusCardTag: '',
+      statusCardBackgroundKey: '',
+      statusCardBackgroundRev: '',
       statusCardCoverKey: '',
       statusCardCoverRev: '',
       statusCardShowHeader: true,
@@ -391,7 +459,7 @@ export function StatusCardPreviewPanel() {
               </Label>
               <Select
                 value={form.statusCardVariant}
-                onValueChange={(value) => patchForm('statusCardVariant', value as StatusCardVariant)}
+                onValueChange={(value) => setVariant(value as StatusCardVariant)}
               >
                 <SelectTrigger id="status-card-variant" className="w-full">
                   <SelectValue />
@@ -403,12 +471,62 @@ export function StatusCardPreviewPanel() {
                   <SelectItem value="cover">
                     {t('webSettingsActivity.statusCard.variants.cover')}
                   </SelectItem>
+                  <SelectItem value="signature">
+                    {t('webSettingsActivity.statusCard.variants.signature')}
+                  </SelectItem>
                   <SelectItem value="classic">
                     {t('webSettingsActivity.statusCard.variants.classic')}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="status-card-tag">
+                {t('webSettingsActivity.statusCard.tagLabel')}
+              </Label>
+              <Input
+                id="status-card-tag"
+                value={form.statusCardTag}
+                onChange={(event) => patchForm('statusCardTag', normalizeStatusCardTag(event.target.value))}
+                placeholder={t('webSettingsActivity.statusCard.tagPlaceholder')}
+              />
+            </div>
+            {form.statusCardVariant === 'signature' ? (
+              <div className="space-y-2">
+                <Label htmlFor="status-card-background-key">
+                  {t('webSettingsActivity.statusCard.backgroundKeyLabel')}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="status-card-background-key"
+                    value={form.statusCardBackgroundKey}
+                    onChange={(event) => patchForm('statusCardBackgroundKey', event.target.value)}
+                    placeholder={t('webSettingsActivity.statusCard.backgroundKeyPlaceholder')}
+                    className="font-mono text-xs"
+                  />
+                  <Button type="button" variant="outline" size="sm" disabled={isUploadingBackground} asChild>
+                    <label className="cursor-pointer">
+                      <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                      {isUploadingBackground
+                        ? t('webSettingsActivity.statusCard.backgroundUploading')
+                        : t('webSettingsActivity.statusCard.backgroundUpload')}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(event) => {
+                          openBackgroundCropForFile(event.target.files?.[0])
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  </Button>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t('webSettingsActivity.statusCard.backgroundKeyHint')}
+                </p>
+              </div>
+            ) : null}
             {form.statusCardVariant === 'cover' ? (
               <div className="space-y-2">
                 <Label htmlFor="status-card-cover-key">
@@ -629,6 +747,29 @@ export function StatusCardPreviewPanel() {
         description={t('webSettingsActivity.statusCard.coverCropDescription')}
         onComplete={(dataUrl) => {
           void uploadCoverDataUrl(dataUrl)
+        }}
+      />
+      <ImageCropDialog
+        open={backgroundCropDialogOpen}
+        onOpenChange={(open) => {
+          setBackgroundCropDialogOpen(open)
+          if (!open) {
+            setBackgroundCropSourceUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev)
+              return null
+            })
+          }
+        }}
+        sourceUrl={backgroundCropSourceUrl}
+        aspectMode="free"
+        aspectRatio={BACKGROUND_CROP_ASPECT_RATIO}
+        outputSize={COVER_CROP_OUTPUT_EDGE}
+        outputFormat="webp"
+        outputQuality={0.88}
+        title={t('webSettingsActivity.statusCard.backgroundCropTitle')}
+        description={t('webSettingsActivity.statusCard.backgroundCropDescription')}
+        onComplete={(dataUrl) => {
+          void uploadBackgroundDataUrl(dataUrl)
         }}
       />
     </WebSettingsInset>

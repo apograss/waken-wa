@@ -57,6 +57,7 @@ import {
   normalizeStatusCardCoverRev,
   normalizeStatusCardDimension,
   normalizeStatusCardHexColor,
+  normalizeStatusCardTag,
   normalizeStatusCardVariant,
 } from '@/lib/status-card-options'
 import { normalizeCustomCss } from '@/lib/theme-css'
@@ -448,6 +449,17 @@ export async function prepareSiteConfigValuesFromPayload(
   if (normalizedBody.statusCardVariant !== undefined && normalizedBody.statusCardVariant !== null) {
     statusCardVariant = normalizeStatusCardVariant(normalizedBody.statusCardVariant)
   }
+  const statusCardTag = normalizeStatusCardTag(
+    normalizedBody.statusCardTag ?? existing?.statusCardTag,
+  )
+  let statusCardBackgroundKey = normalizeStatusCardCoverKey(existing?.statusCardBackgroundKey)
+  if (normalizedBody.statusCardBackgroundKey !== undefined) {
+    statusCardBackgroundKey = normalizeStatusCardCoverKey(normalizedBody.statusCardBackgroundKey)
+  }
+  let statusCardBackgroundRev = normalizeStatusCardCoverRev(existing?.statusCardBackgroundRev)
+  if (normalizedBody.statusCardBackgroundRev !== undefined) {
+    statusCardBackgroundRev = normalizeStatusCardCoverRev(normalizedBody.statusCardBackgroundRev)
+  }
   let statusCardCoverKey = normalizeStatusCardCoverKey(existing?.statusCardCoverKey)
   if (normalizedBody.statusCardCoverKey !== undefined) {
     statusCardCoverKey = normalizeStatusCardCoverKey(normalizedBody.statusCardCoverKey)
@@ -641,6 +653,9 @@ export async function prepareSiteConfigValuesFromPayload(
     hideActivityMedia,
     statusCardEnabled,
     statusCardVariant,
+    statusCardTag,
+    statusCardBackgroundKey,
+    statusCardBackgroundRev,
     statusCardCoverKey,
     statusCardCoverRev,
     statusCardShowHeader,

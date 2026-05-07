@@ -10,6 +10,7 @@ import {
   normalizeStatusCardCoverRev,
   normalizeStatusCardDimension,
   normalizeStatusCardHexColor,
+  normalizeStatusCardTag,
   normalizeStatusCardVariant,
 } from '@/lib/status-card-options'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
@@ -36,6 +37,9 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     mediaDisplayShowNcmLink: config.mediaDisplayShowNcmLink === true,
     statusCardEnabled: config.statusCardEnabled === true,
     statusCardVariant: normalizeStatusCardVariant(config.statusCardVariant),
+    statusCardTag: normalizeStatusCardTag(config.statusCardTag),
+    statusCardBackgroundKey: normalizeStatusCardCoverKey(config.statusCardBackgroundKey) ?? '',
+    statusCardBackgroundRev: normalizeStatusCardCoverRev(config.statusCardBackgroundRev),
     statusCardCoverKey: normalizeStatusCardCoverKey(config.statusCardCoverKey) ?? '',
     statusCardCoverRev: normalizeStatusCardCoverRev(config.statusCardCoverRev),
     statusCardShowHeader: config.statusCardShowHeader !== false,
