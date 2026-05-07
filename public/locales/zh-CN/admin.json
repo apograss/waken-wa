@@ -1001,6 +1001,8 @@
       "showNoteDescription": "签名对应基础设置中的 userNote，不会拉取 Hitokoto。",
       "preferGameTitle": "游戏状态优先显示",
       "preferGameDescription": "当检测到 Steam 正在游玩时，优先把游戏名放在主状态位；自动模式也会优先选择正在游戏的设备。",
+      "showInClassTitle": "上课时覆盖睡眠/锁屏状态",
+      "showInClassDescription": "开启后，如果当前处于课表课程中，且状态是睡眠、待机或锁屏，则状态卡显示为「在上课中」。",
       "showAvatar": "头像",
       "showName": "姓名",
       "showBio": "简介",

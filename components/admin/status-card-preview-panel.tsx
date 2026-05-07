@@ -39,6 +39,7 @@ type StatusCardDraft = {
   showBio: boolean
   showNote: boolean
   preferGame: boolean
+  showInClassStatus: boolean
   width: number
   height: number
   radius: number
@@ -58,6 +59,7 @@ const DEFAULT_DRAFT: StatusCardDraft = {
   showBio: true,
   showNote: false,
   preferGame: false,
+  showInClassStatus: false,
   width: 520,
   height: 310,
   radius: 20,
@@ -92,6 +94,7 @@ function buildStatusCardPath(draft: StatusCardDraft): string {
     params.set(draft.deviceMode, draft.deviceValue)
   }
   params.set('preferGame', draft.preferGame ? '1' : '0')
+  params.set('showInClassStatus', draft.showInClassStatus ? '1' : '0')
   params.set('width', String(draft.width))
   params.set('height', String(draft.height))
   params.set('radius', String(draft.radius))
@@ -271,6 +274,18 @@ export function StatusCardPreviewPanel() {
                   id="status-card-prefer-game"
                   checked={draft.preferGame}
                   onCheckedChange={(value) => patchDraft('preferGame', value)}
+                />
+              }
+            />
+            <WebSettingsRow
+              htmlFor="status-card-show-in-class"
+              title={t('webSettingsActivity.statusCard.showInClassTitle')}
+              description={t('webSettingsActivity.statusCard.showInClassDescription')}
+              action={
+                <Switch
+                  id="status-card-show-in-class"
+                  checked={draft.showInClassStatus}
+                  onCheckedChange={(value) => patchDraft('showInClassStatus', value)}
                 />
               }
             />

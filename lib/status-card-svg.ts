@@ -11,6 +11,7 @@ import {
 } from '@/lib/image-source-store'
 import { decodeInlineImageDataUrl } from '@/lib/inline-image-data'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
+import type { ScheduleOccurrence } from '@/lib/schedule-courses'
 import type { ActivityFeedData, ActivityFeedItem } from '@/types/activity'
 
 const DEFAULT_WIDTH = 520
@@ -24,6 +25,7 @@ const AVATAR_FETCH_TIMEOUT_MS = 2500
 type StatusCardState = 'active' | 'empty' | 'locked' | 'disabled'
 type StatusCardIcon =
   | 'app'
+  | 'bookOpen'
   | 'desktop'
   | 'gamepad'
   | 'hourglass'
@@ -53,6 +55,7 @@ export type StatusCardOptions = {
   showBio: boolean
   showNote: boolean
   preferGame: boolean
+  showInClassStatus: boolean
   deviceId: number | null
   deviceKey: string | null
 }
@@ -321,6 +324,7 @@ export function parseStatusCardOptions(
     showBio: showHeader && parseBooleanParam(searchParams, 'showBio', true),
     showNote: showHeader && parseBooleanParam(searchParams, 'showNote', false),
     preferGame: parseBooleanParam(searchParams, 'preferGame', false),
+    showInClassStatus: parseBooleanParam(searchParams, 'showInClassStatus', false),
     deviceId: Number.isFinite(deviceId) && Number(deviceId) > 0 ? Math.round(Number(deviceId)) : null,
     deviceKey: getTrimmedText(searchParams.get('deviceKey')).slice(0, 256) || null,
   }
@@ -483,6 +487,10 @@ function iconElement({
       '<path d="M8 14h.01"/>',
       '<path d="M12 14h4"/>',
     ].join(''),
+    bookOpen: [
+      '<path d="M12 7v14"/>',
+      '<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
+    ].join(''),
     desktop: [
       '<rect x="3" y="4" width="18" height="12" rx="2"/>',
       '<path d="M8 20h8"/>',
@@ -540,6 +548,28 @@ function getStatusIcon(
   if (/待机|暂离|离开|idle|standby|away|afk/.test(source)) return 'hourglass'
   if (/休眠|睡觉|睡眠|睡了|晚安|sleep|sleeping|asleep|hibernate/.test(source)) return 'moon'
   return 'moon'
+}
+
+function formatTimeHm(value: Date): string {
+  return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`
+}
+
+function getInClassStatusLine(occurrence?: ScheduleOccurrence | null): string {
+  if (!occurrence) return '在上课中'
+  return `${occurrence.title} - ${formatTimeHm(occurrence.start)}-${formatTimeHm(occurrence.end)}`
+}
+
+export function shouldApplyStatusCardInClassOverride(
+  activity: ActivityFeedItem | null,
+): boolean {
+  if (!activity) return false
+  if (activity.isCustomOfflineStatus || activity.isCustomLockStatus) return true
+  const source = [
+    activity.statusText,
+    activity.processTitle,
+    activity.processName,
+  ].map((value) => getTrimmedText(value)).join(' ').toLowerCase()
+  return /锁屏|锁定|lock|locked|待机|暂离|离开|idle|standby|away|afk|休眠|睡觉|睡眠|睡了|晚安|sleep|sleeping|asleep|hibernate/.test(source)
 }
 
 function multilineTextElement({
@@ -636,6 +666,8 @@ export function renderStatusCardSvg({
   profile,
   activity,
   avatarDataUri,
+  inClassStatusActive = false,
+  inClassOccurrence,
   statusPageUrl,
   state,
 }: {
@@ -643,6 +675,8 @@ export function renderStatusCardSvg({
   profile: StatusCardProfile
   activity: ActivityFeedItem | null
   avatarDataUri?: string | null
+  inClassStatusActive?: boolean
+  inClassOccurrence?: ScheduleOccurrence | null
   statusPageUrl: string
   state: StatusCardState
 }): string {
@@ -731,12 +765,19 @@ export function renderStatusCardSvg({
   const steamLine = state === 'active' ? getSteamGameName(activity) : ''
   const appLine = state === 'active' ? getStatusLine(activity) : ''
   const shouldPrioritizeGame = Boolean(options.preferGame && steamLine)
+  const shouldUseInClassStatus = Boolean(
+    inClassStatusActive &&
+    options.showInClassStatus &&
+    state === 'active',
+  )
   const statusLine = state === 'locked'
     ? 'Status locked'
     : state === 'disabled'
       ? 'Status card disabled'
     : state === 'empty'
       ? 'No active status'
+      : shouldUseInClassStatus
+        ? getInClassStatusLine(inClassOccurrence)
       : shouldPrioritizeGame
         ? steamLine
         : appLine
@@ -784,7 +825,9 @@ export function renderStatusCardSvg({
   const statusCardY = showDeviceSection
     ? deviceCardY + deviceCardHeight + 10
     : sectionTitleY + 14
-  const statusIcon = shouldPrioritizeGame
+  const statusIcon = shouldUseInClassStatus
+    ? 'bookOpen'
+    : shouldPrioritizeGame
     ? 'gamepad'
     : getStatusIcon(state, activity, statusLine) ?? (state === 'active' ? 'app' : null)
   const deviceIcon = state === 'active'

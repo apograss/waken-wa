@@ -4,6 +4,12 @@ import { ACTIVITY_FEED_DEFAULT_LIMIT } from '@/lib/activity-api-constants'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { getPublicOrigin } from '@/lib/public-request-url'
+import {
+  findOngoingOccurrenceAt,
+  parseScheduleCoursesJson,
+  resolveSchedulePeriodTemplate,
+  type ScheduleOccurrence,
+} from '@/lib/schedule-courses'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
   getStatusCardProfile,
@@ -11,7 +17,9 @@ import {
   renderStatusCardSvg,
   resolveStatusCardAvatarDataUri,
   selectStatusCardActivity,
+  shouldApplyStatusCardInClassOverride,
 } from '@/lib/status-card-svg'
+import { resolveEffectiveTimezone } from '@/lib/timezone'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -26,6 +34,16 @@ function svgResponse(svg: string, status = 200): NextResponse {
       'X-Content-Type-Options': 'nosniff',
     },
   })
+}
+
+function getOngoingClassOccurrence(
+  config: Record<string, unknown> | null | undefined,
+): ScheduleOccurrence | null {
+  const parsedCourses = parseScheduleCoursesJson(config?.scheduleCourses ?? null)
+  if (!parsedCourses.ok || parsedCourses.data.length === 0) return null
+  const periodTemplate = resolveSchedulePeriodTemplate(config?.schedulePeriodTemplate ?? null)
+  const timezone = resolveEffectiveTimezone(config?.displayTimezone, config?.forceDisplayTimezone)
+  return findOngoingOccurrenceAt(parsedCourses.data, new Date(), periodTemplate, timezone)
 }
 
 export async function GET(request: NextRequest) {
@@ -75,6 +93,13 @@ export async function GET(request: NextRequest) {
       options.showHeader && options.showAvatar
         ? await resolveStatusCardAvatarDataUri(profile)
         : null
+    const ongoingClassOccurrence = options.showInClassStatus ? getOngoingClassOccurrence(config) : null
+    const inClassStatusActive = Boolean(
+      options.showInClassStatus &&
+      activity &&
+      shouldApplyStatusCardInClassOverride(activity) &&
+      ongoingClassOccurrence,
+    )
 
     return svgResponse(
       renderStatusCardSvg({
@@ -82,6 +107,8 @@ export async function GET(request: NextRequest) {
         profile,
         activity,
         avatarDataUri,
+        inClassStatusActive,
+        inClassOccurrence: ongoingClassOccurrence,
         statusPageUrl,
         state: activity ? 'active' : 'empty',
       }),

@@ -22,6 +22,7 @@ export function buildDevicePaths(baseUrl: string) {
           queryParameter('showBio', 'When showHeader=1, controls public bio visibility.', false, { type: 'boolean' }),
           queryParameter('showNote', 'When showHeader=1, controls userNote visibility.', false, { type: 'boolean' }),
           queryParameter('preferGame', 'When true, Steam now-playing games are promoted to the primary status slot and auto selection prefers gaming devices.', false, { type: 'boolean' }),
+          queryParameter('showInClassStatus', 'When true, sleeping, idle, or lock-screen statuses are shown as in-class while the schedule has an ongoing course.', false, { type: 'boolean' }),
           queryParameter('width', 'SVG width in pixels.', false, { type: 'integer', minimum: 280, maximum: 1200 }),
           queryParameter('height', 'Preferred SVG height in pixels. The rendered SVG grows automatically when content needs more space.', false, { type: 'integer', minimum: 1, maximum: 720 }),
           queryParameter('radius', 'Card corner radius in pixels.', false, { type: 'integer', minimum: 0, maximum: 80 }),

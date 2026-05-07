@@ -1001,6 +1001,8 @@
       "showNoteDescription": "The note uses userNote from Basic settings and does not fetch Hitokoto.",
       "preferGameTitle": "Prioritize game status",
       "preferGameDescription": "When Steam is currently playing, put the game name in the primary status slot; auto mode also prefers a gaming device.",
+      "showInClassTitle": "Use in-class status while unavailable",
+      "showInClassDescription": "When enabled, if the schedule is currently in class and the selected status is sleeping, idle, or lock-screen, the card shows “In class”.",
       "showAvatar": "Avatar",
       "showName": "Name",
       "showBio": "Bio",
