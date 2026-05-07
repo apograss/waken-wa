@@ -93,6 +93,13 @@ import {
   SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
   SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/lib/site-settings-constants'
+import {
+  normalizeStatusCardCoverKey,
+  normalizeStatusCardCoverRev,
+  normalizeStatusCardDimension,
+  normalizeStatusCardHexColor,
+  normalizeStatusCardVariant,
+} from '@/lib/status-card-options'
 import { normalizeTimezone } from '@/lib/timezone'
 
 function hasKeyDiff(
@@ -374,6 +381,24 @@ export function useWebSettingsController() {
       steamId: String(data.steamId ?? ''),
       steamApiKey: '',
       statusCardEnabled: data.statusCardEnabled === true,
+      statusCardVariant: normalizeStatusCardVariant(data.statusCardVariant),
+      statusCardCoverKey: normalizeStatusCardCoverKey(data.statusCardCoverKey) ?? '',
+      statusCardCoverRev: normalizeStatusCardCoverRev(data.statusCardCoverRev),
+      statusCardShowHeader: data.statusCardShowHeader !== false,
+      statusCardShowAvatar: data.statusCardShowAvatar !== false,
+      statusCardShowName: data.statusCardShowName !== false,
+      statusCardShowBio: data.statusCardShowBio !== false,
+      statusCardShowNote: data.statusCardShowNote === true,
+      statusCardPreferGame: data.statusCardPreferGame === true,
+      statusCardShowInClassStatus: data.statusCardShowInClassStatus === true,
+      statusCardWidth: normalizeStatusCardDimension(data.statusCardWidth, 520, 280, 1200),
+      statusCardHeight: normalizeStatusCardDimension(data.statusCardHeight, 310, 1, 720),
+      statusCardRadius: normalizeStatusCardDimension(data.statusCardRadius, 20, 0, 80),
+      statusCardBg: normalizeStatusCardHexColor(data.statusCardBg, '#FFFFFF'),
+      statusCardFg: normalizeStatusCardHexColor(data.statusCardFg, '#111827'),
+      statusCardMuted: normalizeStatusCardHexColor(data.statusCardMuted, '#6B7280'),
+      statusCardAccent: normalizeStatusCardHexColor(data.statusCardAccent, '#22C55E'),
+      statusCardBorder: normalizeStatusCardHexColor(data.statusCardBorder, '#E5E7EB'),
     }
   }, [t])
 

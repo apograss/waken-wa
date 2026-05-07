@@ -16,6 +16,8 @@ import {
   parseStatusCardOptions,
   renderStatusCardSvg,
   resolveStatusCardAvatarDataUri,
+  resolveStatusCardCoverDataUri,
+  resolveStatusCardProfileNote,
   selectStatusCardActivity,
   shouldApplyStatusCardInClassOverride,
 } from '@/lib/status-card-svg'
@@ -51,6 +53,9 @@ export async function GET(request: NextRequest) {
     const config = await getSiteConfigMemoryFirst()
     const options = parseStatusCardOptions(request.nextUrl.searchParams, config)
     const profile = getStatusCardProfile(config)
+    if (options.showNote) {
+      profile.note = await resolveStatusCardProfileNote(config)
+    }
     const adminSession = await getSession()
     const statusPageUrl = `${getPublicOrigin(request)}/`
 
@@ -61,6 +66,7 @@ export async function GET(request: NextRequest) {
           profile,
           activity: null,
           avatarDataUri: null,
+          coverDataUri: null,
           statusPageUrl,
           state: 'disabled',
         }),
@@ -77,6 +83,7 @@ export async function GET(request: NextRequest) {
           profile,
           activity: null,
           avatarDataUri: null,
+          coverDataUri: null,
           statusPageUrl,
           state: 'locked',
         }),
@@ -93,6 +100,10 @@ export async function GET(request: NextRequest) {
       options.showHeader && options.showAvatar
         ? await resolveStatusCardAvatarDataUri(profile)
         : null
+    const coverDataUri =
+      options.variant === 'cover'
+        ? await resolveStatusCardCoverDataUri(options.coverKey)
+        : null
     const ongoingClassOccurrence = options.showInClassStatus ? getOngoingClassOccurrence(config) : null
     const inClassStatusActive = Boolean(
       options.showInClassStatus &&
@@ -107,6 +118,7 @@ export async function GET(request: NextRequest) {
         profile,
         activity,
         avatarDataUri,
+        coverDataUri,
         inClassStatusActive,
         inClassOccurrence: ongoingClassOccurrence,
         statusPageUrl,
@@ -122,6 +134,7 @@ export async function GET(request: NextRequest) {
         profile: getStatusCardProfile(null),
         activity: null,
         avatarDataUri: null,
+        coverDataUri: null,
         statusPageUrl: `${getPublicOrigin(request)}/`,
         state: 'empty',
       }),

@@ -52,6 +52,13 @@ import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sourc
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { unsanitizeSiteConfigImageInputs } from '@/lib/site-image-urls'
 import { persistCompatibilitySiteConfigValues } from '@/lib/site-settings-write'
+import {
+  normalizeStatusCardCoverKey,
+  normalizeStatusCardCoverRev,
+  normalizeStatusCardDimension,
+  normalizeStatusCardHexColor,
+  normalizeStatusCardVariant,
+} from '@/lib/status-card-options'
 import { normalizeCustomCss } from '@/lib/theme-css'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
 import { normalizeTimezone } from '@/lib/timezone'
@@ -437,6 +444,56 @@ export async function prepareSiteConfigValuesFromPayload(
   if (normalizedBody.statusCardEnabled !== undefined && normalizedBody.statusCardEnabled !== null) {
     statusCardEnabled = Boolean(normalizedBody.statusCardEnabled)
   }
+  let statusCardVariant = normalizeStatusCardVariant(existing?.statusCardVariant)
+  if (normalizedBody.statusCardVariant !== undefined && normalizedBody.statusCardVariant !== null) {
+    statusCardVariant = normalizeStatusCardVariant(normalizedBody.statusCardVariant)
+  }
+  let statusCardCoverKey = normalizeStatusCardCoverKey(existing?.statusCardCoverKey)
+  if (normalizedBody.statusCardCoverKey !== undefined) {
+    statusCardCoverKey = normalizeStatusCardCoverKey(normalizedBody.statusCardCoverKey)
+  }
+  let statusCardCoverRev = normalizeStatusCardCoverRev(existing?.statusCardCoverRev)
+  if (normalizedBody.statusCardCoverRev !== undefined) {
+    statusCardCoverRev = normalizeStatusCardCoverRev(normalizedBody.statusCardCoverRev)
+  }
+  const statusCardBoolean = (key: string, fallback: boolean) => {
+    const value = normalizedBody[key]
+    if (value === undefined || value === null) return fallback
+    return Boolean(value)
+  }
+  const statusCardShowHeader = statusCardBoolean('statusCardShowHeader', existing?.statusCardShowHeader !== false)
+  const statusCardShowAvatar = statusCardBoolean('statusCardShowAvatar', existing?.statusCardShowAvatar !== false)
+  const statusCardShowName = statusCardBoolean('statusCardShowName', existing?.statusCardShowName !== false)
+  const statusCardShowBio = statusCardBoolean('statusCardShowBio', existing?.statusCardShowBio !== false)
+  const statusCardShowNote = statusCardBoolean('statusCardShowNote', existing?.statusCardShowNote === true)
+  const statusCardPreferGame = statusCardBoolean('statusCardPreferGame', existing?.statusCardPreferGame === true)
+  const statusCardShowInClassStatus = statusCardBoolean(
+    'statusCardShowInClassStatus',
+    existing?.statusCardShowInClassStatus === true,
+  )
+  const statusCardWidth = normalizeStatusCardDimension(
+    normalizedBody.statusCardWidth ?? existing?.statusCardWidth,
+    520,
+    280,
+    1200,
+  )
+  const statusCardHeight = normalizeStatusCardDimension(
+    normalizedBody.statusCardHeight ?? existing?.statusCardHeight,
+    310,
+    1,
+    720,
+  )
+  const statusCardRadius = normalizeStatusCardDimension(
+    normalizedBody.statusCardRadius ?? existing?.statusCardRadius,
+    20,
+    0,
+    80,
+  )
+  const statusCardBg = normalizeStatusCardHexColor(normalizedBody.statusCardBg ?? existing?.statusCardBg, '#FFFFFF')
+  const statusCardFg = normalizeStatusCardHexColor(normalizedBody.statusCardFg ?? existing?.statusCardFg, '#111827')
+  const statusCardMuted = normalizeStatusCardHexColor(normalizedBody.statusCardMuted ?? existing?.statusCardMuted, '#6B7280')
+  const statusCardAccent = normalizeStatusCardHexColor(normalizedBody.statusCardAccent ?? existing?.statusCardAccent, '#22C55E')
+  const statusCardBorder = normalizeStatusCardHexColor(normalizedBody.statusCardBorder ?? existing?.statusCardBorder, '#E5E7EB')
   let mediaDisplayShowSource = existing?.mediaDisplayShowSource === true
   if (normalizedBody.mediaDisplayShowSource !== undefined && normalizedBody.mediaDisplayShowSource !== null) {
     mediaDisplayShowSource = Boolean(normalizedBody.mediaDisplayShowSource)
@@ -583,6 +640,24 @@ export async function prepareSiteConfigValuesFromPayload(
     smoothScrollEnabled,
     hideActivityMedia,
     statusCardEnabled,
+    statusCardVariant,
+    statusCardCoverKey,
+    statusCardCoverRev,
+    statusCardShowHeader,
+    statusCardShowAvatar,
+    statusCardShowName,
+    statusCardShowBio,
+    statusCardShowNote,
+    statusCardPreferGame,
+    statusCardShowInClassStatus,
+    statusCardWidth,
+    statusCardHeight,
+    statusCardRadius,
+    statusCardBg,
+    statusCardFg,
+    statusCardMuted,
+    statusCardAccent,
+    statusCardBorder,
     mediaDisplayShowSource,
     mediaDisplayShowCover,
     mediaDisplayShowAppIcon,

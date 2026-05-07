@@ -42,6 +42,13 @@ import {
 } from '@/lib/site-config-constants'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import {
+  normalizeStatusCardCoverKey,
+  normalizeStatusCardCoverRev,
+  normalizeStatusCardDimension,
+  normalizeStatusCardHexColor,
+  normalizeStatusCardVariant,
+} from '@/lib/status-card-options'
+import {
   parseThemeCustomSurface,
   THEME_CUSTOM_SURFACE_DEFAULTS,
 } from '@/lib/theme-custom-surface'
@@ -509,6 +516,40 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
   if ('statusCardEnabled' in web && typeof web.statusCardEnabled === 'boolean') {
     patch.statusCardEnabled = web.statusCardEnabled
   }
+  if ('statusCardVariant' in web) {
+    patch.statusCardVariant = normalizeStatusCardVariant(web.statusCardVariant)
+  }
+  if ('statusCardCoverKey' in web) {
+    patch.statusCardCoverKey = normalizeStatusCardCoverKey(web.statusCardCoverKey) ?? ''
+  }
+  if ('statusCardCoverRev' in web) {
+    patch.statusCardCoverRev = normalizeStatusCardCoverRev(web.statusCardCoverRev)
+  }
+  for (const key of [
+    'statusCardShowHeader',
+    'statusCardShowAvatar',
+    'statusCardShowName',
+    'statusCardShowBio',
+    'statusCardShowNote',
+    'statusCardPreferGame',
+    'statusCardShowInClassStatus',
+  ] as const) {
+    if (key in web && typeof web[key] === 'boolean') patch[key] = web[key]
+  }
+  if ('statusCardWidth' in web) {
+    patch.statusCardWidth = normalizeStatusCardDimension(web.statusCardWidth, 520, 280, 1200)
+  }
+  if ('statusCardHeight' in web) {
+    patch.statusCardHeight = normalizeStatusCardDimension(web.statusCardHeight, 310, 1, 720)
+  }
+  if ('statusCardRadius' in web) {
+    patch.statusCardRadius = normalizeStatusCardDimension(web.statusCardRadius, 20, 0, 80)
+  }
+  if ('statusCardBg' in web) patch.statusCardBg = normalizeStatusCardHexColor(web.statusCardBg, '#FFFFFF')
+  if ('statusCardFg' in web) patch.statusCardFg = normalizeStatusCardHexColor(web.statusCardFg, '#111827')
+  if ('statusCardMuted' in web) patch.statusCardMuted = normalizeStatusCardHexColor(web.statusCardMuted, '#6B7280')
+  if ('statusCardAccent' in web) patch.statusCardAccent = normalizeStatusCardHexColor(web.statusCardAccent, '#22C55E')
+  if ('statusCardBorder' in web) patch.statusCardBorder = normalizeStatusCardHexColor(web.statusCardBorder, '#E5E7EB')
   if ('hideInspirationOnHome' in web && typeof web.hideInspirationOnHome === 'boolean') {
     patch.hideInspirationOnHome = web.hideInspirationOnHome
   }

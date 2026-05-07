@@ -1009,8 +1009,19 @@
       "variantLabel": "Visual style",
       "variants": {
         "aurora": "Aurora glow",
+        "cover": "Cover banner",
         "classic": "Classic card"
       },
+      "coverKeyLabel": "Cover image hash",
+      "coverKeyPlaceholder": "Filled after upload, or paste an image-src hash",
+      "coverKeyHint": "Copied status-card URLs only include the hash, not the original image URL.",
+      "coverUpload": "Upload",
+      "coverUploading": "Uploading",
+      "coverUploadSuccess": "Cover image uploaded",
+      "coverUploadFailed": "Cover image upload failed",
+      "coverUploadInvalid": "Choose an image file",
+      "coverCropTitle": "Crop status-card cover",
+      "coverCropDescription": "The cover area is shallow, so choose the part that works best as a banner.",
       "deviceModeLabel": "Device filter",
       "deviceModes": {
         "auto": "Auto-select current status",

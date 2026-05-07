@@ -6,12 +6,25 @@ import path from 'node:path'
 import { getMediaDisplay } from '@/lib/activity-media'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import {
+  buildHitokotoRequestUrl,
+  normalizeHitokotoCategories,
+  normalizeHitokotoEncode,
+} from '@/lib/hitokoto'
+import {
   extractImageSourcePublicKey,
   readImageSourceDataUrl,
 } from '@/lib/image-source-store'
 import { decodeInlineImageDataUrl } from '@/lib/inline-image-data'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import type { ScheduleOccurrence } from '@/lib/schedule-courses'
+import {
+  normalizeStatusCardCoverKey,
+  normalizeStatusCardCoverRev,
+  normalizeStatusCardDimension,
+  normalizeStatusCardHexColor,
+  normalizeStatusCardVariant,
+  type StatusCardVariant,
+} from '@/lib/status-card-options'
 import type { ActivityFeedData, ActivityFeedItem } from '@/types/activity'
 
 const DEFAULT_WIDTH = 520
@@ -21,9 +34,9 @@ const DEFAULT_RADIUS = 20
 const DEFAULT_FOOTER_TEXT = 'Powered By Waken-Wa✨'
 const AVATAR_MAX_BYTES = 512 * 1024
 const AVATAR_FETCH_TIMEOUT_MS = 2500
+const HITOKOTO_FETCH_TIMEOUT_MS = 2200
 
 type StatusCardState = 'active' | 'empty' | 'locked' | 'disabled'
-type StatusCardVariant = 'classic' | 'aurora'
 type StatusCardIcon =
   | 'app'
   | 'bookOpen'
@@ -58,6 +71,7 @@ export type StatusCardOptions = {
   showNote: boolean
   preferGame: boolean
   showInClassStatus: boolean
+  coverKey: string | null
   deviceId: number | null
   deviceKey: string | null
 }
@@ -68,6 +82,15 @@ type StatusCardProfile = {
   note: string
   avatarUrl: string
   currentlyText: string
+}
+
+function getHitokotoTextFromJson(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ''
+  const record = value as Record<string, unknown>
+  const text = getTrimmedText(record.hitokoto)
+  if (!text) return ''
+  const from = getTrimmedText(record.from)
+  return from ? `${text} —— ${from}` : text
 }
 
 function clampNumber(value: number, min: number, max: number): number {
@@ -101,8 +124,36 @@ function parseBooleanParam(
   return fallback
 }
 
-function parseStatusCardVariant(searchParams: URLSearchParams): StatusCardVariant {
-  const value = searchParams.get('variant')?.trim().toLowerCase()
+function getConfiguredBoolean(config: Record<string, unknown> | null | undefined, key: string, fallback: boolean): boolean {
+  return typeof config?.[key] === 'boolean' ? config[key] === true : fallback
+}
+
+function getConfiguredColor(config: Record<string, unknown> | null | undefined, key: string, fallback: string): string {
+  return normalizeStatusCardHexColor(config?.[key], fallback)
+}
+
+function getConfiguredNumber(
+  config: Record<string, unknown> | null | undefined,
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  return normalizeStatusCardDimension(config?.[key], fallback, min, max)
+}
+
+function getDefaultStatusCardVariant(config?: Record<string, unknown> | null): StatusCardVariant {
+  if (typeof config?.statusCardVariant === 'string') {
+    return normalizeStatusCardVariant(config.statusCardVariant)
+  }
+  return 'classic'
+}
+
+function parseStatusCardVariantParam(searchParams: URLSearchParams, config?: Record<string, unknown> | null): StatusCardVariant {
+  const raw = searchParams.get('variant')
+  if (raw == null) return getDefaultStatusCardVariant(config)
+  const value = raw.trim().toLowerCase()
+  if (value === 'cover') return 'cover'
   return value === 'aurora' ? 'aurora' : 'classic'
 }
 
@@ -298,16 +349,30 @@ export function parseStatusCardOptions(
   searchParams: URLSearchParams,
   config?: Record<string, unknown> | null,
 ): StatusCardOptions {
-  const showHeader = parseBooleanParam(searchParams, 'showHeader', false)
+  const showHeader = parseBooleanParam(
+    searchParams,
+    'showHeader',
+    getConfiguredBoolean(config, 'statusCardShowHeader', false),
+  )
   const defaultAccent =
     normalizeHexColor(searchParams.get('accent')) ??
+    normalizeHexColor(config?.statusCardAccent) ??
     normalizeProfileOnlineAccentColor(config?.profileOnlineAccentColor) ??
     '#22C55E'
-  const width = parseIntegerParam(searchParams, 'width', DEFAULT_WIDTH, 280, 1200)
+  const defaultHeight = showHeader
+    ? getConfiguredNumber(config, 'statusCardHeight', DEFAULT_HEADER_HEIGHT, 1, 720)
+    : DEFAULT_STATUS_HEIGHT
+  const width = parseIntegerParam(
+    searchParams,
+    'width',
+    getConfiguredNumber(config, 'statusCardWidth', DEFAULT_WIDTH, 280, 1200),
+    280,
+    1200,
+  )
   const height = parseIntegerParam(
     searchParams,
     'height',
-    showHeader ? DEFAULT_HEADER_HEIGHT : DEFAULT_STATUS_HEIGHT,
+    defaultHeight,
     1,
     720,
   )
@@ -317,22 +382,29 @@ export function parseStatusCardOptions(
     : Number(deviceIdRaw)
 
   return {
-    variant: parseStatusCardVariant(searchParams),
+    variant: parseStatusCardVariantParam(searchParams, config),
     width,
     height,
-    radius: parseIntegerParam(searchParams, 'radius', DEFAULT_RADIUS, 0, 80),
-    bg: parseColorParam(searchParams, 'bg', '#FFFFFF'),
-    fg: parseColorParam(searchParams, 'fg', '#111827'),
-    muted: parseColorParam(searchParams, 'muted', '#6B7280'),
+    radius: parseIntegerParam(
+      searchParams,
+      'radius',
+      getConfiguredNumber(config, 'statusCardRadius', DEFAULT_RADIUS, 0, 80),
+      0,
+      80,
+    ),
+    bg: parseColorParam(searchParams, 'bg', getConfiguredColor(config, 'statusCardBg', '#FFFFFF')),
+    fg: parseColorParam(searchParams, 'fg', getConfiguredColor(config, 'statusCardFg', '#111827')),
+    muted: parseColorParam(searchParams, 'muted', getConfiguredColor(config, 'statusCardMuted', '#6B7280')),
     accent: parseColorParam(searchParams, 'accent', defaultAccent),
-    border: parseColorParam(searchParams, 'border', '#E5E7EB'),
+    border: parseColorParam(searchParams, 'border', getConfiguredColor(config, 'statusCardBorder', '#E5E7EB')),
     showHeader,
-    showAvatar: showHeader && parseBooleanParam(searchParams, 'showAvatar', true),
-    showName: showHeader && parseBooleanParam(searchParams, 'showName', true),
-    showBio: showHeader && parseBooleanParam(searchParams, 'showBio', true),
-    showNote: showHeader && parseBooleanParam(searchParams, 'showNote', false),
-    preferGame: parseBooleanParam(searchParams, 'preferGame', false),
-    showInClassStatus: parseBooleanParam(searchParams, 'showInClassStatus', false),
+    showAvatar: showHeader && parseBooleanParam(searchParams, 'showAvatar', getConfiguredBoolean(config, 'statusCardShowAvatar', true)),
+    showName: showHeader && parseBooleanParam(searchParams, 'showName', getConfiguredBoolean(config, 'statusCardShowName', true)),
+    showBio: showHeader && parseBooleanParam(searchParams, 'showBio', getConfiguredBoolean(config, 'statusCardShowBio', true)),
+    showNote: showHeader && parseBooleanParam(searchParams, 'showNote', getConfiguredBoolean(config, 'statusCardShowNote', false)),
+    preferGame: parseBooleanParam(searchParams, 'preferGame', getConfiguredBoolean(config, 'statusCardPreferGame', false)),
+    showInClassStatus: parseBooleanParam(searchParams, 'showInClassStatus', getConfiguredBoolean(config, 'statusCardShowInClassStatus', false)),
+    coverKey: normalizeStatusCardCoverKey(searchParams.get('cover')) ?? normalizeStatusCardCoverKey(config?.statusCardCoverKey),
     deviceId: Number.isFinite(deviceId) && Number(deviceId) > 0 ? Math.round(Number(deviceId)) : null,
     deviceKey: getTrimmedText(searchParams.get('deviceKey')).slice(0, 256) || null,
   }
@@ -346,6 +418,35 @@ export function getStatusCardProfile(config?: Record<string, unknown> | null): S
     avatarUrl: getTrimmedText(config?.avatarUrl),
     currentlyText: getTrimmedText(config?.currentlyText, '当前状态'),
   }
+}
+
+export async function resolveStatusCardProfileNote(
+  config: Record<string, unknown> | null | undefined,
+): Promise<string> {
+  const fallbackNote = getTrimmedText(config?.userNote)
+  if (config?.userNoteHitokotoEnabled !== true) return fallbackNote
+
+  try {
+    const categories = normalizeHitokotoCategories(config?.userNoteHitokotoCategories)
+    const encode = normalizeHitokotoEncode(config?.userNoteHitokotoEncode)
+    const response = await fetch(buildHitokotoRequestUrl(categories, encode), {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(HITOKOTO_FETCH_TIMEOUT_MS),
+      headers: {
+        Accept: encode === 'text' ? 'text/plain,*/*;q=0.8' : 'application/json,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (compatible; WakenStatusCard/1.0)',
+      },
+    })
+    if (!response.ok) throw new Error(`Hitokoto HTTP ${response.status}`)
+    const note = encode === 'text'
+      ? getTrimmedText(await response.text())
+      : getHitokotoTextFromJson(await response.json())
+    if (note) return note
+  } catch (error) {
+    console.warn('[status-card] hitokoto fetch failed:', error)
+  }
+
+  return config?.userNoteHitokotoFallbackToNote === true ? fallbackNote : ''
 }
 
 export function selectStatusCardActivity(
@@ -387,6 +488,15 @@ export async function resolveStatusCardAvatarDataUri(
   }
 
   return readPublicImageAsDataUri(rawUrl)
+}
+
+export async function resolveStatusCardCoverDataUri(
+  coverKey: string | null | undefined,
+): Promise<string | null> {
+  const normalized = normalizeStatusCardCoverKey(coverKey)
+  if (!normalized) return null
+  const dataUrl = await readImageSourceDataUrl(normalized)
+  return dataUrl ? normalizeImageDataUri(dataUrl) : null
 }
 
 function getStatusLine(activity: ActivityFeedItem | null): string {
@@ -971,11 +1081,12 @@ function renderAuroraStatusCardSvg({
   ].join('')
 }
 
-export function renderStatusCardSvg({
+function renderCoverStatusCardSvg({
   options,
   profile,
   activity,
   avatarDataUri,
+  coverDataUri,
   inClassStatusActive = false,
   inClassOccurrence,
   statusPageUrl,
@@ -985,11 +1096,291 @@ export function renderStatusCardSvg({
   profile: StatusCardProfile
   activity: ActivityFeedItem | null
   avatarDataUri?: string | null
+  coverDataUri?: string | null
   inClassStatusActive?: boolean
   inClassOccurrence?: ScheduleOccurrence | null
   statusPageUrl: string
   state: StatusCardState
 }): string {
+  const width = options.width
+  let height = Math.max(options.height, options.showHeader ? 400 : 320)
+  const padding = 24
+  const innerWidth = width - padding * 2
+  const coverHeight = Math.max(86, Math.min(128, Math.round(height * 0.31)))
+  const avatarSize = options.showHeader && options.showAvatar ? 66 : 0
+  const avatarX = padding
+  const avatarY = coverHeight - Math.round(avatarSize * 0.45)
+  const fullTextMaxChars = Math.max(18, Math.floor(innerWidth / 8))
+  let contentTop = options.showHeader
+    ? Math.max(coverHeight + 24, avatarY + avatarSize + 16)
+    : coverHeight + 22
+  const steamLine = state === 'active' ? getSteamGameName(activity) : ''
+  const appLine = state === 'active' ? getStatusLine(activity) : ''
+  const shouldPrioritizeGame = Boolean(options.preferGame && steamLine)
+  const shouldUseInClassStatus = Boolean(
+    inClassStatusActive &&
+    options.showInClassStatus &&
+    state === 'active',
+  )
+  const statusLine = state === 'locked'
+    ? 'Status locked'
+    : state === 'disabled'
+      ? 'Status card disabled'
+    : state === 'empty'
+      ? 'No active status'
+      : shouldUseInClassStatus
+        ? getInClassStatusLine(inClassOccurrence)
+      : shouldPrioritizeGame
+        ? steamLine
+        : appLine
+  const deviceLine = state === 'active' && activity
+    ? shouldPrioritizeGame
+      ? `Steam · ${getTrimmedText(activity.device, 'Unknown device')}`
+      : getTrimmedText(activity.device, 'Unknown device')
+    : state === 'locked'
+      ? 'Unlock the site to view this card'
+      : state === 'disabled'
+        ? 'Enable the status card in admin settings'
+      : 'Waiting for the next activity report'
+  const mediaLine = state === 'active' ? getMediaLine(activity) : ''
+  const statusIcon = shouldUseInClassStatus
+    ? 'bookOpen'
+    : shouldPrioritizeGame
+      ? 'gamepad'
+      : getStatusIcon(state, activity, statusLine) ?? (state === 'active' ? 'app' : 'hourglass')
+  const deviceIcon = state === 'active'
+    ? getDeviceType(deviceLine, activity?.metadata)
+    : 'desktop'
+  const sectionTitle = state === 'locked'
+    ? 'PRIVATE STATUS'
+    : state === 'disabled'
+      ? 'STATUS CARD'
+      : truncateText(profile.currentlyText || '当前状态', fullTextMaxChars)
+  const defs: string[] = [
+    `<clipPath id="coverCardClip"><rect x="0" y="0" width="${width}" height="${height}" rx="${options.radius}"/></clipPath>`,
+    `<linearGradient id="coverFallback" x1="0" y1="0" x2="${width}" y2="${coverHeight}">
+      <stop offset="0%" stop-color="${options.accent}" stop-opacity="0.86"/>
+      <stop offset="100%" stop-color="${options.muted}" stop-opacity="0.72"/>
+    </linearGradient>`,
+    '<linearGradient id="coverShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0F172A" stop-opacity="0.08"/><stop offset="100%" stop-color="#0F172A" stop-opacity="0.42"/></linearGradient>',
+    '<filter id="coverAvatarShadow" x="-28%" y="-28%" width="156%" height="156%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.24"/></filter>',
+    '<filter id="coverPanelShadow" x="-8%" y="-16%" width="116%" height="132%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#0F172A" flood-opacity="0.12"/></filter>',
+  ]
+  if (avatarSize > 0) {
+    defs.push(
+      `<clipPath id="coverAvatarClip"><circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2}"/></clipPath>`,
+    )
+  }
+
+  const nodes: string[] = [
+    `<g clip-path="url(#coverCardClip)">`,
+    coverDataUri
+      ? `<image href="${escapeAttr(coverDataUri)}" x="0" y="0" width="${width}" height="${coverHeight}" preserveAspectRatio="xMidYMid slice"/>`
+      : `<rect x="0" y="0" width="${width}" height="${coverHeight}" fill="url(#coverFallback)"/>`,
+    `<rect x="0" y="0" width="${width}" height="${coverHeight}" fill="url(#coverShade)"/>`,
+    `<line x1="0" y1="${coverHeight}" x2="${width}" y2="${coverHeight}" stroke="${options.border}" stroke-width="1.2" opacity="0.72"/>`,
+    '</g>',
+  ]
+
+  if (options.showHeader) {
+    if (avatarSize > 0) {
+      nodes.push(
+        `<circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2 + 4}" fill="${options.bg}" filter="url(#coverAvatarShadow)"/>`,
+      )
+      if (avatarDataUri) {
+        nodes.push(
+          `<image href="${escapeAttr(avatarDataUri)}" x="${avatarX}" y="${avatarY}" width="${avatarSize}" height="${avatarSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#coverAvatarClip)"/>`,
+        )
+      } else {
+        nodes.push(
+          `<circle cx="${avatarX + avatarSize / 2}" cy="${avatarY + avatarSize / 2}" r="${avatarSize / 2}" fill="${options.accent}" opacity="0.16"/>`,
+          `<text x="${avatarX + avatarSize / 2}" y="${avatarY + 42}" fill="${options.accent}" class="coverAvatarInitials" text-anchor="middle">${escapeXml(getInitials(profile.name))}</text>`,
+        )
+      }
+      nodes.push(
+        `<circle cx="${avatarX + avatarSize - 7}" cy="${avatarY + avatarSize - 9}" r="7" fill="${state === 'active' ? options.accent : options.muted}" stroke="${options.bg}" stroke-width="3"/>`,
+      )
+    }
+
+    const headerX = avatarSize > 0 ? avatarX + avatarSize + 16 : padding
+    const headerY = coverHeight + 23
+    const headerMaxChars = Math.max(14, Math.floor((width - headerX - padding) / 8))
+    let headerBottom = headerY
+    if (options.showName) {
+      nodes.push(textElement({
+        x: headerX,
+        y: headerY,
+        fill: options.fg,
+        className: 'coverName',
+        text: truncateText(profile.name || 'Waken', headerMaxChars),
+      }))
+      headerBottom = Math.max(headerBottom, headerY + 4)
+    }
+    if (options.showBio && profile.bio) {
+      nodes.push(textElement({
+        x: headerX,
+        y: headerY + 20,
+        fill: options.muted,
+        className: 'coverBio',
+        text: truncateText(profile.bio, headerMaxChars),
+      }))
+      headerBottom = Math.max(headerBottom, headerY + 24)
+    }
+    if (options.showNote && profile.note) {
+      const noteLines = wrapTextLines(profile.note, Math.max(24, Math.floor(innerWidth / 7.4)), 2)
+      const noteY = Math.max(avatarY + avatarSize + 18, headerBottom + 18)
+      nodes.push(multilineTextElement({
+        x: padding,
+        y: noteY,
+        fill: options.muted,
+        className: 'coverNote',
+        lines: noteLines,
+        lineHeight: 17,
+      }))
+      contentTop = Math.max(contentTop, noteY + noteLines.length * 17 + 12)
+    }
+  }
+
+  const panelY = contentTop
+  const panelHeight = 76
+  nodes.push(
+    `<rect x="${padding}" y="${panelY}" width="${innerWidth}" height="${panelHeight}" rx="18" fill="${options.bg}" stroke="${options.border}" stroke-width="1.2" filter="url(#coverPanelShadow)"/>`,
+  )
+  nodes.push(
+    `<rect x="${padding}" y="${panelY}" width="4" height="${panelHeight}" rx="2" fill="${options.accent}" opacity="0.86"/>`,
+  )
+  nodes.push(iconElement({
+    type: statusIcon,
+    x: padding + 18,
+    y: panelY + 44,
+    size: 18,
+    stroke: options.accent,
+    opacity: 0.9,
+  }))
+  nodes.push(textElement({
+    x: padding + 48,
+    y: panelY + 27,
+    fill: options.muted,
+    className: 'coverKicker',
+    text: sectionTitle,
+  }))
+  nodes.push(multilineTextElement({
+    x: padding + 48,
+    y: panelY + 53,
+    fill: options.fg,
+    className: 'coverStatus',
+    lines: [truncateTextByUnits(statusLine, Math.max(18, Math.floor((innerWidth - 68) / 9)))],
+    lineHeight: 20,
+    dominantBaseline: 'middle',
+  }))
+
+  const metaY = panelY + panelHeight + 14
+  const metaItems = [
+    { icon: deviceIcon, text: deviceLine },
+    ...(mediaLine ? [{ icon: 'music' as const, text: mediaLine }] : []),
+    ...(steamLine && !shouldPrioritizeGame ? [{ icon: 'gamepad' as const, text: steamLine }] : []),
+  ]
+  const requiredMetaBottom = metaItems.length > 0
+    ? metaY + (metaItems.length - 1) * 42 + 34
+    : metaY
+  height = Math.max(height, requiredMetaBottom + padding + 28)
+  let cursorY = metaY
+  for (const item of metaItems) {
+    if (cursorY + 34 > height - padding - 28) break
+    nodes.push(
+      `<rect x="${padding}" y="${cursorY}" width="${innerWidth}" height="34" rx="13" fill="${options.bg}" stroke="${options.border}" stroke-opacity="0.64"/>`,
+    )
+    nodes.push(iconElement({
+      type: item.icon,
+      x: padding + 13,
+      y: cursorY + 10,
+      size: 16,
+      stroke: item.icon === 'music' || item.icon === 'gamepad' ? options.accent : options.muted,
+      opacity: 0.82,
+    }))
+    nodes.push(textElement({
+      x: padding + 38,
+      y: cursorY + 23,
+      fill: options.muted,
+      className: 'coverMeta',
+      text: truncateTextByUnits(item.text, Math.max(18, Math.floor((innerWidth - 54) / 8))),
+    }))
+    cursorY += 42
+  }
+
+  const footerY = height - padding + 2
+  nodes.push(
+    `<line x1="${padding}" y1="${footerY - 18}" x2="${width - padding}" y2="${footerY - 18}" stroke="${options.border}" stroke-width="1" opacity="0.62"/>`,
+  )
+  nodes.push(linkElement(
+    statusPageUrl,
+    textElement({
+      x: padding,
+      y: footerY,
+      fill: options.muted,
+      className: 'coverFooter',
+      text: truncateText(DEFAULT_FOOTER_TEXT, fullTextMaxChars),
+    }),
+  ))
+
+  const ariaLabel = state === 'active'
+    ? `${profile.currentlyText || '当前状态'}: ${statusLine}${steamLine ? `. Playing: ${steamLine}` : ''}${mediaLine ? `. Listening: ${mediaLine}` : ''}`
+    : statusLine
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(ariaLabel)}">`,
+    '<style>',
+    'text{font-family:"SF Pro Rounded","Segoe UI",ui-rounded,-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:0}',
+    '.coverName{font-size:18px;font-weight:800;letter-spacing:-.01em}',
+    '.coverBio,.coverNote{font-size:13px;font-weight:560}',
+    '.coverKicker{font-size:11px;font-weight:780;letter-spacing:.12em;text-transform:uppercase}',
+    '.coverStatus{font-size:16px;font-weight:760;letter-spacing:-.01em}',
+    '.coverMeta{font-size:13px;font-weight:650}',
+    '.coverFooter{font-size:10.5px;font-weight:700;letter-spacing:.03em}',
+    '.coverAvatarInitials{font-size:19px;font-weight:850}',
+    '</style>',
+    `<defs>${defs.join('')}</defs>`,
+    `<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="${options.bg}" stroke="${options.border}" stroke-width="1.25"/>`,
+    ...nodes,
+    '</svg>',
+  ].join('')
+}
+
+export function renderStatusCardSvg({
+  options,
+  profile,
+  activity,
+  avatarDataUri,
+  coverDataUri,
+  inClassStatusActive = false,
+  inClassOccurrence,
+  statusPageUrl,
+  state,
+}: {
+  options: StatusCardOptions
+  profile: StatusCardProfile
+  activity: ActivityFeedItem | null
+  avatarDataUri?: string | null
+  coverDataUri?: string | null
+  inClassStatusActive?: boolean
+  inClassOccurrence?: ScheduleOccurrence | null
+  statusPageUrl: string
+  state: StatusCardState
+}): string {
+  if (options.variant === 'cover') {
+    return renderCoverStatusCardSvg({
+      options,
+      profile,
+      activity,
+      avatarDataUri,
+      coverDataUri,
+      inClassStatusActive,
+      inClassOccurrence,
+      statusPageUrl,
+      state,
+    })
+  }
+
   if (options.variant === 'aurora') {
     return renderAuroraStatusCardSvg({
       options,

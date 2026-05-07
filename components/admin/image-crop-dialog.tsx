@@ -96,6 +96,7 @@ export function ImageCropDialog({
   sourceUrl,
   outputSize,
   aspectMode = 'square',
+  aspectRatio,
   outputFormat = 'png',
   outputQuality,
   title,
@@ -108,7 +109,7 @@ export function ImageCropDialog({
   const imgRef = useRef<HTMLImageElement>(null)
   const initUrlRef = useRef<string | null>(null)
 
-  const isSquare = aspectMode === 'square'
+  const fixedAspectRatio = aspectMode === 'square' ? 1 : aspectRatio
 
   const baseFit =
     natural.w > 0 && natural.h > 0
@@ -122,12 +123,12 @@ export function ImageCropDialog({
       const w = img.width
       const h = img.height
       if (!w || !h) return
-      const next = isSquare
-        ? centerCrop(makeAspectCrop({ unit: '%', width: 75 }, 1, w, h), w, h)
+      const next = fixedAspectRatio
+        ? centerCrop(makeAspectCrop({ unit: '%', width: 85 }, fixedAspectRatio, w, h), w, h)
         : centerCrop({ unit: '%', width: 85, height: 80 }, w, h)
       setCrop(next)
     },
-    [isSquare],
+    [fixedAspectRatio],
   )
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export function ImageCropDialog({
             <div className="flex max-h-[min(65dvh,420px)] w-full justify-center overflow-auto rounded-md border border-border bg-muted/30 p-2">
               <ReactCrop
                 crop={crop}
-                aspect={isSquare ? 1 : undefined}
+                aspect={fixedAspectRatio}
                 minWidth={24}
                 minHeight={24}
                 keepSelection

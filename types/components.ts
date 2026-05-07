@@ -36,6 +36,7 @@ export interface ImageCropDialogProps {
   sourceUrl: string | null
   outputSize: number
   aspectMode?: ImageCropAspectMode
+  aspectRatio?: number
   outputFormat?: ImageCropOutputFormat
   outputQuality?: number
   title: string

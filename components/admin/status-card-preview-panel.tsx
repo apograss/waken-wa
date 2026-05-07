@@ -1,12 +1,14 @@
 'use client'
 
 import { useAtom } from 'jotai'
-import { Copy, ExternalLink, RotateCcw } from 'lucide-react'
+import { Copy, ExternalLink, RotateCcw, Upload } from 'lucide-react'
 import Image from 'next/image'
 import { useT } from 'next-i18next/client'
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
 
+import { uploadImageSource } from '@/components/admin/admin-query-mutations'
+import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import {
   WebSettingsInset,
   WebSettingsRow,
@@ -29,48 +31,16 @@ import {
 import { Switch } from '@/components/ui/switch'
 
 type DeviceMode = 'auto' | 'deviceId' | 'deviceKey'
-type StatusCardVariant = 'classic' | 'aurora'
+type StatusCardVariant = 'classic' | 'aurora' | 'cover'
 
 type StatusCardDraft = {
-  variant: StatusCardVariant
   deviceMode: DeviceMode
   deviceValue: string
-  showHeader: boolean
-  showAvatar: boolean
-  showName: boolean
-  showBio: boolean
-  showNote: boolean
-  preferGame: boolean
-  showInClassStatus: boolean
-  width: number
-  height: number
-  radius: number
-  bg: string
-  fg: string
-  muted: string
-  accent: string
-  border: string
 }
 
 const DEFAULT_DRAFT: StatusCardDraft = {
-  variant: 'aurora',
   deviceMode: 'auto',
   deviceValue: '',
-  showHeader: true,
-  showAvatar: true,
-  showName: true,
-  showBio: true,
-  showNote: false,
-  preferGame: false,
-  showInClassStatus: false,
-  width: 520,
-  height: 310,
-  radius: 20,
-  bg: '#FFFFFF',
-  fg: '#111827',
-  muted: '#6B7280',
-  accent: '#22C55E',
-  border: '#E5E7EB',
 }
 
 function toHexColor(value: string, fallback: string): string {
@@ -84,29 +54,74 @@ function clampNumber(value: number, fallback: number, min: number, max: number):
   return Math.min(max, Math.max(min, Math.round(value)))
 }
 
-function buildStatusCardPath(draft: StatusCardDraft): string {
+const COVER_CROP_ASPECT_RATIO = 520 / 100
+const COVER_CROP_OUTPUT_EDGE = 1400
+
+function normalizeCoverKey(value: string): string {
+  const normalized = value.trim()
+  return /^[0-9a-f-]{16,64}$/i.test(normalized) ? normalized : ''
+}
+
+function extractCoverKeyFromImageSourceUrl(value: string): string {
+  const normalized = value.trim()
+  const match = /\/api\/image-src\/([0-9a-f-]{16,64})/i.exec(normalized)
+  return match?.[1] ?? normalizeCoverKey(normalized)
+}
+
+async function hashText(value: string): Promise<string> {
+  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function buildStatusCardPath(draft: StatusCardDraft, form: {
+  statusCardVariant: StatusCardVariant
+  statusCardCoverKey: string
+  statusCardCoverRev: string
+  statusCardShowHeader: boolean
+  statusCardShowAvatar: boolean
+  statusCardShowName: boolean
+  statusCardShowBio: boolean
+  statusCardShowNote: boolean
+  statusCardPreferGame: boolean
+  statusCardShowInClassStatus: boolean
+  statusCardWidth: number
+  statusCardHeight: number
+  statusCardRadius: number
+  statusCardBg: string
+  statusCardFg: string
+  statusCardMuted: string
+  statusCardAccent: string
+  statusCardBorder: string
+}): string {
   const params = new URLSearchParams()
-  params.set('variant', draft.variant)
-  params.set('showHeader', draft.showHeader ? '1' : '0')
-  if (draft.showHeader) {
-    params.set('showAvatar', draft.showAvatar ? '1' : '0')
-    params.set('showName', draft.showName ? '1' : '0')
-    params.set('showBio', draft.showBio ? '1' : '0')
-    params.set('showNote', draft.showNote ? '1' : '0')
+  params.set('variant', form.statusCardVariant)
+  const coverKey = normalizeCoverKey(form.statusCardCoverKey)
+  if (form.statusCardVariant === 'cover' && coverKey) {
+    params.set('cover', coverKey)
+    if (form.statusCardCoverRev.trim()) {
+      params.set('coverRev', form.statusCardCoverRev.trim())
+    }
+  }
+  params.set('showHeader', form.statusCardShowHeader ? '1' : '0')
+  if (form.statusCardShowHeader) {
+    params.set('showAvatar', form.statusCardShowAvatar ? '1' : '0')
+    params.set('showName', form.statusCardShowName ? '1' : '0')
+    params.set('showBio', form.statusCardShowBio ? '1' : '0')
+    params.set('showNote', form.statusCardShowNote ? '1' : '0')
   }
   if (draft.deviceMode !== 'auto' && draft.deviceValue) {
     params.set(draft.deviceMode, draft.deviceValue)
   }
-  params.set('preferGame', draft.preferGame ? '1' : '0')
-  params.set('showInClassStatus', draft.showInClassStatus ? '1' : '0')
-  params.set('width', String(draft.width))
-  params.set('height', String(draft.height))
-  params.set('radius', String(draft.radius))
-  params.set('bg', draft.bg)
-  params.set('fg', draft.fg)
-  params.set('muted', draft.muted)
-  params.set('accent', draft.accent)
-  params.set('border', draft.border)
+  params.set('preferGame', form.statusCardPreferGame ? '1' : '0')
+  params.set('showInClassStatus', form.statusCardShowInClassStatus ? '1' : '0')
+  params.set('width', String(form.statusCardWidth))
+  params.set('height', String(form.statusCardHeight))
+  params.set('radius', String(form.statusCardRadius))
+  params.set('bg', form.statusCardBg)
+  params.set('fg', form.statusCardFg)
+  params.set('muted', form.statusCardMuted)
+  params.set('accent', form.statusCardAccent)
+  params.set('border', form.statusCardBorder)
   return `/api/status-card?${params.toString()}`
 }
 
@@ -163,15 +178,17 @@ export function StatusCardPreviewPanel() {
   )
   const [draft, setDraft] = useState<StatusCardDraft>(() => ({
     ...DEFAULT_DRAFT,
-    accent: toHexColor(form.profileOnlineAccentColor || DEFAULT_DRAFT.accent, DEFAULT_DRAFT.accent),
   }))
+  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [coverCropSourceUrl, setCoverCropSourceUrl] = useState<string | null>(null)
+  const [coverCropDialogOpen, setCoverCropDialogOpen] = useState(false)
 
   const selectedDevice = devices.find((device) => {
     if (draft.deviceMode === 'deviceId') return String(device.id) === draft.deviceValue
     if (draft.deviceMode === 'deviceKey') return device.generatedHashKey === draft.deviceValue
     return false
   })
-  const path = useMemo(() => buildStatusCardPath(draft), [draft])
+  const path = useMemo(() => buildStatusCardPath(draft, form), [draft, form])
   const absoluteUrl = `${origin}${path}`
   const embedAlt = form.currentlyText.trim() || t('webSettingsBasic.currentlyTextDefault')
   const embedHtml = `<img src="${escapeHtmlAttribute(absoluteUrl || path)}" alt="${escapeHtmlAttribute(embedAlt)}" />`
@@ -193,21 +210,72 @@ export function StatusCardPreviewPanel() {
     }
   }
 
+  const openCoverCropForFile = (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('webSettingsActivity.statusCard.coverUploadInvalid'))
+      return
+    }
+    if (coverCropSourceUrl) URL.revokeObjectURL(coverCropSourceUrl)
+    setCoverCropSourceUrl(URL.createObjectURL(file))
+    setCoverCropDialogOpen(true)
+  }
+
+  const uploadCoverDataUrl = async (dataUrl: string) => {
+    setIsUploadingCover(true)
+    try {
+      const [url, contentHash] = await Promise.all([
+        uploadImageSource(dataUrl, 'status-card.cover'),
+        hashText(dataUrl),
+      ])
+      const coverKey = extractCoverKeyFromImageSourceUrl(url)
+      if (!coverKey) throw new Error('Missing image key')
+      setForm((prev) => ({
+        ...prev,
+        statusCardCoverKey: coverKey,
+        statusCardCoverRev: contentHash.slice(0, 16),
+      }))
+      toast.success(t('webSettingsActivity.statusCard.coverUploadSuccess'))
+    } catch {
+      toast.error(t('webSettingsActivity.statusCard.coverUploadFailed'))
+    } finally {
+      setIsUploadingCover(false)
+    }
+  }
+
   const reset = () => {
-    setDraft({
-      ...DEFAULT_DRAFT,
-      accent: toHexColor(form.profileOnlineAccentColor || DEFAULT_DRAFT.accent, DEFAULT_DRAFT.accent),
-    })
+    setDraft({ ...DEFAULT_DRAFT })
+    setForm((prev) => ({
+      ...prev,
+      statusCardVariant: 'aurora',
+      statusCardCoverKey: '',
+      statusCardCoverRev: '',
+      statusCardShowHeader: true,
+      statusCardShowAvatar: true,
+      statusCardShowName: true,
+      statusCardShowBio: true,
+      statusCardShowNote: false,
+      statusCardPreferGame: false,
+      statusCardShowInClassStatus: false,
+      statusCardWidth: 520,
+      statusCardHeight: 310,
+      statusCardRadius: 20,
+      statusCardBg: '#FFFFFF',
+      statusCardFg: '#111827',
+      statusCardMuted: '#6B7280',
+      statusCardAccent: toHexColor(prev.profileOnlineAccentColor || '#22C55E', '#22C55E'),
+      statusCardBorder: '#E5E7EB',
+    }))
   }
 
   const setDimension = (
-    key: 'width' | 'height' | 'radius',
+    key: 'statusCardWidth' | 'statusCardHeight' | 'statusCardRadius',
     value: string,
     fallback: number,
     min: number,
     max: number,
   ) => {
-    patchDraft(key, clampNumber(Number(value), fallback, min, max))
+    patchForm(key, clampNumber(Number(value), fallback, min, max))
   }
 
   return (
@@ -251,8 +319,8 @@ export function StatusCardPreviewPanel() {
               action={
                 <Switch
                   id="status-card-show-header"
-                  checked={draft.showHeader}
-                  onCheckedChange={(value) => patchDraft('showHeader', value)}
+                  checked={form.statusCardShowHeader}
+                  onCheckedChange={(value) => patchForm('statusCardShowHeader', value)}
                 />
               }
             />
@@ -263,9 +331,9 @@ export function StatusCardPreviewPanel() {
               action={
                 <Switch
                   id="status-card-show-note"
-                  checked={draft.showNote}
-                  onCheckedChange={(value) => patchDraft('showNote', value)}
-                  disabled={!draft.showHeader}
+                  checked={form.statusCardShowNote}
+                  onCheckedChange={(value) => patchForm('statusCardShowNote', value)}
+                  disabled={!form.statusCardShowHeader}
                 />
               }
             />
@@ -276,8 +344,8 @@ export function StatusCardPreviewPanel() {
               action={
                 <Switch
                   id="status-card-prefer-game"
-                  checked={draft.preferGame}
-                  onCheckedChange={(value) => patchDraft('preferGame', value)}
+                  checked={form.statusCardPreferGame}
+                  onCheckedChange={(value) => patchForm('statusCardPreferGame', value)}
                 />
               }
             />
@@ -288,19 +356,19 @@ export function StatusCardPreviewPanel() {
               action={
                 <Switch
                   id="status-card-show-in-class"
-                  checked={draft.showInClassStatus}
-                  onCheckedChange={(value) => patchDraft('showInClassStatus', value)}
+                  checked={form.statusCardShowInClassStatus}
+                  onCheckedChange={(value) => patchForm('statusCardShowInClassStatus', value)}
                 />
               }
             />
           </WebSettingsRows>
 
-          {draft.showHeader ? (
+          {form.statusCardShowHeader ? (
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                ['showAvatar', t('webSettingsActivity.statusCard.showAvatar')],
-                ['showName', t('webSettingsActivity.statusCard.showName')],
-                ['showBio', t('webSettingsActivity.statusCard.showBio')],
+                ['statusCardShowAvatar', t('webSettingsActivity.statusCard.showAvatar')],
+                ['statusCardShowName', t('webSettingsActivity.statusCard.showName')],
+                ['statusCardShowBio', t('webSettingsActivity.statusCard.showBio')],
               ].map(([key, label]) => (
                 <label
                   key={key}
@@ -308,8 +376,8 @@ export function StatusCardPreviewPanel() {
                 >
                   <span>{label}</span>
                   <Switch
-                    checked={Boolean(draft[key as keyof StatusCardDraft])}
-                    onCheckedChange={(value) => patchDraft(key as 'showAvatar' | 'showName' | 'showBio', value)}
+                    checked={Boolean(form[key as 'statusCardShowAvatar' | 'statusCardShowName' | 'statusCardShowBio'])}
+                    onCheckedChange={(value) => patchForm(key as 'statusCardShowAvatar' | 'statusCardShowName' | 'statusCardShowBio', value)}
                   />
                 </label>
               ))}
@@ -322,8 +390,8 @@ export function StatusCardPreviewPanel() {
                 {t('webSettingsActivity.statusCard.variantLabel')}
               </Label>
               <Select
-                value={draft.variant}
-                onValueChange={(value) => patchDraft('variant', value as StatusCardVariant)}
+                value={form.statusCardVariant}
+                onValueChange={(value) => patchForm('statusCardVariant', value as StatusCardVariant)}
               >
                 <SelectTrigger id="status-card-variant" className="w-full">
                   <SelectValue />
@@ -332,12 +400,51 @@ export function StatusCardPreviewPanel() {
                   <SelectItem value="aurora">
                     {t('webSettingsActivity.statusCard.variants.aurora')}
                   </SelectItem>
+                  <SelectItem value="cover">
+                    {t('webSettingsActivity.statusCard.variants.cover')}
+                  </SelectItem>
                   <SelectItem value="classic">
                     {t('webSettingsActivity.statusCard.variants.classic')}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {form.statusCardVariant === 'cover' ? (
+              <div className="space-y-2">
+                <Label htmlFor="status-card-cover-key">
+                  {t('webSettingsActivity.statusCard.coverKeyLabel')}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="status-card-cover-key"
+                    value={form.statusCardCoverKey}
+                    onChange={(event) => patchForm('statusCardCoverKey', event.target.value)}
+                    placeholder={t('webSettingsActivity.statusCard.coverKeyPlaceholder')}
+                    className="font-mono text-xs"
+                  />
+                  <Button type="button" variant="outline" size="sm" disabled={isUploadingCover} asChild>
+                    <label className="cursor-pointer">
+                      <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                      {isUploadingCover
+                        ? t('webSettingsActivity.statusCard.coverUploading')
+                        : t('webSettingsActivity.statusCard.coverUpload')}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(event) => {
+                          openCoverCropForFile(event.target.files?.[0])
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  </Button>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t('webSettingsActivity.statusCard.coverKeyHint')}
+                </p>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="status-card-device-mode">
                 {t('webSettingsActivity.statusCard.deviceModeLabel')}
@@ -405,8 +512,8 @@ export function StatusCardPreviewPanel() {
                 type="number"
                 min={280}
                 max={1200}
-                value={draft.width}
-                onChange={(event) => setDimension('width', event.target.value, DEFAULT_DRAFT.width, 280, 1200)}
+                value={form.statusCardWidth}
+                onChange={(event) => setDimension('statusCardWidth', event.target.value, 520, 280, 1200)}
               />
             </div>
             <div className="space-y-1.5">
@@ -418,8 +525,8 @@ export function StatusCardPreviewPanel() {
                 type="number"
                 min={1}
                 max={720}
-                value={draft.height}
-                onChange={(event) => setDimension('height', event.target.value, DEFAULT_DRAFT.height, 1, 720)}
+                value={form.statusCardHeight}
+                onChange={(event) => setDimension('statusCardHeight', event.target.value, 310, 1, 720)}
               />
             </div>
             <div className="space-y-1.5">
@@ -431,18 +538,18 @@ export function StatusCardPreviewPanel() {
                 type="number"
                 min={0}
                 max={80}
-                value={draft.radius}
-                onChange={(event) => setDimension('radius', event.target.value, DEFAULT_DRAFT.radius, 0, 80)}
+                value={form.statusCardRadius}
+                onChange={(event) => setDimension('statusCardRadius', event.target.value, 20, 0, 80)}
               />
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <StatusCardColorInput id="status-card-bg" label={t('webSettingsActivity.statusCard.bgLabel')} value={draft.bg} onChange={(value) => patchDraft('bg', value)} />
-            <StatusCardColorInput id="status-card-fg" label={t('webSettingsActivity.statusCard.fgLabel')} value={draft.fg} onChange={(value) => patchDraft('fg', value)} />
-            <StatusCardColorInput id="status-card-muted" label={t('webSettingsActivity.statusCard.mutedLabel')} value={draft.muted} onChange={(value) => patchDraft('muted', value)} />
-            <StatusCardColorInput id="status-card-accent" label={t('webSettingsActivity.statusCard.accentLabel')} value={draft.accent} onChange={(value) => patchDraft('accent', value)} />
-            <StatusCardColorInput id="status-card-border" label={t('webSettingsActivity.statusCard.borderLabel')} value={draft.border} onChange={(value) => patchDraft('border', value)} />
+            <StatusCardColorInput id="status-card-bg" label={t('webSettingsActivity.statusCard.bgLabel')} value={form.statusCardBg} onChange={(value) => patchForm('statusCardBg', value)} />
+            <StatusCardColorInput id="status-card-fg" label={t('webSettingsActivity.statusCard.fgLabel')} value={form.statusCardFg} onChange={(value) => patchForm('statusCardFg', value)} />
+            <StatusCardColorInput id="status-card-muted" label={t('webSettingsActivity.statusCard.mutedLabel')} value={form.statusCardMuted} onChange={(value) => patchForm('statusCardMuted', value)} />
+            <StatusCardColorInput id="status-card-accent" label={t('webSettingsActivity.statusCard.accentLabel')} value={form.statusCardAccent} onChange={(value) => patchForm('statusCardAccent', value)} />
+            <StatusCardColorInput id="status-card-border" label={t('webSettingsActivity.statusCard.borderLabel')} value={form.statusCardBorder} onChange={(value) => patchForm('statusCardBorder', value)} />
           </div>
         </div>
 
@@ -452,11 +559,11 @@ export function StatusCardPreviewPanel() {
               <Image
                 src={path}
                 alt={t('webSettingsActivity.statusCard.previewAlt')}
-                width={draft.width}
-                height={draft.height}
+                width={form.statusCardWidth}
+                height={form.statusCardHeight}
                 unoptimized
                 className="max-w-full rounded-md"
-                style={{ width: Math.min(draft.width, 360), height: 'auto' }}
+                style={{ width: Math.min(form.statusCardWidth, 360), height: 'auto' }}
               />
             </div>
           </div>
@@ -501,6 +608,29 @@ export function StatusCardPreviewPanel() {
           ) : null}
         </div>
       </div>
+      <ImageCropDialog
+        open={coverCropDialogOpen}
+        onOpenChange={(open) => {
+          setCoverCropDialogOpen(open)
+          if (!open) {
+            setCoverCropSourceUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev)
+              return null
+            })
+          }
+        }}
+        sourceUrl={coverCropSourceUrl}
+        aspectMode="free"
+        aspectRatio={COVER_CROP_ASPECT_RATIO}
+        outputSize={COVER_CROP_OUTPUT_EDGE}
+        outputFormat="webp"
+        outputQuality={0.9}
+        title={t('webSettingsActivity.statusCard.coverCropTitle')}
+        description={t('webSettingsActivity.statusCard.coverCropDescription')}
+        onComplete={(dataUrl) => {
+          void uploadCoverDataUrl(dataUrl)
+        }}
+      />
     </WebSettingsInset>
   )
 }

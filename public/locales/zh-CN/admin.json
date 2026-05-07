@@ -1009,8 +1009,19 @@
       "variantLabel": "视觉风格",
       "variants": {
         "aurora": "Aurora 光晕卡",
+        "cover": "Cover 头图卡",
         "classic": "Classic 经典卡"
       },
+      "coverKeyLabel": "头图 Hash",
+      "coverKeyPlaceholder": "上传后自动填入，也可粘贴 image-src hash",
+      "coverKeyHint": "复制出的状态卡 URL 只会包含 hash，不暴露原始图片地址。",
+      "coverUpload": "上传",
+      "coverUploading": "上传中",
+      "coverUploadSuccess": "头图已上传",
+      "coverUploadFailed": "头图上传失败",
+      "coverUploadInvalid": "请选择图片文件",
+      "coverCropTitle": "裁剪状态卡头图",
+      "coverCropDescription": "头图显示区域较窄，请选择最适合横幅展示的部分。",
       "deviceModeLabel": "设备筛选",
       "deviceModes": {
         "auto": "自动选择当前状态",
