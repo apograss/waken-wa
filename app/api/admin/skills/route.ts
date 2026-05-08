@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
+import { updateSiteConfigFromPayload } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
-import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
   clearSkillsApiKey,
@@ -120,6 +120,7 @@ export async function PATCH(request: NextRequest) {
       revokedOauthTokenCount = await revokeSkillsOauthTokensByAiClientId(revokeOauthForAiClientId)
     }
 
+    let updatedConfig: Record<string, unknown> | null = null
     if (enabled !== undefined || authMode !== undefined || oauthTokenTtlMinutes !== undefined) {
       const existing = await getSiteConfigMemoryFirst()
       if (!existing) {
@@ -128,26 +129,14 @@ export async function PATCH(request: NextRequest) {
           { status: 400 },
         )
       }
-      await safeSiteConfigUpsert({
-        where: { id: 1 },
-        update: {
-          skillsDebugEnabled: enabled === undefined ? existing.skillsDebugEnabled : enabled,
-          skillsAuthMode: authMode === undefined ? existing.skillsAuthMode : authMode,
-          skillsOauthTokenTtlMinutes:
-            oauthTokenTtlMinutes === undefined
-              ? existing.skillsOauthTokenTtlMinutes
-              : oauthTokenTtlMinutes,
-        },
-        create: {
-          id: 1,
-          ...existing,
-          skillsDebugEnabled: enabled === undefined ? existing.skillsDebugEnabled : enabled,
-          skillsAuthMode: authMode === undefined ? existing.skillsAuthMode : authMode,
-          skillsOauthTokenTtlMinutes:
-            oauthTokenTtlMinutes === undefined
-              ? existing.skillsOauthTokenTtlMinutes
-              : oauthTokenTtlMinutes,
-        },
+      const configPatch: Record<string, unknown> = {}
+      if (enabled !== undefined) configPatch.skillsDebugEnabled = enabled
+      if (authMode !== undefined) configPatch.skillsAuthMode = authMode
+      if (oauthTokenTtlMinutes !== undefined) {
+        configPatch.skillsOauthTokenTtlMinutes = oauthTokenTtlMinutes
+      }
+      updatedConfig = await updateSiteConfigFromPayload(configPatch, {
+        allowRestrictedFields: true,
       })
 
       const existingMode = normalizeAuthMode(existing.skillsAuthMode)
@@ -162,7 +151,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const cfg = await getSiteConfigMemoryFirst()
+    const cfg = updatedConfig ?? (await getSiteConfigMemoryFirst())
     const authModeOut = normalizeAuthMode(cfg?.skillsAuthMode)
 
     return NextResponse.json({
