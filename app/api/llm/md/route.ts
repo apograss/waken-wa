@@ -35,7 +35,10 @@ function buildEndpoints(origin: string): LlmEndpoints {
     llmBase,
     direct: `${llmBase}/direct`,
     markdown: `${llmBase}/md`,
-    settings: `${llmBase}/settings`,
+    settingsCore: `${llmBase}/settings/core`,
+    settingsTheme: `${llmBase}/settings/theme`,
+    settingsSchedule: `${llmBase}/settings/schedule`,
+    settingsRules: `${llmBase}/settings/rules`,
     appsExport: `${llmBase}/activity/apps-export`,
     oauthExchange: `${llmBase}/oauth/exchange`,
     legacyMcp: `${llmBase}/mcp`,
@@ -119,8 +122,10 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
   lines.push('|----------|-----|')
   lines.push(`| \`GET ${endpoints.direct}\` | Required first call. Runtime detection and next-step guide |`)
   lines.push(`| \`GET ${endpoints.markdown}\` | This document |`)
-  lines.push(`| \`GET ${endpoints.settings}\` | Read site settings |`)
-  lines.push(`| \`PATCH ${endpoints.settings}\` | Update site settings |`)
+  lines.push(`| \`GET/PATCH ${endpoints.settingsCore}\` | Read or update core settings |`)
+  lines.push(`| \`GET/PATCH ${endpoints.settingsTheme}\` | Read or update theme settings |`)
+  lines.push(`| \`GET/PATCH ${endpoints.settingsSchedule}\` | Read or update schedule settings |`)
+  lines.push(`| \`GET/PATCH ${endpoints.settingsRules}\` | Read or update rule settings |`)
   lines.push(`| \`GET ${endpoints.appsExport}\` | Export used activity apps |`)
   lines.push(`| \`POST ${endpoints.oauthExchange}\` | Exchange OAuth code for key (TTL from admin settings) |`)
   lines.push(`| \`${endpoints.legacyMcp}\` | Legacy MCP fallback endpoint |`)
@@ -193,7 +198,7 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
     'Ask the user to open and confirm that authorize link',
     `Call \`POST ${endpoints.oauthExchange}\` with headers: LLM-Skills-Mode, LLM-Skills-Token(code), LLM-Skills-AI`,
     'Read the returned key (TTL follows admin setting), then use that key as LLM-Skills-Token for business calls',
-    'Use `/api/llm/settings` or `/api/llm/activity/apps-export` only after auth succeeds',
+    'Use `/api/llm/settings/core|theme|schedule|rules` or `/api/llm/activity/apps-export` only after auth succeeds',
   ])
   pushBullets(lines, [
     'On Windows, prefer PowerShell examples instead of Bash multiline `curl` examples',
@@ -223,7 +228,7 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
   pushNumbered(lines, [
     `Call \`GET ${endpoints.direct}?mode=apikey\``,
     'Read the returned headers template',
-    'Use `/api/llm/settings` or `/api/llm/activity/apps-export` only after auth succeeds',
+    'Use `/api/llm/settings/core|theme|schedule|rules` or `/api/llm/activity/apps-export` only after auth succeeds',
   ])
 
   pushSection(lines, '## MCP Flow')
@@ -268,12 +273,34 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
   ])
 
   pushSection(lines, '## Read and Write Operations')
+  pushSection(lines, '### v2 Settings Categories')
+  lines.push('The legacy combined `/api/llm/settings` endpoint is removed. Always choose exactly one category endpoint.')
+  lines.push('')
+  lines.push('| Category | Endpoint | Fields |')
+  lines.push('|----------|----------|--------|')
+  lines.push(`| Core | \`${endpoints.settingsCore}\` | profile, home labels, AI mode, status card, media display, Steam public fields, runtime-safe core switches |`)
+  lines.push(`| Theme | \`${endpoints.settingsTheme}\` | themePreset, themeCustomSurface, publicFontOptionsEnabled, publicFontOptions, customCss |`)
+  lines.push(`| Schedule | \`${endpoints.settingsSchedule}\` | scheduleSlotMinutes, period template, weekday grid, courses, ICS, home schedule display fields |`)
+  lines.push(`| Rules | \`${endpoints.settingsRules}\` | app message rules, app filters, capture settings, media source rules |`)
+  lines.push('')
+  lines.push('Rules:')
+  pushBullets(lines, [
+    'Do not call the removed combined endpoint',
+    'Do not mix fields from multiple categories in one PATCH',
+    'If a request touches multiple categories, send one minimal PATCH per category',
+  ])
+
   pushSection(lines, '### Read Current Settings')
-  pushCodeLines(lines, [`GET ${endpoints.settings}`])
+  pushCodeLines(lines, [
+    `GET ${endpoints.settingsCore}`,
+    `GET ${endpoints.settingsTheme}`,
+    `GET ${endpoints.settingsSchedule}`,
+    `GET ${endpoints.settingsRules}`,
+  ])
 
   pushSection(lines, '### Update Settings')
   pushCodeLines(lines, [
-    `PATCH ${endpoints.settings}`,
+    `PATCH ${endpoints.settingsCore}`,
     'Content-Type: application/json; charset=utf-8',
     '',
     '{ "fieldName": "newValue" }',

@@ -1,0 +1,133 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+import { enforceApiRateLimit } from '@/lib/api-rate-limit'
+import {
+  getSafeSiteConfig,
+  prepareSiteConfigValuesFromPayload,
+} from '@/lib/llm-site-config'
+import { readJsonObject } from '@/lib/request-json'
+import { pickRecordKeys } from '@/lib/site-settings-constants'
+import { verifySkillsRequest } from '@/lib/skills-auth'
+
+const LLM_SETTINGS_CATEGORY_RATE_LIMIT_MAX = 60
+const LLM_SETTINGS_CATEGORY_RATE_LIMIT_WINDOW_MS = 60_000
+
+type LlmSettingsCategoryRouteOptions = {
+  bucket: string
+  categoryName: string
+  allowedKeys: readonly string[]
+  read: (config: Record<string, unknown>) => Record<string, unknown>
+  persist: (
+    preparedValues: Record<string, unknown>,
+    requestedBody: Record<string, unknown>,
+  ) => Promise<Record<string, unknown> | null>
+}
+
+function createCategoryFieldError(
+  categoryName: string,
+  allowedKeys: readonly string[],
+  receivedKeys: string[],
+) {
+  const invalidKeys = receivedKeys.filter((key) => !allowedKeys.includes(key))
+  if (invalidKeys.length === 0) return null
+
+  const error = new Error(
+    `Fields do not belong to ${categoryName} settings: ${invalidKeys.join(', ')}`,
+  )
+  ;(error as { status?: number; invalidKeys?: string[] }).status = 400
+  ;(error as { status?: number; invalidKeys?: string[] }).invalidKeys = invalidKeys
+  return error
+}
+
+function errorResponse(error: unknown) {
+  const status =
+    typeof (error as { status?: unknown }).status === 'number'
+      ? (error as { status: number }).status
+      : null
+  if (error instanceof Error && status !== null) {
+    const detail = error as Error & {
+      deniedKeys?: unknown
+      invalidKeys?: unknown
+    }
+    const extra =
+      Array.isArray(detail.deniedKeys)
+        ? { deniedKeys: detail.deniedKeys }
+        : Array.isArray(detail.invalidKeys)
+          ? { invalidKeys: detail.invalidKeys }
+          : {}
+    return NextResponse.json(
+      { success: false, error: error.message, ...extra },
+      { status },
+    )
+  }
+  return null
+}
+
+export function createLlmSettingsCategoryRoute(options: LlmSettingsCategoryRouteOptions) {
+  const GET = async (request: NextRequest) => {
+    const limitedResponse = await enforceApiRateLimit(request, {
+      bucket: `${options.bucket}-get`,
+      maxRequests: LLM_SETTINGS_CATEGORY_RATE_LIMIT_MAX,
+      windowMs: LLM_SETTINGS_CATEGORY_RATE_LIMIT_WINDOW_MS,
+    })
+    if (limitedResponse) return limitedResponse
+
+    const auth = await verifySkillsRequest(request)
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status })
+    }
+
+    try {
+      const data = await getSafeSiteConfig('admin')
+      return NextResponse.json({
+        success: true,
+        data: data ? options.read(data as Record<string, unknown>) : null,
+      })
+    } catch (error) {
+      console.error(`读取 LLM ${options.categoryName} 配置失败:`, error)
+      return NextResponse.json({ success: false, error: '读取失败' }, { status: 500 })
+    }
+  }
+
+  const PATCH = async (request: NextRequest) => {
+    const limitedResponse = await enforceApiRateLimit(request, {
+      bucket: `${options.bucket}-patch`,
+      maxRequests: LLM_SETTINGS_CATEGORY_RATE_LIMIT_MAX,
+      windowMs: LLM_SETTINGS_CATEGORY_RATE_LIMIT_WINDOW_MS,
+    })
+    if (limitedResponse) return limitedResponse
+
+    const auth = await verifySkillsRequest(request)
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status })
+    }
+
+    try {
+      const body = await readJsonObject(request)
+      const categoryError = createCategoryFieldError(
+        options.categoryName,
+        options.allowedKeys,
+        Object.keys(body),
+      )
+      if (categoryError) throw categoryError
+
+      const preparedValues = await prepareSiteConfigValuesFromPayload(body)
+      const data = await options.persist(
+        pickRecordKeys(preparedValues, options.allowedKeys),
+        body,
+      )
+      return NextResponse.json({
+        success: true,
+        data: data ? options.read(data) : null,
+      })
+    } catch (error) {
+      const knownError = errorResponse(error)
+      if (knownError) return knownError
+
+      console.error(`更新 LLM ${options.categoryName} 配置失败:`, error)
+      return NextResponse.json({ success: false, error: '更新失败' }, { status: 500 })
+    }
+  }
+
+  return { GET, PATCH }
+}
