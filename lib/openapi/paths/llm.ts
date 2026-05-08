@@ -84,7 +84,9 @@ function settingsCategoryPath(item: (typeof settingsCategoryPaths)[number]) {
       tags: ['LLM'],
       summary: item.summary,
       description:
-        `Update only the v2 ${item.label} settings category. Send minimal fields and do not mix fields from other categories.`,
+        item.label === 'theme'
+          ? `Update only the v2 ${item.label} settings category. Send minimal fields and do not mix fields from other categories. Background image auto-palette / live palette extraction may overwrite existing manual color tokens; warn the user before enabling it on a hand-tuned palette.`
+          : `Update only the v2 ${item.label} settings category. Send minimal fields and do not mix fields from other categories.`,
       security,
       parameters,
       requestBody: {

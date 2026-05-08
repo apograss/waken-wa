@@ -7,6 +7,7 @@ import {
 } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
 import { pickRecordKeys } from '@/lib/site-settings-constants'
+import { readEffectiveSiteConfig } from '@/lib/site-settings-read'
 import { verifySkillsRequest } from '@/lib/skills-auth'
 
 const LLM_SETTINGS_CATEGORY_RATE_LIMIT_MAX = 60
@@ -63,6 +64,24 @@ function errorResponse(error: unknown) {
   return null
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function mergeNestedPatchFields(
+  body: Record<string, unknown>,
+  currentConfig: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...body }
+  if (isPlainRecord(body.themeCustomSurface) && isPlainRecord(currentConfig.themeCustomSurface)) {
+    next.themeCustomSurface = {
+      ...currentConfig.themeCustomSurface,
+      ...body.themeCustomSurface,
+    }
+  }
+  return next
+}
+
 export function createLlmSettingsCategoryRoute(options: LlmSettingsCategoryRouteOptions) {
   const GET = async (request: NextRequest) => {
     const limitedResponse = await enforceApiRateLimit(request, {
@@ -111,9 +130,21 @@ export function createLlmSettingsCategoryRoute(options: LlmSettingsCategoryRoute
       )
       if (categoryError) throw categoryError
 
-      const preparedValues = await prepareSiteConfigValuesFromPayload(body)
+      const currentConfig = await readEffectiveSiteConfig()
+      if (!currentConfig) {
+        return NextResponse.json(
+          { success: false, error: '未找到网页配置，请先完成初始化配置' },
+          { status: 400 },
+        )
+      }
+
+      const mergedBody = mergeNestedPatchFields(body, currentConfig)
+      const preparedValues = await prepareSiteConfigValuesFromPayload(mergedBody)
       const data = await options.persist(
-        pickRecordKeys(preparedValues, options.allowedKeys),
+        {
+          ...currentConfig,
+          ...pickRecordKeys(preparedValues, options.allowedKeys),
+        },
         body,
       )
       return NextResponse.json({

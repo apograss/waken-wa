@@ -20,6 +20,7 @@ import {
   pickRulesSettingsFromConfig,
   pickScheduleSettingsFromConfig,
   pickThemeSettingsFromConfig,
+  readEffectiveSiteConfig,
 } from '@/lib/site-settings-read'
 import {
   persistCoreSettingsFromPrepared,
@@ -49,6 +50,7 @@ const UPDATE_SITE_SETTINGS_TOOL_DESCRIPTION = [
   'For `appFilterMode`, only use `blacklist` or `whitelist`; when `appWhitelist` is empty under whitelist mode, no app activity is shown.',
   'For `themePreset`, prefer one of: basic, midnight, forest, sakura, obsidian, ocean, amber, lavender, mono, nord, customSurface. If using `customSurface`, write the theme tokens under `themeCustomSurface`.',
   'Useful `themeCustomSurface` fields include primary, secondary, accent, online, card, border, muted, mutedForeground, homeCardOverlay, homeCardOverlayDark, homeCardInsetHighlight, animatedBgTint1/2/3, floatingOrbColor1/2/3, and animatedBg.',
+  'Background image auto-palette / live palette extraction is not only a preview: enabling it may overwrite existing manual color tokens such as background, primary, accent, card, border, muted, and overlay colors. Warn the user before enabling it when a hand-tuned palette already exists.',
   'For `scheduleSlotMinutes`, only use 15, 30, 45, or 60. When editing schedule structure fields, send complete valid JSON values.',
   'For booleans and optional fields, omit the field to keep the existing value.',
   'If a desired display detail is still not exposed via dedicated theme fields, use `customCss` as the fallback global override layer.',
@@ -79,6 +81,24 @@ function assertCategoryPayload(
   throw error
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function mergeNestedPatchFields(
+  payload: Record<string, unknown>,
+  currentConfig: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...payload }
+  if (isPlainRecord(payload.themeCustomSurface) && isPlainRecord(currentConfig.themeCustomSurface)) {
+    next.themeCustomSurface = {
+      ...currentConfig.themeCustomSurface,
+      ...payload.themeCustomSurface,
+    }
+  }
+  return next
+}
+
 async function readCategorySettings(category: SiteSettingsCategory) {
   const data = await getSafeSiteConfig('admin')
   return data ? pickCategorySettings(category, data as Record<string, unknown>) : null
@@ -89,8 +109,19 @@ async function updateCategorySettings(
   payload: Record<string, unknown>,
 ) {
   assertCategoryPayload(category, payload)
-  const preparedValues = await prepareSiteConfigValuesFromPayload(payload)
-  const pickedValues = pickRecordKeys(preparedValues, SITE_SETTINGS_CATEGORY_KEYS[category])
+  const currentConfig = await readEffectiveSiteConfig()
+  if (!currentConfig) {
+    const error = new Error('未找到网页配置，请先完成初始化配置')
+    ;(error as { status?: number }).status = 400
+    throw error
+  }
+
+  const mergedPayload = mergeNestedPatchFields(payload, currentConfig)
+  const preparedValues = await prepareSiteConfigValuesFromPayload(mergedPayload)
+  const pickedValues = {
+    ...currentConfig,
+    ...pickRecordKeys(preparedValues, SITE_SETTINGS_CATEGORY_KEYS[category]),
+  }
 
   let data: Record<string, unknown> | null
   if (category === 'theme') {

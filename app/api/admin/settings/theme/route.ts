@@ -3,11 +3,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { getSafeSiteConfig,prepareSiteConfigValuesFromPayload } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
-import { pickThemeSettingsFromConfig } from '@/lib/site-settings-read'
+import { pickThemeSettingsFromConfig, readEffectiveSiteConfig } from '@/lib/site-settings-read'
 import { persistThemeSettingsFromPrepared } from '@/lib/site-settings-write'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+async function mergeThemeCustomSurfacePatch(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  if (!isPlainRecord(body.themeCustomSurface)) return body
+  const currentConfig = await readEffectiveSiteConfig()
+  if (!isPlainRecord(currentConfig?.themeCustomSurface)) return body
+  return {
+    ...body,
+    themeCustomSurface: {
+      ...currentConfig.themeCustomSurface,
+      ...body.themeCustomSurface,
+    },
+  }
+}
 
 export async function GET() {
   const session = await requireAdminSession()
@@ -34,7 +53,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const body = await readJsonObject(request)
+    const body = await mergeThemeCustomSurfacePatch(await readJsonObject(request))
     const preparedValues = await prepareSiteConfigValuesFromPayload(body, {
       allowRestrictedFields: true,
     })

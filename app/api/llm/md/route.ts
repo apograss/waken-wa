@@ -410,6 +410,7 @@ function buildMarkdown(origin: string, preferredToolMode: ToolMode, endpoints: L
     '`paletteLiveScope`: Currently `randomOnly`, meaning runtime palette sync is intended for random image sources only',
     '`paletteSeedImageUrl`: Last image URL used for manual palette extraction / regeneration',
     'When `themePreset=customSurface` and `paletteMode=liveFromImage`, the active background image may be resolved first and then used to derive runtime theme variables before the public page is shown',
+    'Important: background image auto-palette / live palette extraction is not only a preview. Enabling it may overwrite the existing manual color tokens such as `background`, `primary`, `accent`, `card`, `border`, `muted`, and related overlay colors. Warn the user before enabling it when they already have a hand-tuned palette',
   ])
   pushBullets(lines, [
     `Existing theme presets: ${BUILT_IN_THEME_PRESETS.map((preset) => `\`${preset}\``).join(', ')}`,
