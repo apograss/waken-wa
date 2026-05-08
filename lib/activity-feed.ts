@@ -44,6 +44,16 @@ type ActivityDbRow = {
   device: string
 }
 
+type ActivityRowSource = 'persistent' | 'realtime'
+
+type ActivityFeedCandidate = {
+  row: ActivityDbRow
+  source: ActivityRowSource
+}
+
+const ACTIVITY_FEED_RECENT_REALTIME_MAX = 20
+const ACTIVITY_FEED_RECENT_REALTIME_RATIO = 0.4
+
 function normalizeProcessName(value: string): string {
   return value.trim().toLowerCase()
 }
@@ -124,6 +134,35 @@ function getPushModeFromMetadata(metadata: unknown): 'realtime' | 'active' {
   const mode = String(meta.pushMode ?? '').trim().toLowerCase()
   if (mode === 'active' || mode === 'persistent') return 'active'
   return 'realtime'
+}
+
+function getFeedPushMode(candidate: ActivityFeedCandidate): 'realtime' | 'active' {
+  if (candidate.source === 'persistent') return 'active'
+  return getPushModeFromMetadata(candidate.row.metadata)
+}
+
+function getActivityTimeMs(row: ActivityDbRow): number {
+  const updatedAt = Date.parse(String(row.updatedAt || row.startedAt))
+  if (Number.isFinite(updatedAt)) return updatedAt
+  const startedAt = Date.parse(String(row.startedAt))
+  return Number.isFinite(startedAt) ? startedAt : -1
+}
+
+function compareActivityCandidatesByTime(a: ActivityFeedCandidate, b: ActivityFeedCandidate): number {
+  return getActivityTimeMs(b.row) - getActivityTimeMs(a.row)
+}
+
+function dedupeRealtimeRecentRows(rows: ActivityDbRow[]): ActivityDbRow[] {
+  const latestByKey = new Map<string, ActivityDbRow>()
+  for (const row of rows) {
+    const deviceKey = row.generatedHashKey || String(row.deviceId || row.device || '')
+    const key = `${deviceKey}:${normalizeProcessName(row.processName)}`
+    const existing = latestByKey.get(key)
+    if (!existing || getActivityTimeMs(row) > getActivityTimeMs(existing)) {
+      latestByKey.set(key, row)
+    }
+  }
+  return Array.from(latestByKey.values())
 }
 
 function applyMessageRule(
@@ -275,13 +314,21 @@ export async function getActivityFeedData(
   const recentRows = recentRowsRaw as ActivityDbRow[]
 
   const realtimeRowsTyped = realtimeRows as unknown as ActivityDbRow[]
-  const recentActivitiesRaw = [...recentRows, ...realtimeRowsTyped]
-    .filter((a: ActivityDbRow) => passesAppFilter(a.processName))
-    .sort((a, b) => {
-      const aTime = Date.parse(String(a.updatedAt || a.startedAt))
-      const bTime = Date.parse(String(b.updatedAt || b.startedAt))
-      return bTime - aTime
-    })
+  const recentLimit = Math.min(limit, ACTIVITY_FEED_QUERY_MAX_LIMIT)
+  const realtimeRecentLimit = Math.min(
+    ACTIVITY_FEED_RECENT_REALTIME_MAX,
+    Math.max(1, Math.floor(recentLimit * ACTIVITY_FEED_RECENT_REALTIME_RATIO)),
+  )
+  const recentPersistentCandidates = recentRows
+    .filter((row) => passesAppFilter(row.processName))
+    .map((row): ActivityFeedCandidate => ({ row, source: 'persistent' }))
+  const recentRealtimeCandidates = dedupeRealtimeRecentRows(realtimeRowsTyped)
+    .filter((row) => passesAppFilter(row.processName))
+    .map((row): ActivityFeedCandidate => ({ row, source: 'realtime' }))
+    .sort(compareActivityCandidatesByTime)
+    .slice(0, realtimeRecentLimit)
+  const recentActivitiesRaw = [...recentPersistentCandidates, ...recentRealtimeCandidates]
+    .sort(compareActivityCandidatesByTime)
     .slice(0, Math.min(limit, ACTIVITY_FEED_QUERY_MAX_LIMIT))
 
   const toIso = (value: unknown): string => {
@@ -293,10 +340,11 @@ export async function getActivityFeedData(
   }
 
   const recentActivities = recentActivitiesRaw
-    .map((item: ActivityDbRow) => {
+    .map((candidate: ActivityFeedCandidate) => {
+      const item = candidate.row
       const startedAtIso = toIso(item.startedAt)
       const normalizedMeta = normalizeMetadata(item.metadata)
-      const pushMode = getPushModeFromMetadata(item.metadata)
+      const pushMode = getFeedPushMode(candidate)
       const shaped =
         nameOnlySet.has(normalizeProcessName(item.processName))
           ? { ...item, processTitle: null as string | null }
@@ -316,16 +364,24 @@ export async function getActivityFeedData(
   // Keep latest active entry for each device
   const activePending: Array<{ hashKey: string; row: Record<string, unknown> }> = []
   const seen = new Set<string>()
-  const activeMerged = [...activeRows, ...realtimeRowsTyped]
-    .sort((a, b) => Date.parse(String(b.updatedAt)) - Date.parse(String(a.updatedAt)))
-  for (const item of activeMerged) {
+  const activeMerged: ActivityFeedCandidate[] = [
+    ...activeRows.map((row): ActivityFeedCandidate => ({ row, source: 'persistent' })),
+    ...realtimeRowsTyped.map((row): ActivityFeedCandidate => ({ row, source: 'realtime' })),
+  ].sort((a, b) => {
+    const aMode = getFeedPushMode(a)
+    const bMode = getFeedPushMode(b)
+    if (aMode !== bMode) return aMode === 'active' ? -1 : 1
+    return compareActivityCandidatesByTime(a, b)
+  })
+  for (const candidate of activeMerged) {
+    const item = candidate.row
     const processKey = normalizeProcessName(item.processName)
     const key = item.generatedHashKey
     if (!key) continue
     if (seen.has(key)) continue
     if (!passesAppFilter(item.processName)) continue
     seen.add(key)
-    const pushMode = getPushModeFromMetadata(item.metadata)
+    const pushMode = getFeedPushMode(candidate)
     const normalizedMeta = normalizeMetadata(item.metadata)
     const maskedTitle = nameOnlySet.has(processKey) ? null : item.processTitle
     const ruleStatusText = applyMessageRule(
