@@ -61,6 +61,8 @@
 
 ## 部署
 
+> 可以查看文档了啦！ [Waken-Wa-Docs](https://waken-wa-docs.xwx.today)
+
 > 如果需要使用，请配合 [Waken-Wa-Reporter](https://github.com/MoYoez/waken-wa-reporter)
 
 ### 1. 本机部署
