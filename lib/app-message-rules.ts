@@ -46,6 +46,10 @@ export type AppMessageRuleValidationError = {
   message: string
 }
 
+export function normalizeAppMessageRegexPattern(pattern: string): string {
+  return pattern.replace(/^\(\?i\)/, '')
+}
+
 function createRuntimeId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`
@@ -139,7 +143,7 @@ export function prepareAppMessageRulesForSave(rules: AppMessageRuleGroup[]): {
       const text = String(titleRule?.text ?? '')
       if (mode === 'regex' && pattern.trim()) {
         try {
-          new RegExp(pattern, 'i')
+          new RegExp(normalizeAppMessageRegexPattern(pattern), 'i')
         } catch (error) {
           errors.push({
             type: 'invalid_regex',

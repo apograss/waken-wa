@@ -11,6 +11,7 @@ import {
   type AppMessageRuleGroup,
   type AppMessageRuleMatchContext,
   type AppMessageTitleRule,
+  normalizeAppMessageRegexPattern,
   renderAppMessageRuleText,
 } from '@/lib/app-message-rules'
 import { db } from '@/lib/db'
@@ -181,7 +182,7 @@ function applyMessageRule(
     if (!title) return null
     if (titleRule.mode === 'regex') {
       try {
-        const match = new RegExp(titleRule.pattern, 'i').exec(title)
+        const match = new RegExp(normalizeAppMessageRegexPattern(titleRule.pattern), 'i').exec(title)
         if (!match) return null
         return {
           fullMatch: match[0] ?? '',

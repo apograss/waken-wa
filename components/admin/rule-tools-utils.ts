@@ -1,5 +1,6 @@
 import {
   type AppMessageTitleRule,
+  normalizeAppMessageRegexPattern,
   prepareAppMessageRulesForSave,
 } from '@/lib/app-message-rules'
 import {
@@ -220,7 +221,7 @@ export function getTitleRuleRegexErrorMessage(
 ): string | null {
   if (titleRule.mode !== 'regex' || !titleRule.pattern.trim()) return null
   try {
-    new RegExp(titleRule.pattern, 'i')
+    new RegExp(normalizeAppMessageRegexPattern(titleRule.pattern), 'i')
     return null
   } catch (error) {
     return t('webSettingsRuleTools.appRules.invalidRegex', {
