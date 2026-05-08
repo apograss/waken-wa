@@ -52,6 +52,7 @@ import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sourc
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { unsanitizeSiteConfigImageInputs } from '@/lib/site-image-urls'
 import { persistCompatibilitySiteConfigValues } from '@/lib/site-settings-write'
+import { normalizeSkillsOauthTokenTtlMinutes } from '@/lib/skills-auth'
 import {
   normalizeStatusCardCoverKey,
   normalizeStatusCardCoverRev,
@@ -70,6 +71,13 @@ function normalizeMediaCoverMaxCount(value: unknown): number {
   const count = Number(value)
   if (!Number.isFinite(count)) return 50
   return Math.min(Math.max(Math.round(count), 0), 500)
+}
+
+function normalizeSkillsAuthMode(raw: unknown): 'oauth' | 'apikey' | null {
+  const value = String(raw ?? '').trim().toLowerCase()
+  if (value === 'oauth') return 'oauth'
+  if (value === 'apikey') return 'apikey'
+  return null
 }
 
 export async function prepareSiteConfigValuesFromPayload(
@@ -125,6 +133,17 @@ export async function prepareSiteConfigValuesFromPayload(
   const openApiDocsEnabled = has('openApiDocsEnabled')
     ? Boolean(normalizedBody.openApiDocsEnabled)
     : existing?.openApiDocsEnabled !== false
+  const skillsDebugEnabled = has('skillsDebugEnabled')
+    ? Boolean(normalizedBody.skillsDebugEnabled)
+    : existing?.skillsDebugEnabled === true
+  const skillsAuthMode = has('skillsAuthMode')
+    ? normalizeSkillsAuthMode(normalizedBody.skillsAuthMode)
+    : normalizeSkillsAuthMode(existing?.skillsAuthMode)
+  const skillsOauthTokenTtlMinutes = normalizeSkillsOauthTokenTtlMinutes(
+    has('skillsOauthTokenTtlMinutes')
+      ? normalizedBody.skillsOauthTokenTtlMinutes
+      : existing?.skillsOauthTokenTtlMinutes,
+  )
   const currentlyText = strField('currentlyText', '当前状态')
   const earlierText = strField('earlierText', '最近的随想录')
   const adminText = strField('adminText', 'admin')
@@ -502,6 +521,10 @@ export async function prepareSiteConfigValuesFromPayload(
     80,
   )
   const statusCardBg = normalizeStatusCardHexColor(normalizedBody.statusCardBg ?? existing?.statusCardBg, '#FFFFFF')
+  const statusCardSignatureBg = normalizeStatusCardHexColor(
+    normalizedBody.statusCardSignatureBg ?? existing?.statusCardSignatureBg,
+    '#F4F0FF',
+  )
   const statusCardFg = normalizeStatusCardHexColor(normalizedBody.statusCardFg ?? existing?.statusCardFg, '#111827')
   const statusCardMuted = normalizeStatusCardHexColor(normalizedBody.statusCardMuted ?? existing?.statusCardMuted, '#6B7280')
   const statusCardAccent = normalizeStatusCardHexColor(normalizedBody.statusCardAccent ?? existing?.statusCardAccent, '#22C55E')
@@ -617,6 +640,9 @@ export async function prepareSiteConfigValuesFromPayload(
     customCss,
     mcpThemeToolsEnabled,
     openApiDocsEnabled,
+    skillsDebugEnabled,
+    skillsAuthMode,
+    skillsOauthTokenTtlMinutes,
     aiToolMode,
     historyWindowMinutes,
     appMessageRules,
@@ -669,6 +695,7 @@ export async function prepareSiteConfigValuesFromPayload(
     statusCardHeight,
     statusCardRadius,
     statusCardBg,
+    statusCardSignatureBg,
     statusCardFg,
     statusCardMuted,
     statusCardAccent,

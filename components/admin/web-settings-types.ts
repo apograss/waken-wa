@@ -168,6 +168,7 @@ export interface SiteConfig {
   statusCardHeight: number
   statusCardRadius: number
   statusCardBg: string
+  statusCardSignatureBg: string
   statusCardFg: string
   statusCardMuted: string
   statusCardAccent: string

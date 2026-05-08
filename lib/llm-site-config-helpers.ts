@@ -27,6 +27,9 @@ export const LLM_DENIED_SITE_CONFIG_KEYS = [
   'hcaptchaEnabled',
   'hcaptchaSiteKey',
   'hcaptchaSecretKey',
+  'skillsDebugEnabled',
+  'skillsAuthMode',
+  'skillsOauthTokenTtlMinutes',
 ] as const
 
 export type SiteConfigRecord = Record<string, any>

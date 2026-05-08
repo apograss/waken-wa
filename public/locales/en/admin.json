@@ -1048,6 +1048,7 @@
       "heightLabel": "Height",
       "radiusLabel": "Radius",
       "bgLabel": "Background",
+      "signatureBgLabel": "Signature background",
       "fgLabel": "Text",
       "mutedLabel": "Muted text",
       "accentLabel": "Accent",

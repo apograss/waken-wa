@@ -95,6 +95,7 @@ function buildStatusCardPath(draft: StatusCardDraft, form: {
   statusCardHeight: number
   statusCardRadius: number
   statusCardBg: string
+  statusCardSignatureBg: string
   statusCardFg: string
   statusCardMuted: string
   statusCardAccent: string
@@ -134,6 +135,9 @@ function buildStatusCardPath(draft: StatusCardDraft, form: {
   params.set('height', String(form.statusCardHeight))
   params.set('radius', String(form.statusCardRadius))
   params.set('bg', form.statusCardBg)
+  if (form.statusCardVariant === 'signature') {
+    params.set('signatureBg', form.statusCardSignatureBg)
+  }
   params.set('fg', form.statusCardFg)
   params.set('muted', form.statusCardMuted)
   params.set('accent', form.statusCardAccent)
@@ -329,6 +333,7 @@ export function StatusCardPreviewPanel() {
       statusCardHeight: 310,
       statusCardRadius: 20,
       statusCardBg: '#FFFFFF',
+      statusCardSignatureBg: '#F4F0FF',
       statusCardFg: '#111827',
       statusCardMuted: '#6B7280',
       statusCardAccent: toHexColor(prev.profileOnlineAccentColor || '#22C55E', '#22C55E'),
@@ -664,6 +669,9 @@ export function StatusCardPreviewPanel() {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <StatusCardColorInput id="status-card-bg" label={t('webSettingsActivity.statusCard.bgLabel')} value={form.statusCardBg} onChange={(value) => patchForm('statusCardBg', value)} />
+            {form.statusCardVariant === 'signature' ? (
+              <StatusCardColorInput id="status-card-signature-bg" label={t('webSettingsActivity.statusCard.signatureBgLabel')} value={form.statusCardSignatureBg} onChange={(value) => patchForm('statusCardSignatureBg', value)} />
+            ) : null}
             <StatusCardColorInput id="status-card-fg" label={t('webSettingsActivity.statusCard.fgLabel')} value={form.statusCardFg} onChange={(value) => patchForm('statusCardFg', value)} />
             <StatusCardColorInput id="status-card-muted" label={t('webSettingsActivity.statusCard.mutedLabel')} value={form.statusCardMuted} onChange={(value) => patchForm('statusCardMuted', value)} />
             <StatusCardColorInput id="status-card-accent" label={t('webSettingsActivity.statusCard.accentLabel')} value={form.statusCardAccent} onChange={(value) => patchForm('statusCardAccent', value)} />

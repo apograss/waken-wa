@@ -556,6 +556,7 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
     patch.statusCardRadius = normalizeStatusCardDimension(web.statusCardRadius, 20, 0, 80)
   }
   if ('statusCardBg' in web) patch.statusCardBg = normalizeStatusCardHexColor(web.statusCardBg, '#FFFFFF')
+  if ('statusCardSignatureBg' in web) patch.statusCardSignatureBg = normalizeStatusCardHexColor(web.statusCardSignatureBg, '#F4F0FF')
   if ('statusCardFg' in web) patch.statusCardFg = normalizeStatusCardHexColor(web.statusCardFg, '#111827')
   if ('statusCardMuted' in web) patch.statusCardMuted = normalizeStatusCardHexColor(web.statusCardMuted, '#6B7280')
   if ('statusCardAccent' in web) patch.statusCardAccent = normalizeStatusCardHexColor(web.statusCardAccent, '#22C55E')

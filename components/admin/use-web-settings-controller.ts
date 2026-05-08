@@ -399,6 +399,7 @@ export function useWebSettingsController() {
       statusCardHeight: normalizeStatusCardDimension(data.statusCardHeight, 310, 1, 720),
       statusCardRadius: normalizeStatusCardDimension(data.statusCardRadius, 20, 0, 80),
       statusCardBg: normalizeStatusCardHexColor(data.statusCardBg, '#FFFFFF'),
+      statusCardSignatureBg: normalizeStatusCardHexColor(data.statusCardSignatureBg, '#F4F0FF'),
       statusCardFg: normalizeStatusCardHexColor(data.statusCardFg, '#111827'),
       statusCardMuted: normalizeStatusCardHexColor(data.statusCardMuted, '#6B7280'),
       statusCardAccent: normalizeStatusCardHexColor(data.statusCardAccent, '#22C55E'),

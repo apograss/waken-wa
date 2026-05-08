@@ -63,6 +63,7 @@ export type StatusCardOptions = {
   height: number
   radius: number
   bg: string
+  signatureBg: string
   fg: string
   muted: string
   accent: string
@@ -408,6 +409,11 @@ export function parseStatusCardOptions(
       80,
     ),
     bg: parseColorParam(searchParams, 'bg', getConfiguredColor(config, 'statusCardBg', '#FFFFFF')),
+    signatureBg: parseColorParam(
+      searchParams,
+      'signatureBg',
+      getConfiguredColor(config, 'statusCardSignatureBg', '#F4F0FF'),
+    ),
     fg: parseColorParam(searchParams, 'fg', getConfiguredColor(config, 'statusCardFg', '#111827')),
     muted: parseColorParam(searchParams, 'muted', getConfiguredColor(config, 'statusCardMuted', '#6B7280')),
     accent: parseColorParam(searchParams, 'accent', defaultAccent),
@@ -1412,7 +1418,10 @@ function renderSignatureStatusCardSvg({
   const leftCenterX = leftWidth / 2
   const leftTextWidth = leftWidth - leftInset * 2
   const avatarX = leftCenterX - avatarSize / 2
-  const avatarY = 35
+  const avatarY = 30
+  const nameY = 116
+  const tagPillY = 124
+  const bioY = options.tag ? tagPillY + 40 : nameY + 25
   const centerY = height / 2
   const steamLine = state === 'active' ? getSteamGameName(activity) : ''
   const mediaLine = state === 'active' ? getMediaLine(activity) : ''
@@ -1450,9 +1459,9 @@ function renderSignatureStatusCardSvg({
     : 'desktop'
   const defs: string[] = [
     `<linearGradient id="signatureBg" x1="0" y1="0" x2="${width}" y2="${height}">
-      <stop offset="0%" stop-color="#F4F0FF"/>
-      <stop offset="58%" stop-color="#F7F1FF"/>
-      <stop offset="100%" stop-color="#FFF7EE"/>
+      <stop offset="0%" stop-color="${options.signatureBg}"/>
+      <stop offset="58%" stop-color="${options.signatureBg}"/>
+      <stop offset="100%" stop-color="${options.bg}"/>
     </linearGradient>`,
     `<linearGradient id="signatureBeam" x1="74" y1="0" x2="${width - 74}" y2="${height}">
       <stop offset="0%" stop-color="${options.bg}" stop-opacity="0"/>
@@ -1485,7 +1494,7 @@ function renderSignatureStatusCardSvg({
     nodes.push(
       `<image href="${escapeAttr(backgroundDataUri)}" x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" preserveAspectRatio="xMidYMid slice" opacity="0.34" clip-path="url(#signatureCardClip)"/>`,
     )
-    nodes.push(`<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="${options.bg}" opacity="0.34"/>`)
+    nodes.push(`<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="${options.signatureBg}" opacity="0.34"/>`)
     nodes.push(`<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${options.radius}" fill="url(#signatureBg)" opacity="0.48"/>`)
   }
   nodes.push(`<path d="M82 -18 C178 72 286 91 425 34 C518 -4 601 14 726 90 L726 0 L82 0 Z" fill="url(#signatureBeam)" opacity="0.68"/>`)
@@ -1515,7 +1524,7 @@ function renderSignatureStatusCardSvg({
   const tagText = options.tag
   nodes.push(textElement({
     x: leftCenterX,
-    y: 110,
+    y: nameY,
     fill: options.fg,
     className: 'signatureName',
     text: truncateText(profile.name || 'Waken', leftTextMaxChars),
@@ -1525,11 +1534,11 @@ function renderSignatureStatusCardSvg({
     const tagMaxChars = Math.max(10, Math.floor(leftTextWidth / 6.8))
     const tagPillWidth = 112
     const tagPillX = leftCenterX - tagPillWidth / 2
-    nodes.push(`<rect x="${tagPillX}" y="116" width="${tagPillWidth}" height="24" rx="12" fill="#FFFFFF" opacity="0.36" stroke="#8B5CF6" stroke-width="0.8" stroke-opacity="0.54" filter="url(#signatureMetaShadow)"/>`)
-    nodes.push(`<svg x="${tagPillX + 17}" y="123" width="10" height="10" viewBox="0 0 512 512" aria-hidden="true" fill="#8B5CF6" opacity="0.74"><path d="M0 252.118V48C0 21.49 21.49 0 48 0h204.118a48 48 0 0 1 33.941 14.059l211.882 211.882c18.745 18.745 18.745 49.137 0 67.882L293.823 497.941c-18.745 18.745-49.137 18.745-67.882 0L14.059 286.059A48 48 0 0 1 0 252.118zM112 64c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48z"/></svg>`)
+    nodes.push(`<rect x="${tagPillX}" y="${tagPillY}" width="${tagPillWidth}" height="24" rx="12" fill="#FFFFFF" opacity="0.36" stroke="#8B5CF6" stroke-width="0.8" stroke-opacity="0.54" filter="url(#signatureMetaShadow)"/>`)
+    nodes.push(`<svg x="${tagPillX + 17}" y="${tagPillY + 7}" width="10" height="10" viewBox="0 0 512 512" aria-hidden="true" fill="#8B5CF6" opacity="0.74"><path d="M0 252.118V48C0 21.49 21.49 0 48 0h204.118a48 48 0 0 1 33.941 14.059l211.882 211.882c18.745 18.745 18.745 49.137 0 67.882L293.823 497.941c-18.745 18.745-49.137 18.745-67.882 0L14.059 286.059A48 48 0 0 1 0 252.118zM112 64c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48z"/></svg>`)
     nodes.push(textElement({
       x: tagPillX + 36,
-      y: 132.5,
+      y: tagPillY + 16.5,
       fill: '#7C3AED',
       className: 'signatureTag',
       text: truncateText(tagText, tagMaxChars),
@@ -1538,7 +1547,7 @@ function renderSignatureStatusCardSvg({
   if (profile.bio) {
     nodes.push(multilineTextElement({
       x: leftCenterX,
-      y: tagText ? 159 : 139,
+      y: bioY,
       fill: options.muted,
       className: 'signatureBio',
       lines: wrapTextLines(profile.bio, Math.max(26, Math.floor(leftTextWidth / 5.8)), 2),

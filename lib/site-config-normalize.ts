@@ -53,6 +53,7 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     statusCardHeight: normalizeStatusCardDimension(config.statusCardHeight, 310, 1, 720),
     statusCardRadius: normalizeStatusCardDimension(config.statusCardRadius, 20, 0, 80),
     statusCardBg: normalizeStatusCardHexColor(config.statusCardBg, '#FFFFFF'),
+    statusCardSignatureBg: normalizeStatusCardHexColor(config.statusCardSignatureBg, '#F4F0FF'),
     statusCardFg: normalizeStatusCardHexColor(config.statusCardFg, '#111827'),
     statusCardMuted: normalizeStatusCardHexColor(config.statusCardMuted, '#6B7280'),
     statusCardAccent: normalizeStatusCardHexColor(config.statusCardAccent, '#22C55E'),

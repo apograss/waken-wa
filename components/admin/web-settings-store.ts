@@ -119,6 +119,7 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   statusCardHeight: 310,
   statusCardRadius: 20,
   statusCardBg: '#FFFFFF',
+  statusCardSignatureBg: '#F4F0FF',
   statusCardFg: '#111827',
   statusCardMuted: '#6B7280',
   statusCardAccent: '#22C55E',

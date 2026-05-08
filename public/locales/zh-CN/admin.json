@@ -1048,6 +1048,7 @@
       "heightLabel": "高度",
       "radiusLabel": "圆角",
       "bgLabel": "背景",
+      "signatureBgLabel": "签名卡背景",
       "fgLabel": "文字",
       "mutedLabel": "弱化文字",
       "accentLabel": "强调色",
