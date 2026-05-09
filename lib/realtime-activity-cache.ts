@@ -25,12 +25,30 @@ export type RealtimeActivityRow = {
 }
 
 type RealtimeActivityState = Record<string, RealtimeActivityRow>
+type RealtimeActivityMemory = {
+  state: RealtimeActivityState
+  loaded: boolean
+  loadedAt: number
+  lastRedisCleanupAt: number
+}
 
-let memoryState: RealtimeActivityState = {}
-let memoryLoaded = false
-let memoryLoadedAt = 0
 const REDIS_REFRESH_INTERVAL_MS = 1000
-let lastRedisCleanupAt = 0
+
+declare global {
+  var __wakenRealtimeActivityMemory: RealtimeActivityMemory | undefined
+}
+
+function getMemory(): RealtimeActivityMemory {
+  if (!globalThis.__wakenRealtimeActivityMemory) {
+    globalThis.__wakenRealtimeActivityMemory = {
+      state: {},
+      loaded: false,
+      loadedAt: 0,
+      lastRedisCleanupAt: 0,
+    }
+  }
+  return globalThis.__wakenRealtimeActivityMemory
+}
 
 function cacheKey(generatedHashKey: string, processName: string): string {
   return `${generatedHashKey}:${processName}`.toLowerCase()
@@ -76,47 +94,50 @@ function parseHashState(raw: Record<string, string>): {
 }
 
 async function cleanupExpiredRedisFields(expiredFields: string[], now = nowMs()): Promise<void> {
-  if (now - lastRedisCleanupAt < REALTIME_ACTIVITY_REDIS_CLEANUP_INTERVAL_MS) return
-  lastRedisCleanupAt = now
+  const memory = getMemory()
+  if (now - memory.lastRedisCleanupAt < REALTIME_ACTIVITY_REDIS_CLEANUP_INTERVAL_MS) return
+  memory.lastRedisCleanupAt = now
   if (expiredFields.length === 0) return
   await redisHDelMany(REALTIME_ACTIVITY_CACHE_KEY, expiredFields)
 }
 
 async function loadState(): Promise<RealtimeActivityState> {
-  memoryState = prune(memoryState)
+  const memory = getMemory()
+  memory.state = prune(memory.state)
   const useRedis = await shouldUseRedisCache()
   if (!useRedis) {
-    if (!memoryLoaded) {
-      memoryLoaded = true
-      memoryLoadedAt = nowMs()
+    if (!memory.loaded) {
+      memory.loaded = true
+      memory.loadedAt = nowMs()
     }
-    return memoryState
+    return memory.state
   }
 
-  if (memoryLoaded && nowMs() - memoryLoadedAt < REDIS_REFRESH_INTERVAL_MS) {
-    return memoryState
+  if (memory.loaded && nowMs() - memory.loadedAt < REDIS_REFRESH_INTERVAL_MS) {
+    return memory.state
   }
 
   const fromRedisHash = await redisHGetAll(REALTIME_ACTIVITY_CACHE_KEY)
   if (fromRedisHash) {
     const parsed = parseHashState(fromRedisHash)
-    memoryState = parsed.activeState
+    memory.state = parsed.activeState
     await cleanupExpiredRedisFields(parsed.expiredFields)
   } else {
-    memoryState = {}
+    memory.state = {}
   }
-  memoryLoaded = true
-  memoryLoadedAt = nowMs()
-  return memoryState
+  memory.loaded = true
+  memory.loadedAt = nowMs()
+  return memory.state
 }
 
 async function saveState(state: RealtimeActivityState, _ttlSeconds: number): Promise<void> {
-  memoryState = prune(state)
-  memoryLoaded = true
-  memoryLoadedAt = nowMs()
+  const memory = getMemory()
+  memory.state = prune(state)
+  memory.loaded = true
+  memory.loadedAt = nowMs()
 
   if (await shouldUseRedisCache()) {
-    for (const [field, row] of Object.entries(memoryState)) {
+    for (const [field, row] of Object.entries(memory.state)) {
       await redisHSet(REALTIME_ACTIVITY_CACHE_KEY, field, JSON.stringify(row))
     }
   }
@@ -141,9 +162,10 @@ export async function upsertRealtimeActivity(
       `rt_${row.deviceId}_${Date.parse(row.updatedAt)}_${Math.random().toString(16).slice(2, 8)}`,
   }
   state[key] = nextRow
-  memoryState = prune(state)
-  memoryLoaded = true
-  memoryLoadedAt = nowMs()
+  const memory = getMemory()
+  memory.state = prune(state)
+  memory.loaded = true
+  memory.loadedAt = nowMs()
   if (await shouldUseRedisCache()) {
     await redisHSet(REALTIME_ACTIVITY_CACHE_KEY, key, JSON.stringify(nextRow))
     return
@@ -158,9 +180,10 @@ export async function removeRealtimeActivity(
   const state = await loadState()
   const key = cacheKey(generatedHashKey, processName)
   delete state[key]
-  memoryState = prune(state)
-  memoryLoaded = true
-  memoryLoadedAt = nowMs()
+  const memory = getMemory()
+  memory.state = prune(state)
+  memory.loaded = true
+  memory.loadedAt = nowMs()
   if (await shouldUseRedisCache()) {
     await redisHDel(REALTIME_ACTIVITY_CACHE_KEY, key)
     return

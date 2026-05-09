@@ -14,12 +14,19 @@ type MemoryCacheValue = {
   value: ActivityFeedData
 }
 
-let memoryCache: MemoryCacheValue | null = null
+declare global {
+  var __wakenActivityFeedMemoryCache: MemoryCacheValue | null | undefined
+}
+
+function getMemoryCache(): MemoryCacheValue | null {
+  return globalThis.__wakenActivityFeedMemoryCache ?? null
+}
 
 function getMemoryCached(): ActivityFeedData | null {
+  const memoryCache = getMemoryCache()
   if (!memoryCache) return null
   if (Date.now() > memoryCache.expiresAt) {
-    memoryCache = null
+    globalThis.__wakenActivityFeedMemoryCache = null
     return null
   }
   return memoryCache.value
@@ -27,7 +34,7 @@ function getMemoryCached(): ActivityFeedData | null {
 
 function setMemoryCached(value: ActivityFeedData, ttlSeconds: number): void {
   const ttlMs = Math.max(1000, Math.round(ttlSeconds * 1000))
-  memoryCache = {
+  globalThis.__wakenActivityFeedMemoryCache = {
     expiresAt: Date.now() + ttlMs,
     value,
   }
@@ -63,7 +70,7 @@ export async function setCachedActivityFeedData(value: ActivityFeedData): Promis
 }
 
 export async function clearCachedActivityFeedData(): Promise<void> {
-  memoryCache = null
+  globalThis.__wakenActivityFeedMemoryCache = null
   const useRedis = await shouldUseRedisCache()
   if (useRedis) {
     await redisDel(ACTIVITY_FEED_CACHE_KEY)
