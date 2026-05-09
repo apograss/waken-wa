@@ -34,19 +34,19 @@
 
 ### 🎨 不是普通状态页，而是个人数字生活展示
 
-![Image-preview-main](.github\assets\Preview\preview_v2_image_main_3.png)
+![Image-preview-main](.github/assets/Preview/preview_v2_image_main_3.png)
 
 支持主题取色、背景定制、状态文案规则和个性化卡片，让页面更像“你的个人空间”，而不是冷冰冰的监控面板。
 
 ### 📡 多设备状态自动同步
 
-![Image-preview-main](.github\assets\Preview\preview_v2_image_main.png)
+![Image-preview-main](.github/assets/Preview/preview_v2_image_main.png)
 
 通过 Reporter / API 上报桌面、移动端或脚本状态，自动展示你现在正在做什么。
 
 ### 🎵 支持音乐、应用、游戏和日程
 
-![Image-preview-main_2](.github\assets\Preview\preview_v2_image_main_2.png)
+![Image-preview-main_2](.github/assets/Preview/preview_v2_image_main_2.png)
 
 不仅能显示在线 / 离线，还能展示听歌进度、当前应用、Steam 游戏、ICS 课表 / 日程等生活状态。
 
