@@ -23,15 +23,17 @@
 </p>
 
 
-✨ 一个自托管的个人状态围观面板，把你的设备、听歌、应用、Steam、日程和随想，变成一个实时更新的个人主页。
+✨ 一个自托管的个人状态围观面板
+
+🎗️把你的设备、听歌、应用、Steam、日程和随想，变成一个实时更新的个人主页
 
 > 🌟项目灵感来源于 [Sleepy](https://github.com/sleepy-project/sleepy) 和 [Shiro](https://github.com/Innei/Shiro)
+
+> ✨ 在这里查看 Demo！ [Status](https://Status-me.lemonkoi.one)
 
 ## 可以用来做什么？
 
 ### 🕵️ 自托管的赛博视奸面板
-
-> 在这里查看 Demo！ [✨Roll](https://Status-me.lemonkoi.one)
 
 把你的在线状态、正在听的歌、使用中的应用、Steam 游戏、日程和随想，变成一个可以被朋友围观的实时主页。
 
