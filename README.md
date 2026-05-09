@@ -34,23 +34,29 @@
 
 ### 🎨 不是普通状态页，而是个人数字生活展示
 
-![Image-preview-main](.github/assets/Preview/preview_v2_image_main_3.png)
+<p align="center">
+  <img src=".github/assets/Preview/preview_v2_image_main_3.png" alt="Image-preview-main" width="620">
+</p>
 
 支持主题取色、背景定制、状态文案规则和个性化卡片，让页面更像“你的个人空间”，而不是冷冰冰的监控面板。
 
 ### 📡 多设备状态自动同步
 
-![Image-preview-main](.github/assets/Preview/preview_v2_image_main.png)
+<p align="center">
+  <img src=".github/assets/Preview/preview_v2_image_main.png" alt="Image-preview-main" width="620">
+</p>
 
 通过 Reporter / API 上报桌面、移动端或脚本状态，自动展示你现在正在做什么。
 
 ### 🎵 支持音乐、应用、游戏和日程
 
-![Image-preview-main_2](.github/assets/Preview/preview_v2_image_main_2.png)
+<p align="center">
+  <img src=".github/assets/Preview/preview_v2_image_main_2.png" alt="Image-preview-main_2" width="620">
+</p>
 
 不仅能显示在线 / 离线，还能展示听歌进度、当前应用、Steam 游戏、ICS 课表 / 日程等生活状态。
 
-### 🧩 可嵌入、可扩展、可玩梗
+### 🧩 可嵌入、可扩展
 
 <img src="https://status-me.lemonkoi.one/api/status-card?variant=cover&amp;cover=513f6faa-25db-407c-a23b-c45553524535&amp;coverRev=6fe63d7c874f9c62&amp;showHeader=1&amp;showAvatar=1&amp;showName=1&amp;showBio=1&amp;showNote=1&amp;preferGame=1&amp;showInClassStatus=1&amp;width=520&amp;height=220&amp;radius=20&amp;bg=%23FFFFFF&amp;fg=%23111827&amp;muted=%236B7280&amp;accent=%2322C55E&amp;border=%23E5E7EB" alt="当前状态" />
 
