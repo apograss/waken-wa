@@ -3,7 +3,7 @@
   <span>[<a href="./README.md">简体中文</a>]</span>
 </div>
 
-> 不是被闹钟惊醒，而是温柔地、自愿地，与世界重新相遇。
+> 😴晨光里睁眼是醒，深夜写下"今天很好"也是醒。
 
 <p align="center">
   <img src=".github/assets/logo/Logo.png" alt="Waken Wa" width="100" height="100">
@@ -18,50 +18,50 @@
   </p>
 </p>
 
-✨ 一日一记，一醒一悟。 | 强定制化，简洁美学，AI结合化的个人生活实时面板~
+<p align="center">
+  <img src=".github/assets/Preview/preview_v2_image_main_core.png" alt="Preview core" width="720">
+</p>
 
-> 😴晨光里睁眼是醒，深夜写下"今天很好"也是醒。
+
+✨ 一个自托管的个人状态围观面板，把你的设备、听歌、应用、Steam、日程和随想，变成一个实时更新的个人主页。
 
 > 🌟项目灵感来源于 [Sleepy](https://github.com/sleepy-project/sleepy) 和 [Shiro](https://github.com/Innei/Shiro)
 
-## 项目特点🌟
+## 可以用来做什么？
 
-1. 🖥️ 全套 WebUI 支持，服务端快速配置上线
-2. 🤖 支持 AI Skills / MCP 辅助修改配置
-3. 🧩 支持各类状态与内容显示规则
-4. 🎨 支持主题取色、背景与个性化风格定制
-5. 📡 支持多平台状态自动同步
-6. 🎵 支持音乐、应用与 Steam 游戏状态展示
-7. 🗓️ 支持 ICS 日程 / 课表接入
-8. ✍️ 支持随想录、灵感记录与内容沉淀
-9. 🔒 支持访问锁、hCaptcha 与后台管理
+### 🕵️ 自托管的赛博视奸面板
+把你的在线状态、正在听的歌、使用中的应用、Steam 游戏、日程和随想，变成一个可以被朋友围观的实时主页。
 
-## 图库
+### 🎨 不是普通状态页，而是个人数字生活展示
 
-<table>
-  <tr>
-    <td><img src=".github/assets/Preview/preview.png" alt="Waken Wa 首页" width="100%"></td>
-    <td><img src=".github/assets/Preview/preview_inspiration.png" alt="Waken Wa 灵感页面" width="100%"></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>个人状态首页</strong></td>
-    <td align="center"><strong>灵感与随想记录</strong></td>
-  </tr>
-  <tr>
-    <td><img src=".github/assets/Preview/preview_setting.png" alt="Waken Wa 站点设置" width="100%"></td>
-    <td><img src=".github/assets/Preview/preview_background_main.png" alt="Waken Wa 背景与主题效果" width="100%"></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>后台站点设置</strong></td>
-    <td align="center"><strong>背景与主题展示</strong></td>
-  </tr>
-</table>
+![Image-preview-main](.github\assets\Preview\preview_v2_image_main_3.png)
 
----
+支持主题取色、背景定制、状态文案规则和个性化卡片，让页面更像“你的个人空间”，而不是冷冰冰的监控面板。
+
+### 📡 多设备状态自动同步
+
+![Image-preview-main](.github\assets\Preview\preview_v2_image_main.png)
+
+通过 Reporter / API 上报桌面、移动端或脚本状态，自动展示你现在正在做什么。
+
+### 🎵 支持音乐、应用、游戏和日程
+
+![Image-preview-main_2](.github\assets\Preview\preview_v2_image_main_2.png)
+
+不仅能显示在线 / 离线，还能展示听歌进度、当前应用、Steam 游戏、ICS 课表 / 日程等生活状态。
+
+### 🧩 可嵌入、可扩展、可玩梗
+
+<img src="https://status-me.lemonkoi.one/api/status-card?variant=cover&amp;cover=513f6faa-25db-407c-a23b-c45553524535&amp;coverRev=6fe63d7c874f9c62&amp;showHeader=1&amp;showAvatar=1&amp;showName=1&amp;showBio=1&amp;showNote=1&amp;preferGame=1&amp;showInClassStatus=1&amp;width=520&amp;height=220&amp;radius=20&amp;bg=%23FFFFFF&amp;fg=%23111827&amp;muted=%236B7280&amp;accent=%2322C55E&amp;border=%23E5E7EB" alt="当前状态" />
+
+<br>
+
+适合作为个人主页、BBS 签名卡、GitHub README 状态卡、朋友之间的“围观入口”，也可以通过 OpenAPI 和自定义规则扩展。
+
+
+具体更多详情请查看： [Waken-Wa-Docs](https://waken-wa-docs.xwx.today)
 
 ## 部署
-
-> 可以查看文档了啦！ [Waken-Wa-Docs](https://waken-wa-docs.xwx.today)
 
 > 如果需要使用，请配合 [Waken-Wa-Reporter](https://github.com/MoYoez/waken-wa-reporter)
 
@@ -75,25 +75,15 @@
 curl -fsSL https://waken-wa.xwx.today | bash
 ```
 
-> 脚本会自动获取当前最新的 **稳定版本 tag**，并使用对应的 `moyoez/waken-wa:<tag>` Docker Hub 镜像启动；默认不会直接追踪 `main`，适合日常自托管使用。SQLite 数据默认保存在 Docker 卷中，详见仓库内 `docker-compose.yml`。环境变量可参照 [`.env.example`](.env.example)，或在部署目录中编辑 `.env`。
-
 如果你想部署最新的 `main` 分支版本，可以显式启用：
 
 ```bash
 curl -fsSL https://waken-wa.xwx.today | USE_LATEST_VERSION=1 bash
 ```
 
-如需指定分支、仓库、镜像或安装目录，可使用环境变量覆盖：
-
-```bash
-curl -fsSL https://waken-wa.xwx.today | WAKEN_BRANCH=main bash
-curl -fsSL https://waken-wa.xwx.today | WAKEN_IMAGE=moyoez/waken-wa:v0.40 bash
-curl -fsSL https://waken-wa.xwx.today | WAKEN_WORKSPACE=~/waken-wa-deploy bash
-```
-
 #### 自编译（源码）
 
-在已克隆的本仓库根目录执行（需 **Git**、**Docker**）：
+在已克隆的本仓库根目录执行：
 
 ```bash
 chmod +x deploy-build-from-source.sh   # Unix 首次需要
@@ -101,17 +91,11 @@ chmod +x deploy-build-from-source.sh   # Unix 首次需要
 # 或: bash deploy-build-from-source.sh
 ```
 
-> 脚本会准备 `.env`（若无则从 `.env.example` 复制）、按需生成 `JWT_SECRET`，并执行 `docker compose up -d --build`。也可通过环境变量指定分支与目录，例如 `WAKEN_BRANCH`、`WAKEN_REPO_URL`、`WAKEN_DEPLOY_DIR`（见脚本内注释）。
-
 #### 在 Windows 下部署
 
 ##### 1. 准备环境
 
-确保已安装以下工具：
-
 - **Docker Desktop**（推荐）或 Podman Desktop 等支持 Docker Compose 的容器工具
-- **Git**（可选，但强烈推荐，方便同步和管理代码）
-- 如未安装 Git，也可直接通过 GitHub 网页点击 “Code” -> “Download ZIP” 下载项目源码，再解压到本地
 
 ##### 2. 获取项目代码
 
@@ -130,7 +114,7 @@ cd waken-wa
 
 ##### 4. 启动容器
 
-如果只需直接运行官方镜像（无需自行编译），在项目根目录打开 PowerShell 或 CMD，执行：
+如果只需直接运行官方镜像，在项目根目录打开 PowerShell 或 CMD，执行：
 
 ```powershell
 docker compose up -d
@@ -143,13 +127,6 @@ docker compose up -d
 ```powershell
 docker compose up -d --build
 ```
-
-##### 6. 其他说明
-
-- 首次启动后可能会自动准备数据库和相关数据卷，无需手动操作
-- 如需关闭服务，执行：`docker compose down`
-- 升级项目可使用 Git 拉取最新代码后重启服务
-- 如果遇到端口冲突、环境变量问题等，请参考仓库内文档或 issue 提问
 
 ---
 
@@ -183,6 +160,17 @@ https://vercel.com/new/clone?repository-url=https://github.com/MoYoez/waken-wa
 - OpenAPI JSON: [`/api/openapi.json`](./app/api/openapi.json/route.ts)
 - Device quickstart: [`docs/activity-reporting.md`](./docs/activity-reporting.md)
 - Inspiration quickstart: [`docs/inspiration-integration.md`](./docs/inspiration-integration.md)
+
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=moyoez%2Fwaken-wa&type=date&logscale=&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=moyoez/waken-wa&type=date&theme=dark&logscale&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=moyoez/waken-wa&type=date&logscale&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=moyoez/waken-wa&type=date&logscale&legend=top-left" />
+ </picture>
+</a>
 
 ---
 
