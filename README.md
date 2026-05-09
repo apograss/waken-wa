@@ -31,9 +31,7 @@
 
 ### 🕵️ 自托管的赛博视奸面板
 
-<a href="https://status-me.lemonkoi.one">
-  <img src="https://forthebadge.com/api/badges/generate?panels=2&primaryLabel=%E5%9C%A8%E8%BF%99%E9%87%8C%E6%9F%A5%E7%9C%8B%E9%A2%84%E8%A7%88&secondaryLabel=+%E2%9C%A8&primaryBGColor=%2359b9d9&primaryTextColor=%23FFFFFF&secondaryBGColor=%2391cdf3&secondaryTextColor=%23FFFFFF&primaryFontSize=12&primaryFontWeight=600&primaryLetterSpacing=2&primaryFontFamily=Roboto&primaryTextTransform=uppercase&secondaryFontSize=12&secondaryFontWeight=900&secondaryLetterSpacing=2&secondaryFontFamily=Montserrat&secondaryTextTransform=uppercase" alt="在这里查看预览 ✨" />
-</a>
+> 在这里查看 Demo！ [✨Roll](https://Status-me.lemonkoi.one)
 
 把你的在线状态、正在听的歌、使用中的应用、Steam 游戏、日程和随想，变成一个可以被朋友围观的实时主页。
 
