@@ -128,7 +128,7 @@ export function applyMediaPlaySourceRulesToMetadata(
   if (match.action === 'rename') {
     return {
       ...metadata,
-      play_source: match.displayName,
+      play_source_name: match.displayName,
     }
   }
 

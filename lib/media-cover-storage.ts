@@ -69,32 +69,32 @@ async function parseCoverDataUrlAsync(dataUrl: string): Promise<{
 
 /**
  * Resize cover image to max 256x256, maintaining aspect ratio.
- * Outputs JPEG for consistent format and smaller size.
+ * Outputs PNG to preserve transparency.
  */
 async function resizeCoverImageAsync(
   inputBuffer: Buffer,
-  _originalMime: string,
+  originalMime: string,
 ): Promise<{ buffer: Buffer; mimeType: string }> {
   try {
     const image = sharp(inputBuffer)
     const metadata = await image.metadata()
     if (!metadata.width || !metadata.height) {
-      const output = await image.jpeg({ quality: 85 }).toBuffer()
-      return { buffer: output, mimeType: 'image/jpeg' }
+      const output = await image.png().toBuffer()
+      return { buffer: output, mimeType: 'image/png' }
     }
 
     if (metadata.width <= COVER_RESIZE_MAX && metadata.height <= COVER_RESIZE_MAX) {
-      const output = await image.jpeg({ quality: 85 }).toBuffer()
-      return { buffer: output, mimeType: 'image/jpeg' }
+      const output = await image.png().toBuffer()
+      return { buffer: output, mimeType: 'image/png' }
     }
 
     const output = await image
       .resize(COVER_RESIZE_MAX, COVER_RESIZE_MAX, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
+      .png()
       .toBuffer()
-    return { buffer: output, mimeType: 'image/jpeg' }
+    return { buffer: output, mimeType: 'image/png' }
   } catch {
-    return { buffer: inputBuffer, mimeType: 'image/jpeg' }
+    return { buffer: inputBuffer, mimeType: originalMime }
   }
 }
 

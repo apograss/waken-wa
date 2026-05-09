@@ -142,7 +142,8 @@ export function getMediaDisplay(metadata: unknown): MediaDisplay | null {
   if (!title) return null
   const singer = getOptionalText(m.singer) ?? getOptionalText(m.artist)
   const album = getOptionalText(m.album)
-  const sourceRaw = (metadata as Record<string, unknown>).play_source
+  const sourceRaw = (metadata as Record<string, unknown>).play_source_name
+    ?? (metadata as Record<string, unknown>).play_source
   const source = getOptionalText(sourceRaw)
   const coverUrl = getCoverUrl(m)
   const appIconUrl = getAppIconUrl(m)

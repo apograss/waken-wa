@@ -117,6 +117,7 @@ export function buildDevicePaths(baseUrl: string) {
                   push_mode: 'realtime',
                   metadata: {
                     play_source: 'manual-test',
+                    play_source_name: 'Manual Test',
                     media: { title: 'Example Track', singer: 'Example Artist' },
                   },
                 },
@@ -129,7 +130,7 @@ export function buildDevicePaths(baseUrl: string) {
                   process_name: 'Chrome',
                   process_title: 'Dashboard',
                   push_mode: 'active',
-                  metadata: { play_source: 'system_media' },
+                  metadata: { play_source: 'system_media', play_source_name: 'System Media' },
                 },
               },
             },
@@ -154,6 +155,7 @@ export function buildDevicePaths(baseUrl: string) {
                     processTitle: 'editing setup-form.tsx',
                     metadata: {
                       pushMode: 'realtime',
+                      play_source_name: 'Manual Test',
                       media: { title: 'Example Track', singer: 'Example Artist' },
                     },
                   },

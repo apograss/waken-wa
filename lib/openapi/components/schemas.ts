@@ -184,6 +184,7 @@ export function buildSchemas(baseUrl: string) {
       additionalProperties: true,
       properties: {
         play_source: { type: 'string' },
+        play_source_name: { type: 'string' },
         media: {
           type: 'object',
           additionalProperties: true,

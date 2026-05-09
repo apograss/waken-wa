@@ -191,6 +191,10 @@ function hasPlaybackDetails(media: MediaDisplay): boolean {
   )
 }
 
+function getMediaSourceLabel(media: MediaDisplay): string | null {
+  return media.source || null
+}
+
 function MediaAndSteamRow({
   media,
   steam,
@@ -315,7 +319,7 @@ function MediaAndSteamRow({
                 <p className="text-[11px] leading-none text-muted-foreground">
                   {t('site.currentStatus.mediaSource')}
                 </p>
-                <p className="truncate text-sm leading-snug">{media.source}</p>
+                <p className="truncate text-sm leading-snug">{getMediaSourceLabel(media)}</p>
               </div>
             </div>
             {showMediaNcmLink && media.ncmId ? (
