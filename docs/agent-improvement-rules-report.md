@@ -23,15 +23,15 @@
 
 | 文件 | 行数 | 建议 |
 | --- | ---: | --- |
-| `components/admin/device-manager.tsx` | 893 | 已拆出设备行操作、审核弹窗、自定义状态弹窗；后续拆分查询状态、批量操作 |
 | `components/admin/use-web-settings-controller.ts` | 1093 | 拆分按设置分类的 controller/helper |
-| `components/admin/web-settings-rule-tools.tsx` | 734 | 已拆出预览区、规则组列表、规则组编辑器、媒体源弹窗、导入规则弹窗；后续拆分状态派生 |
 | `components/admin/web-settings-custom-surface.tsx` | 900 | 已拆出背景模式/预览派生 helper；后续拆分颜色/尺寸/背景/预览区域 |
 | `components/admin/schedule-manager.tsx` | 844 | 拆分课程编辑、时间段编辑、导入导出与状态派生 |
-| `components/admin/use-rule-tools-state.ts` | 842 | 拆分规则工具查询、编辑缓存、导入导出状态 |
+| `components/admin/use-rule-tools-state.ts` | 794 | 已拆出导入导出 handler；后续拆分查询、编辑缓存、列表与规则组操作 |
 | `components/current-status.tsx` | 821 | 拆分展示子组件与活动状态派生 |
+| `components/admin/dashboard.tsx` | 801 | 拆分 dashboard 区块与数据派生 |
 | `lib/site-settings-write.ts` | 782 | 已拆出事务/错误/entry 写入 helper；后续按 core/theme/schedule/rules 继续拆分写入逻辑 |
 | `lib/site-settings-read.ts` | 757 | 已拆出缺表兼容与 row 解码 helper；后续按 core/theme/schedule/rules 继续拆分读取逻辑 |
+| `components/admin/web-settings-rule-tools.tsx` | 734 | 已拆出预览区、规则组列表、规则组编辑器、媒体源弹窗、导入规则弹窗；后续拆分状态派生 |
 | `components/admin/status-card-preview-panel.tsx` | 728 | 已拆出预览 URL/HTML/资源 key/hash helper；后续拆分表单区、预览区、资源选择与尺寸控制 |
 
 ## 2. 新规则总原则
@@ -409,6 +409,10 @@ API route 应保持薄层：
 - 管理后台组件拆分：`components/admin/device-list-item-actions.tsx`、`components/admin/rule-tools-preview.tsx`、`components/admin/rule-tools-group-list.tsx`、`components/admin/rule-tools-group-editor.tsx` 承接大组件内的可复用 UI 块。
 - 规则工具弹窗拆分：`components/admin/rule-tools-media-source-dialog.tsx`、`components/admin/rule-tools-import-dialog.tsx` 承接媒体源与导入规则弹窗，让 `components/admin/web-settings-rule-tools.tsx` 当前降至约 734 行。
 - 设备管理弹窗拆分：`components/admin/device-review-dialog.tsx`、`components/admin/device-custom-status-dialog.tsx` 承接审核与自定义状态弹窗，让 `components/admin/device-manager.tsx` 当前降至约 893 行。
+- 设备管理列表项拆分：`components/admin/device-list-item.tsx` 承接设备单项展示、删除确认、启停/置顶/Steam 开关与自定义状态入口，让 `components/admin/device-manager.tsx` 当前降至约 747 行。
+- 设备管理表单控件拆分：`components/admin/device-create-form.tsx`、`components/admin/device-list-filters.tsx`、`components/admin/device-list-pagination.tsx` 承接创建表单、筛选条和分页摘要，让 `components/admin/device-manager.tsx` 当前降至约 627 行。
+- 设备管理状态逻辑拆分：`components/admin/use-device-custom-status-editor.ts`、`components/admin/use-device-list-query-state.ts`、`components/admin/use-device-manager-mutations.ts` 承接自定义状态编辑、设备列表查询与设备 mutation helper，让 `components/admin/device-manager.tsx` 当前降至约 312 行，暂时移出大文件拆分重点。
+- 规则工具导入导出拆分：`components/admin/rule-tools-import-export-handlers.ts` 承接复制规则 JSON、导出已用应用 JSON、确认导入规则 JSON，让 `components/admin/use-rule-tools-state.ts` 当前降至约 794 行。
 - 分支规范补充：`components/admin/lexical-editor.tsx`、`lib/skills-auth/secrets.ts`、`lib/public-page-font.ts` 中同变量多分支已改为 `switch`。
 - 清理无用文件：删除未使用的 `lib/inspiration-admin-constants.ts`。
 - 分支规范：`components/admin/schedule-manager-utils.ts` 与状态卡相关枚举/扩展名分支已改为 `switch`。
@@ -420,12 +424,12 @@ API route 应保持薄层：
 
 | 项目 | 数量 | 说明 |
 | --- | ---: | --- |
-| 当前 `ts/tsx` 文件总数 | 387 | 不含已删除的旧迁移文件 |
-| 已动到的当前 `ts/tsx` 文件 | 107 | 包含修改文件与新增文件 |
+| 当前 `ts/tsx` 文件总数 | 399 | 不含已删除的旧迁移文件；本轮新增多个拆分组件/hook |
+| 已动到的当前 `ts/tsx` 文件 | 约 120 | 包含修改文件与新增文件，按原报告口径顺延估算 |
 | 删除/迁移出去的旧 `ts/tsx` 文件 | 15 | 主要是旧 constants/types 文件 |
-| 仍未触碰的当前 `ts/tsx` 文件 | 280 | 约占当前文件的 72% |
+| 仍未触碰的当前 `ts/tsx` 文件 | 约 279 | 约占当前文件的 70% |
 | 当前 400 行以上文件 | 33 | 仍是后续拆分重点 |
-| 当前 400 行以上且尚未触碰的文件 | 14 | 适合后续单独推进 |
+| 当前 400 行以上且尚未触碰的文件 | 约 13 | 适合后续单独推进 |
 | `types/` 外的 `type/interface` 声明 | 约 210 | 不等于都必须迁移，单文件私有类型可保留 |
 | `constants/` 外的大写常量声明 | 约 245 | 不等于都必须迁移，仅共享常量或固写配置优先迁移 |
 
@@ -433,11 +437,10 @@ API route 应保持薄层：
 
 | 文件 | 行数 | 后续建议 |
 | --- | ---: | --- |
-| `components/admin/use-rule-tools-state.ts` | 842 | 拆分查询、编辑缓存、导入导出与列表操作 |
 | `components/current-status.tsx` | 821 | 拆分展示子组件与活动状态派生 |
 | `components/admin/dashboard.tsx` | 801 | 拆分 dashboard 区块与数据派生 |
 | `components/admin/web-settings-skills-panel.tsx` | 647 | 拆分技能列表、鉴权状态与操作弹窗 |
-| `components/admin/token-manager.tsx` | 629 | 拆分 token 列表、创建表单与操作弹窗 |
+| `components/admin/token-manager.tsx` | 670 | 拆分 token 列表、创建表单与操作弹窗 |
 | `components/user-profile.tsx` | 606 | 拆分资料展示、社交链接与主题相关派生 |
 | `lib/openapi/components/schemas.ts` | 555 | 按 schema 领域拆分或生成结构梳理 |
 | `app/api/llm/md/route.ts` | 551 | Route 保持薄层，复杂逻辑下沉到 `lib/` |
@@ -448,10 +451,17 @@ API route 应保持薄层：
 | `components/site-theme-runtime.tsx` | 422 | 拆分运行时主题状态与 DOM 注入逻辑 |
 | `components/ui/select.tsx` | 400 | UI 基础组件，除非有明确需求不建议主动重构 |
 
+当前仍需要记录并继续推进的内容：
+
+- `components/admin/device-manager.tsx` 已降至约 312 行，剩余只有高亮/审核接线与轻量表单 state，暂不再作为优先拆分对象。
+- `components/admin/use-rule-tools-state.ts` 仍有约 794 行，是下一轮最划算入口：优先拆列表操作、规则组操作、编辑缓存与查询状态。
+- 仍在 700 行以上的大文件包括 `components/admin/use-web-settings-controller.ts`、`components/admin/web-settings-custom-surface.tsx`、`components/admin/schedule-manager.tsx`、`components/current-status.tsx`、`components/admin/dashboard.tsx`、`lib/site-settings-write.ts`、`lib/site-settings-read.ts`、`components/admin/web-settings-rule-tools.tsx`、`components/admin/status-card-preview-panel.tsx`。
+- 共享类型/常量仍然采用“触碰到哪里迁到哪里”的方式，不做清零式批量迁移。
+
 下一轮最划算的推进顺序：
 
-1. 拆 `components/admin/device-manager.tsx` 的设备查询状态与列表项展示。
-2. 拆 `components/admin/use-rule-tools-state.ts`，优先将列表操作、规则组操作与导入导出状态分离。
-3. 处理 `components/admin/use-web-settings-controller.ts`，按 core/theme/schedule/rules 分出 controller helper。
-4. 渐进拆 `components/admin/web-settings-rule-tools.tsx` 剩余状态派生；避免再把新功能塞回主文件。
+1. 拆 `components/admin/use-rule-tools-state.ts`，优先将列表操作、规则组操作、编辑缓存与查询状态分离。
+2. 处理 `components/admin/use-web-settings-controller.ts`，按 core/theme/schedule/rules 分出 controller helper。
+3. 渐进拆 `components/admin/web-settings-rule-tools.tsx` 剩余状态派生；避免再把新功能塞回主文件。
+4. 拆 `components/current-status.tsx` 展示子组件与活动状态派生。
 5. 渐进迁移仍散落的共享类型与共享常量；不要为了数字清零批量移动私有类型或局部常量。
