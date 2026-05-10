@@ -159,6 +159,7 @@
     "sheet": {
       "close": "关闭"
     },
+    "numberRange": "请输入范围 {{range}} 内的整数。",
     "autocomplete": {
       "empty": "没有匹配项。"
     },

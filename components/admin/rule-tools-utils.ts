@@ -59,9 +59,7 @@ export function cloneRuleToolsPayload(payload: RuleToolsExportPayload): RuleTool
     appWhitelist: [...payload.appWhitelist],
     appNameOnlyList: [...payload.appNameOnlyList],
     captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
-    captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
-      payload.captureReportedAppTitleLimit,
-    ),
+    captureReportedAppTitleLimit: payload.captureReportedAppTitleLimit,
     mediaPlaySourceRules,
     mediaPlaySourceBlocklist: mediaPlaySourceBlocklistFromRules(mediaPlaySourceRules),
   }
@@ -154,16 +152,37 @@ export function dedupeDraftList(listKey: RuleToolsListKey, values: string[]): st
 
 export function normalizePayloadForSave(
   payload: RuleToolsExportPayload,
-): { data: RuleToolsExportPayload; error: { group: number; rule: number; message: string } | null } {
+): {
+  data: RuleToolsExportPayload
+  error:
+    | { type: 'regex'; group: number; rule: number; message: string }
+    | { type: 'range'; message: string }
+    | null
+} {
   const preparedRules = prepareAppMessageRulesForSave(payload.appMessageRules)
   if (preparedRules.errors.length > 0) {
     const first = preparedRules.errors[0]
     return {
       data: cloneRuleToolsPayload(payload),
       error: {
+        type: 'regex',
         group: first.groupIndex + 1,
         rule: first.titleRuleIndex + 1,
         message: first.message,
+      },
+    }
+  }
+  const titleLimit = Number(payload.captureReportedAppTitleLimit)
+  if (
+    !Number.isSafeInteger(titleLimit) ||
+    titleLimit < 0 ||
+    titleLimit > 10
+  ) {
+    return {
+      data: cloneRuleToolsPayload(payload),
+      error: {
+        type: 'range',
+        message: 'captureReportedAppTitleLimit must be an integer between 0 and 10',
       },
     }
   }
@@ -177,9 +196,7 @@ export function normalizePayloadForSave(
       appWhitelist: dedupeDraftList('appWhitelist', payload.appWhitelist),
       appNameOnlyList: dedupeDraftList('appNameOnlyList', payload.appNameOnlyList),
       captureReportedAppsEnabled: payload.captureReportedAppsEnabled !== false,
-      captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
-        payload.captureReportedAppTitleLimit,
-      ),
+      captureReportedAppTitleLimit: titleLimit,
       mediaPlaySourceRules: dedupeMediaPlaySourceRules(
         payload.mediaPlaySourceRules,
         payload.mediaPlaySourceBlocklist,

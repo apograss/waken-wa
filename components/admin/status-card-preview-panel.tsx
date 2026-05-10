@@ -4,11 +4,16 @@ import { useAtom } from 'jotai'
 import { Copy, ExternalLink, RotateCcw, Upload } from 'lucide-react'
 import Image from 'next/image'
 import { useT } from 'next-i18next/client'
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
 
 import { uploadImageSource } from '@/components/admin/admin-query-mutations'
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
+import {
+  formatNumberRange,
+  NumberSettingInput,
+  parseIntegerInRange,
+} from '@/components/admin/number-setting-input'
 import {
   WebSettingsInset,
   WebSettingsRow,
@@ -44,15 +49,35 @@ const DEFAULT_DRAFT: StatusCardDraft = {
   deviceValue: '',
 }
 
+type StatusCardPreviewSource = {
+  statusCardVariant: StatusCardVariant
+  statusCardTag: string
+  statusCardBackgroundKey: string
+  statusCardBackgroundRev: string
+  statusCardCoverKey: string
+  statusCardCoverRev: string
+  statusCardShowHeader: boolean
+  statusCardShowAvatar: boolean
+  statusCardShowName: boolean
+  statusCardShowBio: boolean
+  statusCardShowNote: boolean
+  statusCardPreferGame: boolean
+  statusCardShowInClassStatus: boolean
+  statusCardWidth: number | string
+  statusCardHeight: number | string
+  statusCardRadius: number | string
+  statusCardBg: string
+  statusCardSignatureBg: string
+  statusCardFg: string
+  statusCardMuted: string
+  statusCardAccent: string
+  statusCardBorder: string
+}
+
 function toHexColor(value: string, fallback: string): string {
   const normalized = value.trim()
   if (/^#[0-9a-f]{6}$/i.test(normalized)) return normalized.toUpperCase()
   return fallback
-}
-
-function clampNumber(value: number, fallback: number, min: number, max: number): number {
-  if (!Number.isFinite(value)) return fallback
-  return Math.min(max, Math.max(min, Math.round(value)))
 }
 
 const COVER_CROP_ASPECT_RATIO = 520 / 100
@@ -77,30 +102,7 @@ async function hashText(value: string): Promise<string> {
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-function buildStatusCardPath(draft: StatusCardDraft, form: {
-  statusCardVariant: StatusCardVariant
-  statusCardTag: string
-  statusCardBackgroundKey: string
-  statusCardBackgroundRev: string
-  statusCardCoverKey: string
-  statusCardCoverRev: string
-  statusCardShowHeader: boolean
-  statusCardShowAvatar: boolean
-  statusCardShowName: boolean
-  statusCardShowBio: boolean
-  statusCardShowNote: boolean
-  statusCardPreferGame: boolean
-  statusCardShowInClassStatus: boolean
-  statusCardWidth: number
-  statusCardHeight: number
-  statusCardRadius: number
-  statusCardBg: string
-  statusCardSignatureBg: string
-  statusCardFg: string
-  statusCardMuted: string
-  statusCardAccent: string
-  statusCardBorder: string
-}): string {
+function buildStatusCardPath(draft: StatusCardDraft, form: StatusCardPreviewSource): string {
   const params = new URLSearchParams()
   params.set('variant', form.statusCardVariant)
   const tag = normalizeStatusCardTag(form.statusCardTag)
@@ -131,9 +133,12 @@ function buildStatusCardPath(draft: StatusCardDraft, form: {
   }
   params.set('preferGame', form.statusCardPreferGame ? '1' : '0')
   params.set('showInClassStatus', form.statusCardShowInClassStatus ? '1' : '0')
-  params.set('width', String(form.statusCardWidth))
-  params.set('height', String(form.statusCardHeight))
-  params.set('radius', String(form.statusCardRadius))
+  const statusCardWidth = parseIntegerInRange(form.statusCardWidth, 280, 1200) ?? 520
+  const statusCardHeight = parseIntegerInRange(form.statusCardHeight, 1, 720) ?? 310
+  const statusCardRadius = parseIntegerInRange(form.statusCardRadius, 0, 80) ?? 20
+  params.set('width', String(statusCardWidth))
+  params.set('height', String(statusCardHeight))
+  params.set('radius', String(statusCardRadius))
   params.set('bg', form.statusCardBg)
   if (form.statusCardVariant === 'signature') {
     params.set('signatureBg', form.statusCardSignatureBg)
@@ -211,7 +216,35 @@ export function StatusCardPreviewPanel() {
     if (draft.deviceMode === 'deviceKey') return device.generatedHashKey === draft.deviceValue
     return false
   })
-  const path = useMemo(() => buildStatusCardPath(draft, form), [draft, form])
+  const pathDraft = buildStatusCardPath(draft, {
+    statusCardVariant: form.statusCardVariant,
+    statusCardTag: form.statusCardTag,
+    statusCardBackgroundKey: form.statusCardBackgroundKey,
+    statusCardBackgroundRev: form.statusCardBackgroundRev,
+    statusCardCoverKey: form.statusCardCoverKey,
+    statusCardCoverRev: form.statusCardCoverRev,
+    statusCardShowHeader: form.statusCardShowHeader,
+    statusCardShowAvatar: form.statusCardShowAvatar,
+    statusCardShowName: form.statusCardShowName,
+    statusCardShowBio: form.statusCardShowBio,
+    statusCardShowNote: form.statusCardShowNote,
+    statusCardPreferGame: form.statusCardPreferGame,
+    statusCardShowInClassStatus: form.statusCardShowInClassStatus,
+    statusCardWidth: form.statusCardWidth,
+    statusCardHeight: form.statusCardHeight,
+    statusCardRadius: form.statusCardRadius,
+    statusCardBg: form.statusCardBg,
+    statusCardSignatureBg: form.statusCardSignatureBg,
+    statusCardFg: form.statusCardFg,
+    statusCardMuted: form.statusCardMuted,
+    statusCardAccent: form.statusCardAccent,
+    statusCardBorder: form.statusCardBorder,
+  })
+  const [path, setPath] = useState(pathDraft)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPath(pathDraft), 700)
+    return () => window.clearTimeout(timer)
+  }, [pathDraft])
   const absoluteUrl = `${origin}${path}`
   const embedAlt = form.currentlyText.trim() || t('webSettingsBasic.currentlyTextDefault')
   const embedHtml = `<img src="${escapeHtmlAttribute(absoluteUrl || path)}" alt="${escapeHtmlAttribute(embedAlt)}" />`
@@ -341,15 +374,8 @@ export function StatusCardPreviewPanel() {
     }))
   }
 
-  const setDimension = (
-    key: 'statusCardWidth' | 'statusCardHeight' | 'statusCardRadius',
-    value: string,
-    fallback: number,
-    min: number,
-    max: number,
-  ) => {
-    patchForm(key, clampNumber(Number(value), fallback, min, max))
-  }
+  const previewWidth = parseIntegerInRange(form.statusCardWidth, 280, 1200) ?? 520
+  const previewHeight = parseIntegerInRange(form.statusCardHeight, 1, 720) ?? 310
 
   return (
     <WebSettingsInset className="space-y-4">
@@ -630,39 +656,39 @@ export function StatusCardPreviewPanel() {
               <Label htmlFor="status-card-width" className="text-xs text-muted-foreground">
                 {t('webSettingsActivity.statusCard.widthLabel')}
               </Label>
-              <Input
+              <NumberSettingInput
                 id="status-card-width"
-                type="number"
                 min={280}
                 max={1200}
                 value={form.statusCardWidth}
-                onChange={(event) => setDimension('statusCardWidth', event.target.value, 520, 280, 1200)}
+                rangeMessage={formatNumberRange(280, 1200)}
+                onValueChange={(value) => patchForm('statusCardWidth', value)}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="status-card-height" className="text-xs text-muted-foreground">
                 {t('webSettingsActivity.statusCard.heightLabel')}
               </Label>
-              <Input
+              <NumberSettingInput
                 id="status-card-height"
-                type="number"
                 min={1}
                 max={720}
                 value={form.statusCardHeight}
-                onChange={(event) => setDimension('statusCardHeight', event.target.value, 310, 1, 720)}
+                rangeMessage={formatNumberRange(1, 720)}
+                onValueChange={(value) => patchForm('statusCardHeight', value)}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="status-card-radius" className="text-xs text-muted-foreground">
                 {t('webSettingsActivity.statusCard.radiusLabel')}
               </Label>
-              <Input
+              <NumberSettingInput
                 id="status-card-radius"
-                type="number"
                 min={0}
                 max={80}
                 value={form.statusCardRadius}
-                onChange={(event) => setDimension('statusCardRadius', event.target.value, 20, 0, 80)}
+                rangeMessage={formatNumberRange(0, 80)}
+                onValueChange={(value) => patchForm('statusCardRadius', value)}
               />
             </div>
           </div>
@@ -685,11 +711,11 @@ export function StatusCardPreviewPanel() {
               <Image
                 src={path}
                 alt={t('webSettingsActivity.statusCard.previewAlt')}
-                width={form.statusCardWidth}
-                height={form.statusCardHeight}
+                width={previewWidth}
+                height={previewHeight}
                 unoptimized
                 className="max-w-full rounded-md"
-                style={{ width: Math.min(form.statusCardWidth, 360), height: 'auto' }}
+                style={{ width: Math.min(previewWidth, 360), height: 'auto' }}
               />
             </div>
           </div>

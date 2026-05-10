@@ -15,6 +15,7 @@ import {
 } from '@/lib/media-play-source-rules'
 import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
+import { parseIntegerInRangeForWrite } from '@/lib/site-config-constants'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
 import { persistRulesSettingsValues } from '@/lib/site-settings-write'
 import type {
@@ -296,7 +297,12 @@ export async function patchRuleToolsConfig(
         : state.config.captureReportedAppsEnabled,
     captureReportedAppTitleLimit:
       'captureReportedAppTitleLimit' in body
-        ? normalizeReportedAppTitleLimit(body.captureReportedAppTitleLimit)
+        ? parseIntegerInRangeForWrite(
+            body.captureReportedAppTitleLimit,
+            0,
+            10,
+            'captureReportedAppTitleLimit',
+          )
         : state.config.captureReportedAppTitleLimit,
   }
 
@@ -670,8 +676,11 @@ export async function importRuleToolsPayload(
       appMessageRulesShowProcessName: body.appMessageRulesShowProcessName !== false,
       appFilterMode: normalizeFilterMode(body.appFilterMode),
       captureReportedAppsEnabled: body.captureReportedAppsEnabled !== false,
-      captureReportedAppTitleLimit: normalizeReportedAppTitleLimit(
+      captureReportedAppTitleLimit: parseIntegerInRangeForWrite(
         body.captureReportedAppTitleLimit,
+        0,
+        10,
+        'captureReportedAppTitleLimit',
       ),
     },
   }

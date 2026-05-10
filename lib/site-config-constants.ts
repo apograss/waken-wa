@@ -29,6 +29,22 @@ export function clampSiteConfigProcessStaleSeconds(value: number): number {
   )
 }
 
+export function parseIntegerInRangeForWrite(
+  raw: unknown,
+  min: number,
+  max: number,
+  fieldName: string,
+): number {
+  const text = String(raw ?? '').trim()
+  const value = Number(text)
+  if (!/^-?\d+$/.test(text) || !Number.isSafeInteger(value) || value < min || value > max) {
+    const error = new Error(`${fieldName} must be an integer between ${min} and ${max}`)
+    ;(error as { status?: number }).status = 400
+    throw error
+  }
+  return value
+}
+
 /** Parse PATCH/setup body field; non-finite input falls back to default. */
 export function parseHistoryWindowMinutes(raw: unknown): number {
   const parsed = Number(raw ?? SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES)

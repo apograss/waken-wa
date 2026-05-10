@@ -12,7 +12,15 @@ import { getRequestLanguage } from '@/lib/i18n/request-locale'
 import { getT } from '@/lib/i18n/server'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import { parseHistoryWindowMinutes, parseProcessStaleSeconds } from '@/lib/site-config-constants'
+import {
+  parseHistoryWindowMinutes,
+  parseIntegerInRangeForWrite,
+  parseProcessStaleSeconds,
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+} from '@/lib/site-config-constants'
 import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
 import { bootstrapSiteSettingsSplitStorage } from '@/lib/site-settings-write'
 import { normalizeCustomCss } from '@/lib/theme-css'
@@ -85,8 +93,24 @@ export async function POST(request: NextRequest) {
       imageSourceBody.themeCustomSurface ?? {},
     )
     const normalizedCustomCss = normalizeCustomCss(customCss)
-    const normalizedHistoryWindowMinutes = parseHistoryWindowMinutes(historyWindowMinutes)
-    const normalizedProcessStaleSeconds = parseProcessStaleSeconds(processStaleSeconds)
+    const normalizedHistoryWindowMinutes =
+      historyWindowMinutes === undefined || historyWindowMinutes === null
+        ? parseHistoryWindowMinutes(historyWindowMinutes)
+        : parseIntegerInRangeForWrite(
+            historyWindowMinutes,
+            SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+            SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+            'historyWindowMinutes',
+          )
+    const normalizedProcessStaleSeconds =
+      processStaleSeconds === undefined || processStaleSeconds === null
+        ? parseProcessStaleSeconds(processStaleSeconds)
+        : parseIntegerInRangeForWrite(
+            processStaleSeconds,
+            SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+            SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+            'processStaleSeconds',
+          )
     const normalizedAppMessageRules = Array.isArray(appMessageRules) ? appMessageRules : []
     const normalizedAppBlacklist = Array.isArray(appBlacklist)
       ? appBlacklist
@@ -244,6 +268,13 @@ export async function POST(request: NextRequest) {
       { status: hasAdmin ? 200 : 201 }
     )
   } catch (error: unknown) {
+    const status =
+      typeof (error as { status?: unknown })?.status === 'number'
+        ? (error as { status: number }).status
+        : null
+    if (error instanceof Error && status !== null) {
+      return NextResponse.json({ success: false, error: error.message }, { status })
+    }
     const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: string }).code) : ''
     const msg = String((error as { message?: string })?.message ?? error ?? '')
     if (

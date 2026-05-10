@@ -8,6 +8,10 @@ import {
   getAdminPanelTransition,
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
+import {
+  formatNumberRange,
+  NumberSettingInput,
+} from '@/components/admin/number-setting-input'
 import { ListDialogEditor } from '@/components/admin/rule-tools-list-dialog-editor'
 import { getErrorMessage, getTitleRuleRegexErrorMessage,summarizeAppRuleGroup } from '@/components/admin/rule-tools-utils'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
@@ -39,10 +43,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { AppTitleRuleMode } from '@/lib/app-message-rules'
-import {
-  normalizeReportedAppTitleLimit,
-  REPORTED_APP_TITLE_LIMIT_MAX,
-} from '@/lib/reported-app-title-limit'
+import { REPORTED_APP_TITLE_LIMIT_MAX } from '@/lib/reported-app-title-limit'
 import { cn } from '@/lib/utils'
 
 export function WebSettingsRuleTools() {
@@ -777,17 +778,16 @@ export function WebSettingsRuleTools() {
                 max: REPORTED_APP_TITLE_LIMIT_MAX,
               })}
               action={
-                <Input
+                <NumberSettingInput
                   id="rule-tools-capture-reported-app-title-limit"
-                  type="number"
                   min={0}
                   max={REPORTED_APP_TITLE_LIMIT_MAX}
                   step={1}
                   className="w-24"
                   value={currentPayload?.captureReportedAppTitleLimit ?? 3}
                   disabled={!currentPayload || busy}
-                  onChange={(event) => {
-                    const nextLimit = normalizeReportedAppTitleLimit(event.target.value)
+                  rangeMessage={formatNumberRange(0, REPORTED_APP_TITLE_LIMIT_MAX)}
+                  onValueChange={(nextLimit) => {
                     updateDraftPayload((current) => ({
                       ...current,
                       captureReportedAppTitleLimit: nextLimit,

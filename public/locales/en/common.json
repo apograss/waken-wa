@@ -159,6 +159,7 @@
     "sheet": {
       "close": "Close"
     },
+    "numberRange": "Enter a whole number in range {{range}}.",
     "autocomplete": {
       "empty": "No matching items."
     },

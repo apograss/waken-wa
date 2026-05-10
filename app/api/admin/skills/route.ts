@@ -4,6 +4,7 @@ import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { updateSiteConfigFromPayload } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
+import { parseIntegerInRangeForWrite } from '@/lib/site-config-constants'
 import {
   clearSkillsApiKey,
   getSkillsSecretEnvStatus,
@@ -88,7 +89,7 @@ export async function PATCH(request: NextRequest) {
     const oauthTokenTtlMinutesInBody =
       body.oauthTokenTtlMinutes !== undefined && body.oauthTokenTtlMinutes !== null
     const oauthTokenTtlMinutes = oauthTokenTtlMinutesInBody
-      ? normalizeSkillsOauthTokenTtlMinutes(body.oauthTokenTtlMinutes)
+      ? parseIntegerInRangeForWrite(body.oauthTokenTtlMinutes, 5, 1440, 'oauthTokenTtlMinutes')
       : undefined
     const revokeOauthForAiClientId = String(body.revokeOauthForAiClientId ?? '')
       .trim()
@@ -180,6 +181,12 @@ export async function PATCH(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (error instanceof Error && typeof (error as { status?: unknown }).status === 'number') {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: (error as unknown as { status: number }).status },
+      )
+    }
     console.error('更新 Skills 设置失败:', error)
     return NextResponse.json({ success: false, error: '更新失败' }, { status: 500 })
   }

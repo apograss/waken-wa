@@ -10,6 +10,10 @@ import {
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
 import {
+  formatNumberRange,
+  NumberSettingInput,
+} from '@/components/admin/number-setting-input'
+import {
   WebSettingsInset,
   WebSettingsRow,
   WebSettingsRows,
@@ -281,18 +285,13 @@ export function WebSettingsSkillsPanel({
                 </div>
               </div>
               <div className="max-w-xs space-y-2">
-                <Input
-                  type="number"
-                  onWheel={(event) => event.currentTarget.blur()}
+                <NumberSettingInput
                   min={5}
                   max={1440}
                   step={1}
                   value={skillsOauthTokenTtlMinutes}
-                  onChange={(event) =>
-                    setSkillsOauthTokenTtlMinutes(
-                      Math.min(1440, Math.max(5, Math.round(Number(event.target.value) || 60))),
-                    )
-                  }
+                  rangeMessage={formatNumberRange(5, 1440)}
+                  onValueChange={(value) => setSkillsOauthTokenTtlMinutes(value)}
                   disabled={skillsSaving}
                 />
                 <p className="text-[11px] text-muted-foreground">

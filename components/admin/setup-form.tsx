@@ -13,10 +13,18 @@ import {
 } from '@/components/admin/admin-query-mutations'
 import { FileSelectTrigger } from '@/components/admin/file-select-trigger'
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
+import {
+  formatNumberRange,
+  parseIntegerInRange,
+} from '@/components/admin/number-setting-input'
 import { Switch } from '@/components/ui/switch'
 import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
 import { DEFAULT_PAGE_TITLE, PAGE_TITLE_MAX_LEN } from '@/lib/default-page-title'
-import { SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES } from '@/lib/site-config-constants'
+import {
+  SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+} from '@/lib/site-config-constants'
 import type { SetupInitialConfig } from '@/types/components'
 
 export type { SetupInitialConfig } from '@/types/components'
@@ -42,7 +50,7 @@ export function SetupForm({ needAdminSetup, initialConfig }: SetupFormProps) {
     initialConfig?.avatarFetchByServerEnabled === true,
   )
   const [userNote, setUserNote] = useState(initialConfig?.userNote ?? '')
-  const [historyWindowMinutes, setHistoryWindowMinutes] = useState(
+  const [historyWindowMinutes, setHistoryWindowMinutes] = useState<string | number>(
     initialConfig?.historyWindowMinutes ?? SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   )
   const [currentlyText, setCurrentlyText] = useState(initialConfig?.currentlyText ?? '')
@@ -71,6 +79,22 @@ export function SetupForm({ needAdminSetup, initialConfig }: SetupFormProps) {
       setError(t('setup.passwordMismatch'))
       return
     }
+    const normalizedHistoryWindowMinutes = parseIntegerInRange(
+      historyWindowMinutes,
+      SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+      SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+    )
+    if (normalizedHistoryWindowMinutes === null) {
+      setError(
+        t('setup.historyWindowRange', {
+          range: formatNumberRange(
+            SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+            SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+          ),
+        }),
+      )
+      return
+    }
 
     setLoading(true)
     try {
@@ -85,7 +109,7 @@ export function SetupForm({ needAdminSetup, initialConfig }: SetupFormProps) {
         avatarFetchByServerEnabled:
           avatarUsesRemoteUrl && avatarFetchByServerEnabled,
         userNote,
-        historyWindowMinutes,
+        historyWindowMinutes: normalizedHistoryWindowMinutes,
         currentlyText,
         earlierText,
         adminText,
@@ -320,17 +344,34 @@ export function SetupForm({ needAdminSetup, initialConfig }: SetupFormProps) {
                   <input
                     type="number"
                     onWheel={(e) => e.currentTarget.blur()}
-                    min={10}
-                    max={1440}
+                    min={SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES}
+                    max={SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES}
                     step={10}
                     value={historyWindowMinutes}
-                    onChange={(e) =>
-                      setHistoryWindowMinutes(
-                        Number(e.target.value || SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES),
-                      )
+                    aria-invalid={
+                      parseIntegerInRange(
+                        historyWindowMinutes,
+                        SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+                        SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+                      ) === null
                     }
+                    onChange={(e) => setHistoryWindowMinutes(e.target.value)}
                     className="w-full px-3 py-2.5 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   />
+                  {parseIntegerInRange(
+                    historyWindowMinutes,
+                    SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+                    SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+                  ) === null ? (
+                    <p className="text-[11px] text-destructive">
+                      {t('setup.historyWindowRange', {
+                        range: formatNumberRange(
+                          SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+                          SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+                        ),
+                      })}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">

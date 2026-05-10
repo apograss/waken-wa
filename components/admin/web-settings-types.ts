@@ -86,8 +86,8 @@ export interface SiteConfig {
   mcpThemeToolsEnabled: boolean
   openApiDocsEnabled: boolean
   aiToolMode: 'skills' | 'mcp'
-  historyWindowMinutes: number
-  processStaleSeconds: number
+  historyWindowMinutes: number | string
+  processStaleSeconds: number | string
   pageLockEnabled: boolean
   pageLockPassword: string
   hcaptchaEnabled: boolean
@@ -124,7 +124,7 @@ export interface SiteConfig {
   /** When true, show NCM song link in hover card when genre info is available. */
   mediaDisplayShowNcmLink: boolean
   /** Max number of cover images to keep per device (0 = unlimited, recommended: 50). */
-  mediaCoverMaxCount: number
+  mediaCoverMaxCount: number | string
   /** When true, hide the inspiration section from the home page. */
   hideInspirationOnHome: boolean
   /**
@@ -142,7 +142,7 @@ export interface SiteConfig {
   /** Enable Redis cache outside forced runtime environments. */
   useNoSqlAsCacheRedis: boolean
   /** Redis activity-feed cache TTL seconds. */
-  redisCacheTtlSeconds: number
+  redisCacheTtlSeconds: number | string
   /** Whether Steam status integration is enabled. */
   steamEnabled: boolean
   /** Steam 64-bit ID */
@@ -164,9 +164,9 @@ export interface SiteConfig {
   statusCardShowNote: boolean
   statusCardPreferGame: boolean
   statusCardShowInClassStatus: boolean
-  statusCardWidth: number
-  statusCardHeight: number
-  statusCardRadius: number
+  statusCardWidth: number | string
+  statusCardHeight: number | string
+  statusCardRadius: number | string
   statusCardBg: string
   statusCardSignatureBg: string
   statusCardFg: string
@@ -189,7 +189,7 @@ export type SkillsAiAuthorizationItem = {
 export type SkillsEditableConfig = {
   enabled: boolean
   authMode: 'oauth' | 'apikey' | ''
-  oauthTokenTtlMinutes: number
+  oauthTokenTtlMinutes: number | string
 }
 
 export type SiteSettingsMigrationInfo = {

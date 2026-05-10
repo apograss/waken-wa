@@ -25,6 +25,10 @@ import {
   uploadImageSource,
 } from '@/components/admin/admin-query-mutations'
 import {
+  formatNumberRange,
+  parseIntegerInRange,
+} from '@/components/admin/number-setting-input'
+import {
   webSettingsBaselineFormAtom,
   webSettingsBaselineSkillsConfigAtom,
   webSettingsCropDialogOpenAtom,
@@ -79,7 +83,11 @@ import { isAllowedSlotMinutes, resolveSchedulePeriodTemplate, type ScheduleCours
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
@@ -108,7 +116,40 @@ function hasKeyDiff(
   right: Record<string, unknown>,
   keys: readonly string[],
 ): boolean {
-  return JSON.stringify(pickRecordKeys(left, keys)) !== JSON.stringify(pickRecordKeys(right, keys))
+  for (const key of keys) {
+    if (!areValuesEqual(left[key], right[key])) return true
+  }
+  return false
+}
+
+function areValuesEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true
+  if (typeof left !== typeof right) return false
+  if (left === null || right === null) return false
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false
+    if (left.length !== right.length) return false
+    for (let index = 0; index < left.length; index += 1) {
+      if (!areValuesEqual(left[index], right[index])) return false
+    }
+    return true
+  }
+
+  if (typeof left === 'object' && typeof right === 'object') {
+    const leftObject = left as Record<string, unknown>
+    const rightObject = right as Record<string, unknown>
+    const leftKeys = Object.keys(leftObject)
+    const rightKeys = Object.keys(rightObject)
+    if (leftKeys.length !== rightKeys.length) return false
+    for (const key of leftKeys) {
+      if (!Object.prototype.hasOwnProperty.call(rightObject, key)) return false
+      if (!areValuesEqual(leftObject[key], rightObject[key])) return false
+    }
+    return true
+  }
+
+  return false
 }
 
 function isInlineImageDataUrl(value: unknown): value is string {
@@ -717,12 +758,79 @@ export function useWebSettingsController() {
         ...formRest
       } = form
 
-      const normalizedRedisTtl = Number.isFinite(formRest.redisCacheTtlSeconds)
-        ? Math.min(
-            REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-            Math.max(1, Math.round(formRest.redisCacheTtlSeconds)),
-          )
-        : REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS
+      const validateRange = (
+        label: string,
+        raw: unknown,
+        min: number,
+        max: number,
+      ): number | null => {
+        const value = parseIntegerInRange(raw, min, max)
+        if (value !== null) return value
+        toast.error(`${label}: ${t('common.numberRange', { range: formatNumberRange(min, max) })}`)
+        return null
+      }
+
+      const normalizedHistoryWindowMinutes = validateRange(
+        t('webSettingsActivity.historyWindowLabel'),
+        formRest.historyWindowMinutes,
+        SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+        SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+      )
+      const normalizedProcessStaleSeconds = validateRange(
+        t('webSettingsActivity.processStaleLabel'),
+        formRest.processStaleSeconds,
+        SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+        SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+      )
+      const normalizedMediaCoverMaxCount = validateRange(
+        t('webSettingsActivity.mediaCoverMaxCountLabel'),
+        formRest.mediaCoverMaxCount,
+        0,
+        500,
+      )
+      const normalizedRedisTtl = validateRange(
+        t('webSettingsActivity.redisCacheTtlLabel'),
+        formRest.redisCacheTtlSeconds,
+        1,
+        REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
+      )
+      const normalizedStatusCardWidth = validateRange(
+        t('webSettingsActivity.statusCard.widthLabel'),
+        formRest.statusCardWidth,
+        280,
+        1200,
+      )
+      const normalizedStatusCardHeight = validateRange(
+        t('webSettingsActivity.statusCard.heightLabel'),
+        formRest.statusCardHeight,
+        1,
+        720,
+      )
+      const normalizedStatusCardRadius = validateRange(
+        t('webSettingsActivity.statusCard.radiusLabel'),
+        formRest.statusCardRadius,
+        0,
+        80,
+      )
+      const normalizedSkillsOauthTokenTtlMinutes = validateRange(
+        t('webSettingsSkills.oauthTtlTitle'),
+        skillsOauthTokenTtlMinutes,
+        5,
+        1440,
+      )
+      if (
+        normalizedHistoryWindowMinutes === null ||
+        normalizedProcessStaleSeconds === null ||
+        normalizedMediaCoverMaxCount === null ||
+        normalizedRedisTtl === null ||
+        normalizedStatusCardWidth === null ||
+        normalizedStatusCardHeight === null ||
+        normalizedStatusCardRadius === null ||
+        normalizedSkillsOauthTokenTtlMinutes === null
+      ) {
+        setSaving(false)
+        return
+      }
 
       const hcaptchaPatch: Record<string, unknown> = {
         hcaptchaEnabled: formRest.hcaptchaEnabled,
@@ -743,8 +851,14 @@ export function useWebSettingsController() {
         adminBackgroundColor,
         avatarFetchByServerEnabled:
           isRemoteAvatarUrl(formRest.avatarUrl) && formRest.avatarFetchByServerEnabled === true,
+        historyWindowMinutes: normalizedHistoryWindowMinutes,
+        processStaleSeconds: normalizedProcessStaleSeconds,
         mcpThemeToolsEnabled: form.mcpThemeToolsEnabled,
         redisCacheTtlSeconds: normalizedRedisTtl,
+        mediaCoverMaxCount: normalizedMediaCoverMaxCount,
+        statusCardWidth: normalizedStatusCardWidth,
+        statusCardHeight: normalizedStatusCardHeight,
+        statusCardRadius: normalizedStatusCardRadius,
         profileOnlineAccentColor: normalizeProfileOnlineAccentColor(poTrim || '') ?? null,
         inspirationAllowedDeviceHashes: inspirationDeviceRestrictionEnabled
           ? normalizeStringList(inspirationHashSelection)
@@ -811,12 +925,12 @@ export function useWebSettingsController() {
         const skillsPatch = normalizeSkillsEditableConfig({
           enabled: skillsEnabled,
           authMode: skillsAuthMode,
-          oauthTokenTtlMinutes: skillsOauthTokenTtlMinutes,
+          oauthTokenTtlMinutes: normalizedSkillsOauthTokenTtlMinutes,
         })
         const skillsJson = await patchAdminSkills({
           enabled: skillsPatch.enabled,
           authMode: skillsPatch.authMode || undefined,
-          oauthTokenTtlMinutes: skillsPatch.oauthTokenTtlMinutes,
+          oauthTokenTtlMinutes: normalizedSkillsOauthTokenTtlMinutes,
         })
 
         const serverSkills = normalizeSkillsEditableConfig({

@@ -9,6 +9,10 @@ import {
   getAdminPanelTransition,
   getAdminSectionVariants,
 } from '@/components/admin/admin-motion'
+import {
+  formatNumberRange,
+  NumberSettingInput,
+} from '@/components/admin/number-setting-input'
 import { StatusCardPreviewPanel } from '@/components/admin/status-card-preview-panel'
 import {
   WebSettingsInset,
@@ -195,17 +199,14 @@ export function WebSettingsActivityPanel() {
             >
               <WebSettingsInset className="space-y-2">
                 <Label htmlFor="media-cover-max-count">{t('webSettingsActivity.mediaCoverMaxCountLabel')}</Label>
-                <Input
+                <NumberSettingInput
                   id="media-cover-max-count"
-                  type="number"
-                  onWheel={(event) => event.currentTarget.blur()}
                   min={0}
                   max={500}
                   value={form.mediaCoverMaxCount}
                   disabled={coreHeavyLocked}
-                  onChange={(event) =>
-                    patch('mediaCoverMaxCount', Number(event.target.value || 50))
-                  }
+                  rangeMessage={formatNumberRange(0, 500)}
+                  onValueChange={(value) => patch('mediaCoverMaxCount', value)}
                 />
                 <p className="text-xs text-muted-foreground">
                   {t('webSettingsActivity.mediaCoverMaxCountHint')}
@@ -364,19 +365,13 @@ export function WebSettingsActivityPanel() {
 
         <div className="space-y-2">
           <Label htmlFor="redis-cache-ttl-seconds">{t('webSettingsActivity.redisCacheTtlLabel')}</Label>
-          <Input
+          <NumberSettingInput
             id="redis-cache-ttl-seconds"
-            type="number"
-            onWheel={(event) => event.currentTarget.blur()}
             min={1}
             max={REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS}
             value={form.redisCacheTtlSeconds}
-            onChange={(event) =>
-              patch(
-                'redisCacheTtlSeconds',
-                Number(event.target.value || REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS),
-              )
-            }
+            rangeMessage={formatNumberRange(1, REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS)}
+            onValueChange={(value) => patch('redisCacheTtlSeconds', value)}
           />
           <p className="text-xs text-muted-foreground">
             {t('webSettingsActivity.redisCacheTtlHint')}
@@ -462,37 +457,31 @@ export function WebSettingsActivityPanel() {
       <WebSettingsInset className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="history-window-minutes">{t('webSettingsActivity.historyWindowLabel')}</Label>
-          <Input
+          <NumberSettingInput
             id="history-window-minutes"
-            type="number"
-            onWheel={(event) => event.currentTarget.blur()}
             min={SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES}
             max={SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES}
             value={form.historyWindowMinutes}
-            onChange={(event) =>
-              patch(
-                'historyWindowMinutes',
-                Number(event.target.value || SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES),
-              )
-            }
+            rangeMessage={formatNumberRange(
+              SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+              SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+            )}
+            onValueChange={(value) => patch('historyWindowMinutes', value)}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="process-stale-seconds">{t('webSettingsActivity.processStaleLabel')}</Label>
-          <Input
+          <NumberSettingInput
             id="process-stale-seconds"
-            type="number"
-            onWheel={(event) => event.currentTarget.blur()}
             min={SITE_CONFIG_PROCESS_STALE_MIN_SECONDS}
             max={SITE_CONFIG_PROCESS_STALE_MAX_SECONDS}
             value={form.processStaleSeconds}
-            onChange={(event) =>
-              patch(
-                'processStaleSeconds',
-                Number(event.target.value || SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS),
-              )
-            }
+            rangeMessage={formatNumberRange(
+              SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+              SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+            )}
+            onValueChange={(value) => patch('processStaleSeconds', value)}
           />
           <p className="text-xs text-muted-foreground">
             {t('webSettingsActivity.processStaleHint', {

@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs'
 
-import { REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS } from '@/lib/activity-api-constants'
+import {
+  REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
+  REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
+} from '@/lib/activity-api-constants'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import {
@@ -43,7 +46,12 @@ import {
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
   parseHistoryWindowMinutes,
+  parseIntegerInRangeForWrite,
   parseProcessStaleSeconds,
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
@@ -71,6 +79,10 @@ function normalizeMediaCoverMaxCount(value: unknown): number {
   const count = Number(value)
   if (!Number.isFinite(count)) return 50
   return Math.min(Math.max(Math.round(count), 0), 500)
+}
+
+function parseMediaCoverMaxCountForWrite(value: unknown): number {
+  return parseIntegerInRangeForWrite(value, 0, 500, 'mediaCoverMaxCount')
 }
 
 function normalizeSkillsAuthMode(raw: unknown): 'oauth' | 'apikey' | null {
@@ -173,16 +185,22 @@ export async function prepareSiteConfigValuesFromPayload(
       : existing?.mediaPlaySourceRules,
     mediaPlaySourceBlocklist,
   )
-  const historyWindowMinutes = parseHistoryWindowMinutes(
-    has('historyWindowMinutes')
-      ? normalizedBody.historyWindowMinutes
-      : existing?.historyWindowMinutes,
-  )
-  const processStaleSeconds = parseProcessStaleSeconds(
-    has('processStaleSeconds')
-      ? normalizedBody.processStaleSeconds
-      : existing?.processStaleSeconds,
-  )
+  const historyWindowMinutes = has('historyWindowMinutes')
+    ? parseIntegerInRangeForWrite(
+        normalizedBody.historyWindowMinutes,
+        SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+        SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+        'historyWindowMinutes',
+      )
+    : parseHistoryWindowMinutes(existing?.historyWindowMinutes)
+  const processStaleSeconds = has('processStaleSeconds')
+    ? parseIntegerInRangeForWrite(
+        normalizedBody.processStaleSeconds,
+        SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+        SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+        'processStaleSeconds',
+      )
+    : parseProcessStaleSeconds(existing?.processStaleSeconds)
 
   let captureReportedAppsEnabled = existing?.captureReportedAppsEnabled !== false
   if (
@@ -191,11 +209,14 @@ export async function prepareSiteConfigValuesFromPayload(
   ) {
     captureReportedAppsEnabled = Boolean(normalizedBody.captureReportedAppsEnabled)
   }
-  const captureReportedAppTitleLimit = normalizeReportedAppTitleLimit(
-    has('captureReportedAppTitleLimit')
-      ? normalizedBody.captureReportedAppTitleLimit
-      : existing?.captureReportedAppTitleLimit,
-  )
+  const captureReportedAppTitleLimit = has('captureReportedAppTitleLimit')
+    ? parseIntegerInRangeForWrite(
+        normalizedBody.captureReportedAppTitleLimit,
+        0,
+        10,
+        'captureReportedAppTitleLimit',
+      )
+    : normalizeReportedAppTitleLimit(existing?.captureReportedAppTitleLimit)
 
   let inspirationAllowedDeviceHashes: string[] | null = normalizeInspirationAllowedHashes(
     existing?.inspirationAllowedDeviceHashes ?? null,
@@ -502,24 +523,15 @@ export async function prepareSiteConfigValuesFromPayload(
     'statusCardShowInClassStatus',
     existing?.statusCardShowInClassStatus === true,
   )
-  const statusCardWidth = normalizeStatusCardDimension(
-    normalizedBody.statusCardWidth ?? existing?.statusCardWidth,
-    520,
-    280,
-    1200,
-  )
-  const statusCardHeight = normalizeStatusCardDimension(
-    normalizedBody.statusCardHeight ?? existing?.statusCardHeight,
-    310,
-    1,
-    720,
-  )
-  const statusCardRadius = normalizeStatusCardDimension(
-    normalizedBody.statusCardRadius ?? existing?.statusCardRadius,
-    20,
-    0,
-    80,
-  )
+  const statusCardWidth = has('statusCardWidth')
+    ? parseIntegerInRangeForWrite(normalizedBody.statusCardWidth, 280, 1200, 'statusCardWidth')
+    : normalizeStatusCardDimension(existing?.statusCardWidth, 520, 280, 1200)
+  const statusCardHeight = has('statusCardHeight')
+    ? parseIntegerInRangeForWrite(normalizedBody.statusCardHeight, 1, 720, 'statusCardHeight')
+    : normalizeStatusCardDimension(existing?.statusCardHeight, 310, 1, 720)
+  const statusCardRadius = has('statusCardRadius')
+    ? parseIntegerInRangeForWrite(normalizedBody.statusCardRadius, 0, 80, 'statusCardRadius')
+    : normalizeStatusCardDimension(existing?.statusCardRadius, 20, 0, 80)
   const statusCardBg = normalizeStatusCardHexColor(normalizedBody.statusCardBg ?? existing?.statusCardBg, '#FFFFFF')
   const statusCardSignatureBg = normalizeStatusCardHexColor(
     normalizedBody.statusCardSignatureBg ?? existing?.statusCardSignatureBg,
@@ -547,7 +559,7 @@ export async function prepareSiteConfigValuesFromPayload(
   }
   let mediaCoverMaxCount = normalizeMediaCoverMaxCount(existing?.mediaCoverMaxCount)
   if (normalizedBody.mediaCoverMaxCount !== undefined && normalizedBody.mediaCoverMaxCount !== null) {
-    mediaCoverMaxCount = normalizeMediaCoverMaxCount(normalizedBody.mediaCoverMaxCount)
+    mediaCoverMaxCount = parseMediaCoverMaxCountForWrite(normalizedBody.mediaCoverMaxCount)
   }
 
   let hideInspirationOnHome = existing?.hideInspirationOnHome === true
@@ -579,7 +591,12 @@ export async function prepareSiteConfigValuesFromPayload(
     existing?.redisCacheTtlSeconds ?? REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   )
   if (normalizedBody.redisCacheTtlSeconds !== undefined && normalizedBody.redisCacheTtlSeconds !== null) {
-    redisCacheTtlSeconds = parseRedisCacheTtlSeconds(normalizedBody.redisCacheTtlSeconds)
+    redisCacheTtlSeconds = parseIntegerInRangeForWrite(
+      normalizedBody.redisCacheTtlSeconds,
+      1,
+      REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
+      'redisCacheTtlSeconds',
+    )
   }
 
   let steamEnabled = existing?.steamEnabled ?? false

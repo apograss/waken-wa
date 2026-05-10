@@ -264,11 +264,13 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
     const normalized = normalizePayloadForSave(payload)
     if (normalized.error) {
       toast.error(
-        t('webSettingsRuleTools.appRules.invalidRegex', {
-          group: normalized.error.group,
-          rule: normalized.error.rule,
-          message: normalized.error.message,
-        }),
+        normalized.error.type === 'regex'
+          ? t('webSettingsRuleTools.appRules.invalidRegex', {
+              group: normalized.error.group,
+              rule: normalized.error.rule,
+              message: normalized.error.message,
+            })
+          : t('common.numberRange', { range: '0 - 10' }),
       )
       return false
     }
@@ -633,7 +635,19 @@ export function useRuleToolsState(migration: { heavyEditingLocked?: boolean } | 
   const copyRulesJson = async () => {
     try {
       const payload = currentPayload ?? (await exportAdminRuleTools())
-      const json = exportAppRulesJson(payload)
+      const titleLimit = Number(payload.captureReportedAppTitleLimit)
+      if (
+        !Number.isSafeInteger(titleLimit) ||
+        titleLimit < 0 ||
+        titleLimit > 10
+      ) {
+        toast.error(t('common.numberRange', { range: '0 - 10' }))
+        return
+      }
+      const json = exportAppRulesJson({
+        ...payload,
+        captureReportedAppTitleLimit: titleLimit,
+      })
       await navigator.clipboard.writeText(json)
       toast.success(t('webSettingsRuleTools.toasts.copiedRulesJson'))
     } catch (error) {
