@@ -27,7 +27,9 @@ import {
   deleteAdminDevice,
   patchAdminDevice,
 } from '@/components/admin/admin-query-mutations'
+import { DeviceCustomStatusDialog } from '@/components/admin/device-custom-status-dialog'
 import { DeviceListItemActions } from '@/components/admin/device-list-item-actions'
+import { DeviceReviewDialog } from '@/components/admin/device-review-dialog'
 import { FormattedTime } from '@/components/formatted-time'
 import {
   AlertDialog,
@@ -41,14 +43,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -65,8 +59,11 @@ import {
 } from '@/constants/device'
 import { toastSwitchLabel } from '@/lib/admin-switch-toast'
 import { cn } from '@/lib/utils'
-import type { AdminDeviceSummary } from '@/types'
-import type { AdminDeviceItem, AdminTokenOption } from '@/types'
+import type {
+  AdminDeviceItem,
+  AdminDeviceSummary,
+  AdminTokenOption,
+} from '@/types'
 
 export function DeviceManager({
   initialHashKey,
@@ -406,73 +403,16 @@ export function DeviceManager({
     [deviceSummaryQuery.data, editCustomStatusDeviceId],
   )
 
-  const filteredBypassDevices = useMemo(() => {
-    const search = customStatusBypassSearch.trim().toLowerCase()
-    if (!search) return availableBypassDevices
-    return availableBypassDevices.filter((item: AdminDeviceSummary) => {
-      const displayName = item.displayName.toLowerCase()
-      const hashKey = item.generatedHashKey.toLowerCase()
-      return displayName.includes(search) || hashKey.includes(search)
-    })
-  }, [availableBypassDevices, customStatusBypassSearch])
-
-  const renderBypassDeviceOptions = (
-    selectedKeys: string[],
-    onChange: (keys: string[]) => void,
-    title: string,
-    description: string,
-  ) => (
-    <div className="space-y-2 rounded-md border border-dashed border-border/60 bg-background/70 p-3">
-      <div className="space-y-1">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <Input
-        value={customStatusBypassSearch}
-        onChange={(event) => setCustomStatusBypassSearch(event.target.value)}
-        placeholder={t('devices.customStatus.bypassSearchPlaceholder')}
-        className="h-8"
-      />
-      <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
-        {availableBypassDevices.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t('devices.customStatus.noBypassDevices')}</p>
-        ) : filteredBypassDevices.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            {t('devices.customStatus.noBypassDevicesMatched')}
-          </p>
-        ) : (
-          filteredBypassDevices.map((device) => {
-            const checked = selectedKeys.includes(device.generatedHashKey)
-            return (
-              <label
-                key={device.id}
-                className="flex cursor-pointer items-start gap-3 rounded-md border border-border/50 px-3 py-2 text-sm hover:bg-muted/30"
-              >
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={checked}
-                  onChange={(event) => {
-                    if (event.target.checked) {
-                      onChange([...selectedKeys, device.generatedHashKey])
-                    } else {
-                      onChange(selectedKeys.filter((key) => key !== device.generatedHashKey))
-                    }
-                  }}
-                />
-                <span className="min-w-0">
-                  <span className="block break-words font-medium">{device.displayName}</span>
-                  <span className="block break-all text-[11px] text-muted-foreground">
-                    {device.generatedHashKey}
-                  </span>
-                </span>
-              </label>
-            )
-          })
-        )}
-      </div>
-    </div>
-  )
+  const closeCustomStatusEditor = () => {
+    setEditCustomStatusDeviceId(null)
+    setCustomOfflineStatus('')
+    setCustomOfflineStatusEnabled(false)
+    setCustomOfflineStatusBypassOnlineDeviceKeys([])
+    setCustomLockStatus('')
+    setCustomLockStatusEnabled(false)
+    setCustomLockStatusBypassOnlineDeviceKeys([])
+    setCustomStatusBypassSearch('')
+  }
 
   const updateBinding = async (id: number, apiTokenId: number | null) => {
     await updateBindingMutation.mutateAsync({ id, apiTokenId })
@@ -899,237 +839,58 @@ export function DeviceManager({
         ) : null}
       </div>
 
-      <Dialog
-        open={reviewDevice !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setReviewDeviceId(null)
-            setReviewTokenId('')
-          }
+      <DeviceReviewDialog
+        reviewDevice={reviewDevice}
+        reviewTokenId={reviewTokenId}
+        tokens={tokens}
+        bindingPending={updateBindingMutation.isPending}
+        t={t}
+        deviceStatusLabel={deviceStatusLabel}
+        onClose={() => {
+          setReviewDeviceId(null)
+          setReviewTokenId('')
         }}
-      >
-        <DialogContent className="sm:max-w-md" showCloseButton>
-          {reviewDevice ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{t('devices.reviewTitle')}</DialogTitle>
-                <DialogDescription>
-                  {t('devices.reviewDescription')}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 text-sm">
-                <p>
-                  <span className="text-muted-foreground">{t('devices.fieldDisplayName')}</span>
-                  {reviewDevice.displayName}
-                </p>
-                <p className="text-xs">
-                  <span className="text-muted-foreground">{t('devices.fieldIdentity')}</span>
-                  <span className="font-mono break-all">{reviewDevice.generatedHashKey}</span>
-                </p>
-                <p>
-                  <span className="text-muted-foreground">{t('devices.fieldStatus')}</span>
-                  {deviceStatusLabel(reviewDevice.status)}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">{t('devices.fieldLastOnline')}</span>
-                  <FormattedTime
-                    date={reviewDevice.lastSeenAt}
-                    pattern="yyyy-MM-dd HH:mm:ss"
-                    fallback="—"
-                  />
-                </p>
-                <p>
-                  <span className="text-muted-foreground">{t('devices.fieldToken')}</span>
-                  {reviewDevice.apiToken ? reviewDevice.apiToken.name : t('devices.tokenUnbound')}
-                </p>
-                {reviewDevice.apiToken ? (
-                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-xs text-amber-800 dark:text-amber-200">
-                    {t('devices.bindingChangeDetected', { name: reviewDevice.apiToken.name })}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="review-device-token">{t('devices.reviewBindToken')}</Label>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Select
-                        value={reviewTokenId || 'none'}
-                        onValueChange={(v) => setReviewTokenId(v === 'none' ? '' : v)}
-                      >
-                        <SelectTrigger id="review-device-token" className="flex-1">
-                          <SelectValue placeholder={t('devices.selectToken')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">{t('devices.unbind')}</SelectItem>
-                          {tokens.map((tokenOption) => (
-                            <SelectItem key={tokenOption.id} value={String(tokenOption.id)}>
-                              {tokenOption.name}
-                              {!tokenOption.isActive ? t('devices.disabledTokenSuffix') : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full sm:w-auto"
-                        disabled={updateBindingMutation.isPending}
-                        onClick={() => {
-                          const parsed = reviewTokenId ? Number(reviewTokenId) : NaN
-                          const nextTokenId = Number.isFinite(parsed) ? parsed : null
-                          void updateBinding(reviewDevice.id, nextTokenId)
-                        }}
-                      >
-                        {t('devices.saveBinding')}
-                      </Button>
-                    </div>
-                    <p className="text-[11px] text-amber-600 dark:text-amber-300">
-                      {t('devices.bindTokenBeforeApprove')}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void updateStatus(reviewDevice.id, 'revoked')}
-                >
-                  {t('devices.reject')}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={!reviewDevice.apiToken}
-                  onClick={() => void updateStatus(reviewDevice.id, 'active')}
-                >
-                  {t('devices.approve')}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        onReviewTokenIdChange={setReviewTokenId}
+        onUpdateBinding={(id, apiTokenId) => void updateBinding(id, apiTokenId)}
+        onUpdateStatus={(id, nextStatus) => void updateStatus(id, nextStatus)}
+      />
 
-      <Dialog
+      <DeviceCustomStatusDialog
         open={editCustomStatusDeviceId !== null}
+        saving={updateCustomStatusMutation.isPending}
+        customOfflineStatus={customOfflineStatus}
+        customOfflineStatusEnabled={customOfflineStatusEnabled}
+        customOfflineStatusBypassOnlineDeviceKeys={
+          customOfflineStatusBypassOnlineDeviceKeys
+        }
+        customLockStatus={customLockStatus}
+        customLockStatusEnabled={customLockStatusEnabled}
+        customLockStatusBypassOnlineDeviceKeys={
+          customLockStatusBypassOnlineDeviceKeys
+        }
+        customStatusBypassSearch={customStatusBypassSearch}
+        bypassDevices={availableBypassDevices}
+        t={t}
         onOpenChange={(open) => {
-          if (!open) {
-            setEditCustomStatusDeviceId(null)
-            setCustomOfflineStatus('')
-            setCustomOfflineStatusEnabled(false)
-            setCustomOfflineStatusBypassOnlineDeviceKeys([])
-            setCustomLockStatus('')
-            setCustomLockStatusEnabled(false)
-            setCustomLockStatusBypassOnlineDeviceKeys([])
-            setCustomStatusBypassSearch('')
+          if (!open) closeCustomStatusEditor()
+        }}
+        onCustomOfflineStatusChange={setCustomOfflineStatus}
+        onCustomOfflineStatusEnabledChange={setCustomOfflineStatusEnabled}
+        onCustomOfflineStatusBypassOnlineDeviceKeysChange={
+          setCustomOfflineStatusBypassOnlineDeviceKeys
+        }
+        onCustomLockStatusChange={setCustomLockStatus}
+        onCustomLockStatusEnabledChange={setCustomLockStatusEnabled}
+        onCustomLockStatusBypassOnlineDeviceKeysChange={
+          setCustomLockStatusBypassOnlineDeviceKeys
+        }
+        onCustomStatusBypassSearchChange={setCustomStatusBypassSearch}
+        onSave={() => {
+          if (editCustomStatusDeviceId !== null) {
+            void saveCustomStatus(editCustomStatusDeviceId)
           }
         }}
-      >
-        <DialogContent className="flex max-h-[min(92vh,52rem)] flex-col overflow-hidden sm:max-w-lg" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>{t('devices.customStatus.title')}</DialogTitle>
-            <DialogDescription>
-              {t('devices.customStatus.description')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
-            <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="custom-offline-enabled" className="text-sm font-medium cursor-pointer">
-                  {t('devices.customStatus.offlineTitle')}
-                </Label>
-                <Switch
-                  id="custom-offline-enabled"
-                  checked={customOfflineStatusEnabled}
-                  onCheckedChange={setCustomOfflineStatusEnabled}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('devices.customStatus.offlineDescription')}
-              </p>
-              <div className="space-y-2">
-                <Input
-                  value={customOfflineStatus}
-                  onChange={(e) => setCustomOfflineStatus(e.target.value)}
-                  placeholder={t('devices.customStatus.offlinePlaceholder')}
-                  maxLength={100}
-                  disabled={!customOfflineStatusEnabled}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('devices.customStatus.maxLength', { max: 100 })} ({customOfflineStatus.length}/100)
-                </p>
-              </div>
-              {renderBypassDeviceOptions(
-                customOfflineStatusBypassOnlineDeviceKeys,
-                setCustomOfflineStatusBypassOnlineDeviceKeys,
-                t('devices.customStatus.offlineBypassTitle'),
-                t('devices.customStatus.offlineBypassDescription'),
-              )}
-            </div>
-
-            <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="custom-lock-enabled" className="text-sm font-medium cursor-pointer">
-                  {t('devices.customStatus.lockTitle')}
-                </Label>
-                <Switch
-                  id="custom-lock-enabled"
-                  checked={customLockStatusEnabled}
-                  onCheckedChange={setCustomLockStatusEnabled}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('devices.customStatus.lockDescription')}
-              </p>
-              <div className="space-y-2">
-                <Input
-                  value={customLockStatus}
-                  onChange={(e) => setCustomLockStatus(e.target.value)}
-                  placeholder={t('devices.customStatus.lockPlaceholder')}
-                  maxLength={100}
-                  disabled={!customLockStatusEnabled}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('devices.customStatus.maxLength', { max: 100 })} ({customLockStatus.length}/100)
-                </p>
-              </div>
-              {renderBypassDeviceOptions(
-                customLockStatusBypassOnlineDeviceKeys,
-                setCustomLockStatusBypassOnlineDeviceKeys,
-                t('devices.customStatus.lockBypassTitle'),
-                t('devices.customStatus.lockBypassDescription'),
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setEditCustomStatusDeviceId(null)
-                setCustomOfflineStatus('')
-                setCustomOfflineStatusEnabled(false)
-                setCustomOfflineStatusBypassOnlineDeviceKeys([])
-                setCustomLockStatus('')
-                setCustomLockStatusEnabled(false)
-                setCustomLockStatusBypassOnlineDeviceKeys([])
-                setCustomStatusBypassSearch('')
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                if (editCustomStatusDeviceId !== null) {
-                  void saveCustomStatus(editCustomStatusDeviceId)
-                }
-              }}
-              disabled={updateCustomStatusMutation.isPending}
-            >
-              {updateCustomStatusMutation.isPending ? t('common.saving') : t('common.save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   )
 }

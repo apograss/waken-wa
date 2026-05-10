@@ -23,9 +23,9 @@
 
 | 文件 | 行数 | 建议 |
 | --- | ---: | --- |
-| `components/admin/device-manager.tsx` | 1135 | 已拆出设备行操作组件；后续拆分查询状态、批量操作、弹窗 |
+| `components/admin/device-manager.tsx` | 893 | 已拆出设备行操作、审核弹窗、自定义状态弹窗；后续拆分查询状态、批量操作 |
 | `components/admin/use-web-settings-controller.ts` | 1093 | 拆分按设置分类的 controller/helper |
-| `components/admin/web-settings-rule-tools.tsx` | 970 | 已拆出预览区、规则组列表、规则组编辑器；后续拆分导入导出、媒体源弹窗、状态派生 |
+| `components/admin/web-settings-rule-tools.tsx` | 734 | 已拆出预览区、规则组列表、规则组编辑器、媒体源弹窗、导入规则弹窗；后续拆分状态派生 |
 | `components/admin/web-settings-custom-surface.tsx` | 900 | 已拆出背景模式/预览派生 helper；后续拆分颜色/尺寸/背景/预览区域 |
 | `components/admin/schedule-manager.tsx` | 844 | 拆分课程编辑、时间段编辑、导入导出与状态派生 |
 | `components/admin/use-rule-tools-state.ts` | 842 | 拆分规则工具查询、编辑缓存、导入导出状态 |
@@ -407,6 +407,8 @@ API route 应保持薄层：
 - 主题自定义背景拆分：`lib/theme-custom-surface-preview.ts` 承接背景模式、预览 hint、上传 usage key 与 palette 选项解析，`types/web-settings.ts` 新增预览资源状态类型。
 - 站点设置读写拆分：共享类型迁入 `types/site-settings.ts`，`SITE_SETTINGS_SITE_CONFIG_ID` 与迁移提示迁入 `constants/site-settings.ts`，读侧缺表兼容/row 解码与写侧事务/错误/entry rows 已下沉。
 - 管理后台组件拆分：`components/admin/device-list-item-actions.tsx`、`components/admin/rule-tools-preview.tsx`、`components/admin/rule-tools-group-list.tsx`、`components/admin/rule-tools-group-editor.tsx` 承接大组件内的可复用 UI 块。
+- 规则工具弹窗拆分：`components/admin/rule-tools-media-source-dialog.tsx`、`components/admin/rule-tools-import-dialog.tsx` 承接媒体源与导入规则弹窗，让 `components/admin/web-settings-rule-tools.tsx` 当前降至约 734 行。
+- 设备管理弹窗拆分：`components/admin/device-review-dialog.tsx`、`components/admin/device-custom-status-dialog.tsx` 承接审核与自定义状态弹窗，让 `components/admin/device-manager.tsx` 当前降至约 893 行。
 - 分支规范补充：`components/admin/lexical-editor.tsx`、`lib/skills-auth/secrets.ts`、`lib/public-page-font.ts` 中同变量多分支已改为 `switch`。
 - 清理无用文件：删除未使用的 `lib/inspiration-admin-constants.ts`。
 - 分支规范：`components/admin/schedule-manager-utils.ts` 与状态卡相关枚举/扩展名分支已改为 `switch`。
@@ -448,8 +450,8 @@ API route 应保持薄层：
 
 下一轮最划算的推进顺序：
 
-1. 继续拆 `components/admin/web-settings-rule-tools.tsx` 的媒体源弹窗或导入导出弹窗。
-2. 拆 `components/admin/device-manager.tsx` 的弹窗区与设备查询状态。
-3. 拆 `components/admin/use-rule-tools-state.ts`，优先将列表操作、规则组操作与导入导出状态分离。
-4. 处理 `components/admin/use-web-settings-controller.ts`，按 core/theme/schedule/rules 分出 controller helper。
+1. 拆 `components/admin/device-manager.tsx` 的设备查询状态与列表项展示。
+2. 拆 `components/admin/use-rule-tools-state.ts`，优先将列表操作、规则组操作与导入导出状态分离。
+3. 处理 `components/admin/use-web-settings-controller.ts`，按 core/theme/schedule/rules 分出 controller helper。
+4. 渐进拆 `components/admin/web-settings-rule-tools.tsx` 剩余状态派生；避免再把新功能塞回主文件。
 5. 渐进迁移仍散落的共享类型与共享常量；不要为了数字清零批量移动私有类型或局部常量。

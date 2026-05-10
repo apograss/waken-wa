@@ -240,7 +240,10 @@
     "tokenPrefix": "Token:",
     "noQrData": "No QR code data",
     "copied": "Copied",
-    "copyBundle": "Copy access bundle"
+    "copyBundle": "Copy access bundle",
+    "reporterImportHint": "Reporter import link with the current API key. It is only available after this creation.",
+    "openReporterImport": "Open Reporter import",
+    "copyReporterImportLink": "Copy import link"
   },
   "orphanImages": {
     "deletedSummary": "Deleted {{deleted}} images and skipped {{skipped}} images",

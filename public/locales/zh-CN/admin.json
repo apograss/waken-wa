@@ -240,7 +240,10 @@
     "tokenPrefix": "Token:",
     "noQrData": "暂无二维码数据",
     "copied": "已复制",
-    "copyBundle": "复制接入配置"
+    "copyBundle": "复制接入配置",
+    "reporterImportHint": "包含当前 API Key 的 Reporter 导入链接，只会在本次创建后可用。",
+    "openReporterImport": "打开 Reporter 导入",
+    "copyReporterImportLink": "复制导入链接"
   },
   "orphanImages": {
     "deletedSummary": "已删除 {{deleted}} 张，跳过 {{skipped}} 张",

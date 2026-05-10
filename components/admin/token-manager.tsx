@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Check, Copy, QrCode, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Copy, ExternalLink, QrCode, RefreshCw, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Image from 'next/image'
 import { useT } from 'next-i18next/client'
@@ -62,6 +62,11 @@ import type { ApiTokenListRow } from '@/types/admin'
 
 const TOKEN_LIST_PAGE_SIZE = 10
 const TOKEN_LIST_MAX_HEIGHT = 'min(70vh,48rem)'
+const REPORTER_IMPORT_SCHEME = 'waken-wa-reporter://import'
+
+function buildReporterImportUrl(encodedBundle: string): string {
+  return `${REPORTER_IMPORT_SCHEME}?config=${encodeURIComponent(encodedBundle)}`
+}
 
 export interface TokenManagerHandle {
   openCreate: () => void
@@ -103,6 +108,10 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
     exitY: 8,
     scale: 0.996,
   })
+  const reporterImportUrl = useMemo(
+    () => (newTokenBundle ? buildReporterImportUrl(newTokenBundle) : null),
+    [newTokenBundle],
+  )
 
   useEffect(() => {
     if (page <= safePage) return
@@ -286,6 +295,38 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
                       )}
                     </Button>
                   </div>
+                  {reporterImportUrl ? (
+                    <div className="space-y-2 rounded-md border border-border/60 bg-background/60 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        {t('tokens.reporterImportHint')}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button asChild size="sm">
+                          <a href={reporterImportUrl}>
+                            <ExternalLink className="h-4 w-4" />
+                            {t('tokens.openReporterImport')}
+                          </a>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            void copyToClipboard(reporterImportUrl, 'create-reporter-import-link')
+                          }
+                        >
+                          {copiedTarget === 'create-reporter-import-link' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                          {copiedTarget === 'create-reporter-import-link'
+                            ? t('tokens.copied')
+                            : t('tokens.copyReporterImportLink')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                   <div className="pt-1">
                     <Button
                       type="button"
