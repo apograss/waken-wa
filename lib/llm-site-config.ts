@@ -64,10 +64,8 @@ import { normalizeSkillsOauthTokenTtlMinutes } from '@/lib/skills-auth'
 import {
   normalizeStatusCardCoverKey,
   normalizeStatusCardCoverRev,
-  normalizeStatusCardDimension,
-  normalizeStatusCardHexColor,
-  normalizeStatusCardTag,
-  normalizeStatusCardVariant,
+  normalizeStatusCardSettings,
+  parseStatusCardDimensionForWrite,
 } from '@/lib/status-card-options'
 import { normalizeCustomCss } from '@/lib/theme-css'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
@@ -481,66 +479,39 @@ export async function prepareSiteConfigValuesFromPayload(
   if (normalizedBody.hideActivityMedia !== undefined && normalizedBody.hideActivityMedia !== null) {
     hideActivityMedia = Boolean(normalizedBody.hideActivityMedia)
   }
-  let statusCardEnabled = existing?.statusCardEnabled === true
-  if (normalizedBody.statusCardEnabled !== undefined && normalizedBody.statusCardEnabled !== null) {
-    statusCardEnabled = Boolean(normalizedBody.statusCardEnabled)
-  }
-  let statusCardVariant = normalizeStatusCardVariant(existing?.statusCardVariant)
-  if (normalizedBody.statusCardVariant !== undefined && normalizedBody.statusCardVariant !== null) {
-    statusCardVariant = normalizeStatusCardVariant(normalizedBody.statusCardVariant)
-  }
-  const statusCardTag = normalizeStatusCardTag(
-    normalizedBody.statusCardTag ?? existing?.statusCardTag,
+  const statusCardNormalized = normalizeStatusCardSettings(
+    normalizedBody,
+    existing ?? {},
+    {
+      parseDimension: (value, fallback, min, max, key) =>
+        parseStatusCardDimensionForWrite(value, fallback, min, max, key),
+    },
   )
-  let statusCardBackgroundKey = normalizeStatusCardCoverKey(existing?.statusCardBackgroundKey)
-  if (normalizedBody.statusCardBackgroundKey !== undefined) {
-    statusCardBackgroundKey = normalizeStatusCardCoverKey(normalizedBody.statusCardBackgroundKey)
-  }
-  let statusCardBackgroundRev = normalizeStatusCardCoverRev(existing?.statusCardBackgroundRev)
-  if (normalizedBody.statusCardBackgroundRev !== undefined) {
-    statusCardBackgroundRev = normalizeStatusCardCoverRev(normalizedBody.statusCardBackgroundRev)
-  }
-  let statusCardCoverKey = normalizeStatusCardCoverKey(existing?.statusCardCoverKey)
-  if (normalizedBody.statusCardCoverKey !== undefined) {
-    statusCardCoverKey = normalizeStatusCardCoverKey(normalizedBody.statusCardCoverKey)
-  }
-  let statusCardCoverRev = normalizeStatusCardCoverRev(existing?.statusCardCoverRev)
-  if (normalizedBody.statusCardCoverRev !== undefined) {
-    statusCardCoverRev = normalizeStatusCardCoverRev(normalizedBody.statusCardCoverRev)
-  }
-  const statusCardBoolean = (key: string, fallback: boolean) => {
-    const value = normalizedBody[key]
-    if (value === undefined || value === null) return fallback
-    return Boolean(value)
-  }
-  const statusCardShowHeader = statusCardBoolean('statusCardShowHeader', existing?.statusCardShowHeader !== false)
-  const statusCardShowAvatar = statusCardBoolean('statusCardShowAvatar', existing?.statusCardShowAvatar !== false)
-  const statusCardShowName = statusCardBoolean('statusCardShowName', existing?.statusCardShowName !== false)
-  const statusCardShowBio = statusCardBoolean('statusCardShowBio', existing?.statusCardShowBio !== false)
-  const statusCardShowNote = statusCardBoolean('statusCardShowNote', existing?.statusCardShowNote === true)
-  const statusCardPreferGame = statusCardBoolean('statusCardPreferGame', existing?.statusCardPreferGame === true)
-  const statusCardShowInClassStatus = statusCardBoolean(
-    'statusCardShowInClassStatus',
-    existing?.statusCardShowInClassStatus === true,
-  )
-  const statusCardWidth = has('statusCardWidth')
-    ? parseIntegerInRangeForWrite(normalizedBody.statusCardWidth, 280, 1200, 'statusCardWidth')
-    : normalizeStatusCardDimension(existing?.statusCardWidth, 520, 280, 1200)
-  const statusCardHeight = has('statusCardHeight')
-    ? parseIntegerInRangeForWrite(normalizedBody.statusCardHeight, 1, 720, 'statusCardHeight')
-    : normalizeStatusCardDimension(existing?.statusCardHeight, 310, 1, 720)
-  const statusCardRadius = has('statusCardRadius')
-    ? parseIntegerInRangeForWrite(normalizedBody.statusCardRadius, 0, 80, 'statusCardRadius')
-    : normalizeStatusCardDimension(existing?.statusCardRadius, 20, 0, 80)
-  const statusCardBg = normalizeStatusCardHexColor(normalizedBody.statusCardBg ?? existing?.statusCardBg, '#FFFFFF')
-  const statusCardSignatureBg = normalizeStatusCardHexColor(
-    normalizedBody.statusCardSignatureBg ?? existing?.statusCardSignatureBg,
-    '#F4F0FF',
-  )
-  const statusCardFg = normalizeStatusCardHexColor(normalizedBody.statusCardFg ?? existing?.statusCardFg, '#111827')
-  const statusCardMuted = normalizeStatusCardHexColor(normalizedBody.statusCardMuted ?? existing?.statusCardMuted, '#6B7280')
-  const statusCardAccent = normalizeStatusCardHexColor(normalizedBody.statusCardAccent ?? existing?.statusCardAccent, '#22C55E')
-  const statusCardBorder = normalizeStatusCardHexColor(normalizedBody.statusCardBorder ?? existing?.statusCardBorder, '#E5E7EB')
+  const {
+    statusCardEnabled,
+    statusCardVariant,
+    statusCardTag,
+    statusCardBackgroundKey,
+    statusCardBackgroundRev,
+    statusCardCoverKey,
+    statusCardCoverRev,
+    statusCardShowHeader,
+    statusCardShowAvatar,
+    statusCardShowName,
+    statusCardShowBio,
+    statusCardShowNote,
+    statusCardPreferGame,
+    statusCardShowInClassStatus,
+    statusCardWidth,
+    statusCardHeight,
+    statusCardRadius,
+    statusCardBg,
+    statusCardSignatureBg,
+    statusCardFg,
+    statusCardMuted,
+    statusCardAccent,
+    statusCardBorder,
+  } = statusCardNormalized
   let mediaDisplayShowSource = existing?.mediaDisplayShowSource === true
   if (normalizedBody.mediaDisplayShowSource !== undefined && normalizedBody.mediaDisplayShowSource !== null) {
     mediaDisplayShowSource = Boolean(normalizedBody.mediaDisplayShowSource)

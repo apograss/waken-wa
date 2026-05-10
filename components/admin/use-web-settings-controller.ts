@@ -101,14 +101,7 @@ import {
   SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
   SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/lib/site-settings-constants'
-import {
-  normalizeStatusCardCoverKey,
-  normalizeStatusCardCoverRev,
-  normalizeStatusCardDimension,
-  normalizeStatusCardHexColor,
-  normalizeStatusCardTag,
-  normalizeStatusCardVariant,
-} from '@/lib/status-card-options'
+import { normalizeStatusCardSettings } from '@/lib/status-card-options'
 import { normalizeTimezone } from '@/lib/timezone'
 
 function hasKeyDiff(
@@ -150,6 +143,17 @@ function areValuesEqual(left: unknown, right: unknown): boolean {
   }
 
   return false
+}
+
+function normalizeCorePayloadForComparison(payload: Record<string, unknown>): Record<string, unknown> {
+  return omitRecordKeys(
+    {
+      ...payload,
+      hcaptchaSecretKey: '',
+      steamApiKey: '',
+    },
+    [...SITE_SETTINGS_THEME_CATEGORY_KEYS, ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS],
+  )
 }
 
 function isInlineImageDataUrl(value: unknown): value is string {
@@ -303,6 +307,7 @@ export function useWebSettingsController() {
   }, [setPublicOrigin])
 
   const buildSiteConfigForm = useCallback((data: Record<string, any>): SiteConfig => {
+    const statusCard = normalizeStatusCardSettings(data)
     return {
       adminThemeColor:
         typeof data.adminThemeColor === 'string'
@@ -422,29 +427,7 @@ export function useWebSettingsController() {
       steamEnabled: Boolean(data.steamEnabled),
       steamId: String(data.steamId ?? ''),
       steamApiKey: '',
-      statusCardEnabled: data.statusCardEnabled === true,
-      statusCardVariant: normalizeStatusCardVariant(data.statusCardVariant),
-      statusCardTag: normalizeStatusCardTag(data.statusCardTag),
-      statusCardBackgroundKey: normalizeStatusCardCoverKey(data.statusCardBackgroundKey) ?? '',
-      statusCardBackgroundRev: normalizeStatusCardCoverRev(data.statusCardBackgroundRev),
-      statusCardCoverKey: normalizeStatusCardCoverKey(data.statusCardCoverKey) ?? '',
-      statusCardCoverRev: normalizeStatusCardCoverRev(data.statusCardCoverRev),
-      statusCardShowHeader: data.statusCardShowHeader !== false,
-      statusCardShowAvatar: data.statusCardShowAvatar !== false,
-      statusCardShowName: data.statusCardShowName !== false,
-      statusCardShowBio: data.statusCardShowBio !== false,
-      statusCardShowNote: data.statusCardShowNote === true,
-      statusCardPreferGame: data.statusCardPreferGame === true,
-      statusCardShowInClassStatus: data.statusCardShowInClassStatus === true,
-      statusCardWidth: normalizeStatusCardDimension(data.statusCardWidth, 520, 280, 1200),
-      statusCardHeight: normalizeStatusCardDimension(data.statusCardHeight, 310, 1, 720),
-      statusCardRadius: normalizeStatusCardDimension(data.statusCardRadius, 20, 0, 80),
-      statusCardBg: normalizeStatusCardHexColor(data.statusCardBg, '#FFFFFF'),
-      statusCardSignatureBg: normalizeStatusCardHexColor(data.statusCardSignatureBg, '#F4F0FF'),
-      statusCardFg: normalizeStatusCardHexColor(data.statusCardFg, '#111827'),
-      statusCardMuted: normalizeStatusCardHexColor(data.statusCardMuted, '#6B7280'),
-      statusCardAccent: normalizeStatusCardHexColor(data.statusCardAccent, '#22C55E'),
-      statusCardBorder: normalizeStatusCardHexColor(data.statusCardBorder, '#E5E7EB'),
+      ...statusCard,
     }
   }, [t])
 
@@ -877,16 +860,9 @@ export function useWebSettingsController() {
       const coreKeys = Object.keys(corePayload)
       const coreDiff = !baselineForm
         ? true
-        : JSON.stringify(corePayload) !==
-          JSON.stringify(
-            omitRecordKeys(
-              {
-                ...baselineForm,
-                hcaptchaSecretKey: '',
-                steamApiKey: '',
-              } as unknown as Record<string, unknown>,
-              [...SITE_SETTINGS_THEME_CATEGORY_KEYS, ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS],
-            ),
+        : !areValuesEqual(
+            corePayload,
+            normalizeCorePayloadForComparison(baselineForm as unknown as Record<string, unknown>),
           )
 
       const settingsSaveSteps: Array<{
@@ -906,7 +882,7 @@ export function useWebSettingsController() {
           run: () => patchAdminSettingsSchedule(schedulePayload),
         })
       }
-      if ((!baselineForm || webSettingsDirty) && coreDiff) {
+      if (coreDiff) {
         settingsSaveSteps.push({
           keys: coreKeys,
           run: () => patchAdminSettingsCore(corePayload),
@@ -1061,14 +1037,13 @@ export function useWebSettingsController() {
   const webSettingsDirty = useMemo(() => {
     if (!baselineForm || !baselineSkillsConfig) return false
     try {
-      const formDirty = JSON.stringify(form) !== JSON.stringify(baselineForm)
-      if (formDirty) return true
+      if (!areValuesEqual(form, baselineForm)) return true
       const currentSkills = normalizeSkillsEditableConfig({
         enabled: skillsEnabled,
         authMode: skillsAuthMode,
         oauthTokenTtlMinutes: skillsOauthTokenTtlMinutes,
       })
-      return JSON.stringify(currentSkills) !== JSON.stringify(baselineSkillsConfig)
+      return !areValuesEqual(currentSkills, baselineSkillsConfig)
     } catch {
       return true
     }

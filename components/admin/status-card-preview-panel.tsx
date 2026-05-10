@@ -12,7 +12,6 @@ import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import {
   formatNumberRange,
   NumberSettingInput,
-  parseIntegerInRange,
 } from '@/components/admin/number-setting-input'
 import {
   WebSettingsInset,
@@ -34,7 +33,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { normalizeStatusCardTag } from '@/lib/status-card-options'
+import {
+  normalizeStatusCardSettings,
+  normalizeStatusCardTag,
+} from '@/lib/status-card-options'
 
 type DeviceMode = 'auto' | 'deviceId' | 'deviceKey'
 type StatusCardVariant = 'classic' | 'aurora' | 'cover' | 'signature'
@@ -97,12 +99,38 @@ function extractCoverKeyFromImageSourceUrl(value: string): string {
   return match?.[1] ?? normalizeCoverKey(normalized)
 }
 
+function getStatusCardDimensions(
+  width: unknown,
+  height: unknown,
+  radius: unknown,
+): {
+  width: number
+  height: number
+  radius: number
+} {
+  const normalized = normalizeStatusCardSettings({
+    statusCardWidth: width,
+    statusCardHeight: height,
+    statusCardRadius: radius,
+  })
+  return {
+    width: normalized.statusCardWidth,
+    height: normalized.statusCardHeight,
+    radius: normalized.statusCardRadius,
+  }
+}
+
 async function hashText(value: string): Promise<string> {
   const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 function buildStatusCardPath(draft: StatusCardDraft, form: StatusCardPreviewSource): string {
+  const dimensions = getStatusCardDimensions(
+    form.statusCardWidth,
+    form.statusCardHeight,
+    form.statusCardRadius,
+  )
   const params = new URLSearchParams()
   params.set('variant', form.statusCardVariant)
   const tag = normalizeStatusCardTag(form.statusCardTag)
@@ -133,12 +161,9 @@ function buildStatusCardPath(draft: StatusCardDraft, form: StatusCardPreviewSour
   }
   params.set('preferGame', form.statusCardPreferGame ? '1' : '0')
   params.set('showInClassStatus', form.statusCardShowInClassStatus ? '1' : '0')
-  const statusCardWidth = parseIntegerInRange(form.statusCardWidth, 280, 1200) ?? 520
-  const statusCardHeight = parseIntegerInRange(form.statusCardHeight, 1, 720) ?? 310
-  const statusCardRadius = parseIntegerInRange(form.statusCardRadius, 0, 80) ?? 20
-  params.set('width', String(statusCardWidth))
-  params.set('height', String(statusCardHeight))
-  params.set('radius', String(statusCardRadius))
+  params.set('width', String(dimensions.width))
+  params.set('height', String(dimensions.height))
+  params.set('radius', String(dimensions.radius))
   params.set('bg', form.statusCardBg)
   if (form.statusCardVariant === 'signature') {
     params.set('signatureBg', form.statusCardSignatureBg)
@@ -374,8 +399,7 @@ export function StatusCardPreviewPanel() {
     }))
   }
 
-  const previewWidth = parseIntegerInRange(form.statusCardWidth, 280, 1200) ?? 520
-  const previewHeight = parseIntegerInRange(form.statusCardHeight, 1, 720) ?? 310
+  const previewDimensions = getStatusCardDimensions(form.statusCardWidth, form.statusCardHeight, form.statusCardRadius)
 
   return (
     <WebSettingsInset className="space-y-4">
@@ -711,11 +735,11 @@ export function StatusCardPreviewPanel() {
               <Image
                 src={path}
                 alt={t('webSettingsActivity.statusCard.previewAlt')}
-                width={previewWidth}
-                height={previewHeight}
+                width={previewDimensions.width}
+                height={previewDimensions.height}
                 unoptimized
                 className="max-w-full rounded-md"
-                style={{ width: Math.min(previewWidth, 360), height: 'auto' }}
+                style={{ width: Math.min(previewDimensions.width, 360), height: 'auto' }}
               />
             </div>
           </div>
