@@ -38,8 +38,8 @@ flowchart TB
   end
   subgraph shared [shared]
     lib[lib]
-    hooks[hooks]
     comp[components]
+    const[constants]
     types[types]
   end
   subgraph data [data]
@@ -48,6 +48,7 @@ flowchart TB
   end
   pages --> lib
   api --> lib
+  comp --> lib
   lib --> schema
   scripts --> schema
 ```
@@ -62,10 +63,11 @@ flowchart TB
     - 活动：[app/api/activity/route.ts](app/api/activity/route.ts)、[app/api/activity/stream/route.ts](app/api/activity/stream/route.ts)
     - 灵感：[app/api/inspiration/](app/api/inspiration/)（entries、assets、img）
     - 站点解锁：[app/api/site/unlock/route.ts](app/api/site/unlock/route.ts)
-- **[lib/](lib/)**：数据库、认证、活动聚合（含 Steam：[lib/steam.ts](lib/steam.ts)、[lib/activity-feed.ts](lib/activity-feed.ts)）、主题、站点配置、[lib/rate-limit.ts](lib/rate-limit.ts) 等。
-- **[components/](components/)**：业务组件（如 [current-status.tsx](components/current-status.tsx)、[activity-feed-provider.tsx](components/activity-feed-provider.tsx)）、[components/admin/](components/admin/)、[components/ui/](components/ui/)。
+- **[lib/](lib/)**：数据库、认证、活动聚合（含 Steam：[lib/steam.ts](lib/steam.ts)、[lib/activity-feed.ts](lib/activity-feed.ts)）、主题、站点配置读写（含 [lib/site-settings-read.ts](lib/site-settings-read.ts)、[lib/site-settings-write.ts](lib/site-settings-write.ts) 及 `site-settings-read-utils.ts`、`site-settings-record.ts`、`site-settings-write-core.ts`、`site-settings-write-theme.ts`、`site-settings-write-schedule.ts`、`site-settings-write-rules.ts`、`site-settings-write-entries.ts`），[lib/rate-limit.ts](lib/rate-limit.ts) 等。
+- **[components/](components/)**：业务组件（如 [current-status.tsx](components/current-status.tsx)、[activity-feed-provider.tsx](components/activity-feed-provider.tsx)）、[components/admin/](components/admin/)、[components/ui/](components/ui/)。`components/admin/` 当前常见的拆分块包括 `dashboard-overview-panel.tsx`、`dashboard-utils.ts`、`web-settings-controller-actions.ts`、`web-settings-custom-surface-inset-panel.tsx`、`web-settings-custom-surface-style-panel.tsx`、`rule-tools-app-rules-dialogs.tsx`、`rule-tools-list-dialogs.tsx`、`schedule-manager-actions.ts`、`schedule-home-display-card.tsx`、`schedule-period-template-card.tsx`、`status-card-color-input.tsx`、`status-card-preview-result-panel.tsx`。
 - **[hooks/](hooks/)**：如 [use-activity-feed.ts](hooks/use-activity-feed.ts)、[use-is-client.ts](hooks/use-is-client.ts)。
-- **[types/](types/)**：领域与 API 相关 TypeScript 类型。
+- **[constants/](constants/)**：领域常量（如 [constants/activity-api.ts](constants/activity-api.ts)、[constants/admin-dashboard.ts](constants/admin-dashboard.ts)、[constants/site-settings.ts](constants/site-settings.ts)、[constants/site-settings-storage.ts](constants/site-settings-storage.ts)、[constants/status-card.ts](constants/status-card.ts)）。
+- **[types/](types/)**：领域与 API 相关 TypeScript 类型（如 [types/web-settings.ts](types/web-settings.ts)、[types/site-settings.ts](types/site-settings.ts)、[types/status-card.ts](types/status-card.ts)、[types/openapi.ts](types/openapi.ts)、[types/schedule-manager.ts](types/schedule-manager.ts)）。
 - **[drizzle/](drizzle/)**：双 schema；本地开发数据库默认放在 [data/dev.db](data/dev.db)。
 - **[scripts/](scripts/)**：环境解析与数据库脚本（见下文）。
 - **[proxy.ts](proxy.ts)**：导出 `proxy` 与 `matcher`，对敏感路径限流、对 `/api/admin/*`（除 setup）要求 `session` Cookie。若你使用的 Next.js 版本对边界层文件名或导出约定不同，以**当前仓库能实际生效的配置**为准，并查阅对应版本官方文档。
@@ -127,7 +129,7 @@ flowchart TB
 - **新设置 key**：迁移后应写入 `site_config_v2_entries`（以及 theme / schedule / rules 的分类表），不要为了普通新增设置继续给 `site_config` 加实体列。
 - **读取默认值**：新 key 在老表或旧数据中不存在时，应用层必须给默认值（通常在 [lib/site-config-normalize.ts](lib/site-config-normalize.ts)、表单初始值、前台消费处兜底），不要依赖 legacy 列。
 - **保存保护**：如果新 key 只支持迁移后的 v2 存储，应加入 [lib/site-settings-constants.ts](lib/site-settings-constants.ts) 的 `SITE_SETTINGS_MIGRATED_CORE_KEYS`（或相应分类约束），并在 [lib/site-settings-write.ts](lib/site-settings-write.ts) 中保持未迁移状态下返回“请先迁移到新方案”。
-- **写入链路**：核心设置 key 通常需要同时检查 [lib/llm-site-config.ts](lib/llm-site-config.ts)（`prepareSiteConfigValuesFromPayload`）、[lib/site-config-normalize.ts](lib/site-config-normalize.ts)、[components/admin/use-web-settings-controller.ts](components/admin/use-web-settings-controller.ts)、[components/admin/web-settings-store.ts](components/admin/web-settings-store.ts)、[components/admin/web-settings-types.ts](components/admin/web-settings-types.ts)、导入导出与 OpenAPI schema。
+- **写入链路**：核心设置 key 通常需要同时检查 [constants/site-settings.ts](constants/site-settings.ts)、[constants/site-settings-storage.ts](constants/site-settings-storage.ts)、[lib/llm-site-config.ts](lib/llm-site-config.ts)（`prepareSiteConfigValuesFromPayload`）、[lib/site-config-normalize.ts](lib/site-config-normalize.ts)、[components/admin/use-web-settings-controller.ts](components/admin/use-web-settings-controller.ts)、[components/admin/web-settings-controller-actions.ts](components/admin/web-settings-controller-actions.ts)、[components/admin/web-settings-store.ts](components/admin/web-settings-store.ts)、[types/web-settings.ts](types/web-settings.ts)、导入导出与 OpenAPI schema，以及 [lib/site-settings-write.ts](lib/site-settings-write.ts) 的 `*-core/theme/schedule/rules/entries` 拆分。
 - **何时改 schema**：只有新增真正的数据表、分类存储表、业务记录表，或必须兼容未迁移 legacy 单表写入的字段时，才改 PG/SQLite schema。若只是迁移后设置 key，不改 `site_config`。
 
 ### SQLite JSON 绑定注意事项
@@ -163,10 +165,10 @@ flowchart TB
 | 模块 | 说明 | 入口参考 |
 |------|------|----------|
 | 首页与布局 | 动态元数据、全局鼠标倾斜开关 | [app/layout.tsx](app/layout.tsx)、[app/page.tsx](app/page.tsx) |
-| 活动流 | REST + SSE | [app/api/activity/route.ts](app/api/activity/route.ts)、[app/api/activity/stream/route.ts](app/api/activity/stream/route.ts)、[lib/activity-feed.ts](lib/activity-feed.ts) |
-| 管理后台 UI | 仪表盘、设置、设备等 | [app/admin/](app/admin/)、[components/admin/](components/admin/) |
+| 活动流 | REST + SSE、活动聚合 | [app/api/activity/route.ts](app/api/activity/route.ts)、[app/api/activity/stream/route.ts](app/api/activity/stream/route.ts)、[lib/activity-feed.ts](lib/activity-feed.ts) |
+| 管理后台 UI | 仪表盘、设置、设备、规则工具、课表、状态卡 | [app/admin/](app/admin/)、[components/admin/](components/admin/)、[components/admin/dashboard.tsx](components/admin/dashboard.tsx)、[components/admin/web-settings-rule-tools.tsx](components/admin/web-settings-rule-tools.tsx)、[components/admin/schedule-manager.tsx](components/admin/schedule-manager.tsx)、[components/admin/status-card-preview-panel.tsx](components/admin/status-card-preview-panel.tsx) |
 | 灵感 | 列表页与 API | [app/inspiration/](app/inspiration/)、[app/api/inspiration/](app/api/inspiration/) |
-| 站点配置 | legacy `site_config` + 迁移后 split/v2 设置存储 | [lib/site-settings-read.ts](lib/site-settings-read.ts)、[lib/site-settings-write.ts](lib/site-settings-write.ts)、[lib/site-config-v2.ts](lib/site-config-v2.ts) |
+| 站点配置与设置 | legacy `site_config` + 迁移后 split/v2 设置存储 | [lib/site-settings-read.ts](lib/site-settings-read.ts)、[lib/site-settings-write.ts](lib/site-settings-write.ts)、[lib/site-settings-write-core.ts](lib/site-settings-write-core.ts)、[lib/site-settings-write-theme.ts](lib/site-settings-write-theme.ts)、[lib/site-settings-write-schedule.ts](lib/site-settings-write-schedule.ts)、[lib/site-settings-write-rules.ts](lib/site-settings-write-rules.ts)、[lib/site-settings-write-entries.ts](lib/site-settings-write-entries.ts)、[lib/site-config-v2.ts](lib/site-config-v2.ts) |
 
 ---
 
@@ -180,6 +182,7 @@ flowchart TB
 6. **代码注释**：使用 **英文**（与仓库惯例一致）。
 7. **设计美学**：每个组件需符合设计美学，保持信息层级、留白节奏、视觉一致性与交互反馈的清晰度。
 8. **Windows 命令优先级**：在 Windows 环境提供命令示例时，优先给出 **PowerShell** 版本；仅在确有必要时再补充 Bash / `curl` 风格写法。
+9. **工程化习惯**：按下文第 9 节执行共享常量、共享类型、normalize、`switch`、拆分阈值与兼容性规则。
 
 ### 代码风格
 
@@ -196,4 +199,76 @@ flowchart TB
 | [tsconfig.json](tsconfig.json) | TypeScript 与路径别名 |
 | [eslint.config.mjs](eslint.config.mjs) | ESLint |
 | [drizzle.config.pg.ts](drizzle.config.pg.ts) / [drizzle.config.sqlite.ts](drizzle.config.sqlite.ts) | Drizzle Kit 配置 |
+
+---
+
+## 9. 工程化补充规则
+
+### 9.1 Constants / Types
+
+- 共享常量放 `constants/<domain>.ts`，共享类型放 `types/<domain>-<usage>.ts`。
+- 不要新增 `constants/index.ts` 作为大杂烩。
+- 新增第二个使用方后，局部常量/类型应在本次变更里迁出。
+
+### 9.2 Normalize
+
+- normalize 只放在边界层：API payload、legacy DB row、SQLite JSON、env/cookie/header/search params、第三方返回值、旧数据迁移。
+- 不要为了内部对象传递、已有表单 state、简单默认值或新设置 key 重复 normalize。
+- 优先 Zod/schema、builder/helper、单入口 parse、统一 DB 读写转换。
+
+### 9.3 函数命名
+
+- 新增业务函数优先 PascalCase，尤其导出的 helper、factory、controller。
+- 例外：Route Handler、`useXxx` hook、局部 `handleXxx`、已有公共函数名、框架或第三方约定。
+- 不要为了风格单独批量重命名已有公共函数。
+
+### 9.4 if / switch
+
+- 同一个变量的多分支优先 `switch`。
+- `if` 仅保留 guard clause、单条件、语义完全不同的双条件、权限/异常短路、类型收窄。
+- 触碰到字符串/枚举分支时，优先顺手改成 `switch`。
+
+### 9.5 拆分阈值
+
+- 单文件超过 500 行且本次还要继续增加逻辑、单函数超过 80 行、同一个函数同时做 parse/validate/DB/UI/response、一个组件同时处理查询/表单/弹窗/列表/导入导出、一个 `lib` 文件同时包含常量/类型/normalize/写入/缓存失效时，都应考虑拆分。
+- 优先方向：`constants/<domain>.ts`、`types/<domain>-<usage>.ts`、`lib/<domain>-parse.ts`、`lib/<domain>-query.ts`、`lib/<domain>-write.ts`、`components/<domain>/<part>.tsx`、`components/<domain>/use-<feature>.ts`。
+- 不要为了“工程化”硬拆没有复用价值的一层。
+
+### 9.6 兼容性
+
+- 需要兼容：`site_config` legacy 表、split/v2 site settings 迁移状态、SQLite JSON 历史格式、已发布 API、已有 Cookie/localStorage key、环境变量别名。
+- 不需要兼容：新的后台 UI state、未发布 API、v2-only 设置 key、新组件 props、新 constants/types 结构。
+- 如果保留兼容分支，要能明确说明兼容对象是什么。
+
+### 9.7 站点设置特别规则
+
+- 新设置先判断属于 core / theme / schedule / rules / status-card / activity/media / security。
+- 普通新增设置 key 优先进入 split/v2 存储，不要默认给 `site_config` 加列。
+- 修改链路通常要一起看：`constants/site-settings.ts`、`constants/site-settings-storage.ts`、`lib/site-settings-read.ts`、`lib/site-settings-write.ts`、`lib/llm-site-config.ts`、`lib/site-config-normalize.ts`、`components/admin/use-web-settings-controller.ts`、`components/admin/web-settings-controller-actions.ts`、`components/admin/web-settings-store.ts`、`types/web-settings.ts`、对应 panel/component、导入导出与 OpenAPI schema。
+- 如果新 key 只支持迁移后的 v2 存储，要加迁移保护，并在 legacy 状态下返回“请先迁移到新方案”。
+
+### 9.8 数据库修改特别规则
+
+- DB 变更必须同步 `drizzle/schema.pg.ts`、`drizzle/schema.sqlite.ts` 和 `lib/drizzle-schema.ts`。
+- 新列默认可空；只有业务强制不能为 `NULL` 时才用 `.notNull()`，并且要带服务端默认值。
+- SQLite JSON 不能直接 bind object/array；写入时传 string 或确保 helper 会 stringify，读取时只在边界处兼容 string/object。
+
+### 9.9 API 与 UI 工程化规则
+
+- API route 保持薄层：鉴权、读 request、调用 `lib/`、返回 response。
+- React 组件保持职责清楚：展示组件只收 props，状态放 hook/store，固定选项放 constants，共享类型放 types，复杂派生值放 helper。
+- 后台大组件后续改动时，优先把新增功能放到新子组件或新 hook，不继续扩大原文件。
+
+### 9.10 修改前检查清单
+
+- 这个常量是否被多个文件使用？是否该进 `constants/<domain>.ts`？
+- 这个类型是否跨文件共享？是否该进 `types/`？
+- 这段 normalize 是否真的只在边界层？
+- 是否为了没有历史数据的新功能写了兼容代码？
+- 是否有多个同变量分支可以改成 `switch`？
+- 文件结构是否仍然是 import -> constants/vars -> types -> functions？
+- 新逻辑是否让单文件或单函数明显过大？
+- 是否触碰数据库 schema？PG / SQLite / 统一导出是否同步？
+- 是否触碰站点设置？读写链路、UI store、OpenAPI、导入导出是否同步？
+- 是否至少跑过本次变更相关的 `pnpm lint` 或 `pnpm typecheck`？
 

@@ -1,8 +1,7 @@
 'use client'
 
 import { useAtom } from 'jotai'
-import { Copy, ExternalLink, RotateCcw, Upload } from 'lucide-react'
-import Image from 'next/image'
+import { RotateCcw, Upload } from 'lucide-react'
 import { useT } from 'next-i18next/client'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
@@ -13,6 +12,8 @@ import {
   formatNumberRange,
   NumberSettingInput,
 } from '@/components/admin/number-setting-input'
+import { StatusCardColorInput } from '@/components/admin/status-card-color-input'
+import { StatusCardPreviewResultPanel } from '@/components/admin/status-card-preview-result-panel'
 import {
   WebSettingsInset,
   WebSettingsRow,
@@ -57,40 +58,6 @@ import type {
   StatusCardPreviewDraft,
   StatusCardVariant,
 } from '@/types/status-card'
-
-function StatusCardColorInput({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs text-muted-foreground">
-        {label}
-      </Label>
-      <div className="flex items-center gap-2">
-        <input
-          id={id}
-          type="color"
-          className="h-9 w-12 shrink-0 cursor-pointer rounded-md border border-input bg-background p-1 shadow-xs"
-          value={value}
-          onChange={(event) => onChange(event.target.value.toUpperCase())}
-        />
-        <Input
-          value={value}
-          onChange={(event) => onChange(ToStatusCardHexColor(event.target.value, value))}
-          className="font-mono text-xs"
-        />
-      </div>
-    </div>
-  )
-}
 
 export function StatusCardPreviewPanel() {
   const { t } = useT('admin')
@@ -621,60 +588,15 @@ export function StatusCardPreviewPanel() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/10 p-3">
-            <div className="flex min-h-40 items-center justify-center overflow-auto">
-              <Image
-                src={path}
-                alt={t('webSettingsActivity.statusCard.previewAlt')}
-                width={previewDimensions.width}
-                height={previewDimensions.height}
-                unoptimized
-                className="max-w-full rounded-md"
-                style={{ width: Math.min(previewDimensions.width, 360), height: 'auto' }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('webSettingsActivity.statusCard.urlLabel')}</Label>
-            <div className="flex gap-2">
-              <Input readOnly value={absoluteUrl || path} className="font-mono text-xs" />
-              <Button type="button" variant="outline" size="icon" onClick={() => void copyText(absoluteUrl || path)}>
-                <Copy className="h-4 w-4" aria-hidden />
-                <span className="sr-only">{t('webSettingsActivity.statusCard.copyUrl')}</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('webSettingsActivity.statusCard.htmlLabel')}</Label>
-            <div className="flex gap-2">
-              <Input readOnly value={embedHtml} className="font-mono text-xs" />
-              <Button type="button" variant="outline" size="icon" onClick={() => void copyText(embedHtml)}>
-                <Copy className="h-4 w-4" aria-hidden />
-                <span className="sr-only">{t('webSettingsActivity.statusCard.copyHtml')}</span>
-              </Button>
-            </div>
-          </div>
-
-          {absoluteUrl ? (
-            <Button type="button" variant="outline" size="sm" asChild>
-              <a href={absoluteUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                {t('webSettingsActivity.statusCard.openPreview')}
-              </a>
-            </Button>
-          ) : null}
-
-          {selectedDevice ? (
-            <p className="text-xs text-muted-foreground">
-              {t('webSettingsActivity.statusCard.currentDevice', {
-                value: selectedDevice.displayName,
-              })}
-            </p>
-          ) : null}
-        </div>
+        <StatusCardPreviewResultPanel
+          path={path}
+          absoluteUrl={absoluteUrl}
+          embedHtml={embedHtml}
+          previewWidth={previewDimensions.width}
+          previewHeight={previewDimensions.height}
+          selectedDevice={selectedDevice}
+          onCopyText={(value) => void copyText(value)}
+        />
       </div>
       <ImageCropDialog
         open={coverCropDialogOpen}

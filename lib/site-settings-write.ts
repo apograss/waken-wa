@@ -1,53 +1,26 @@
 import 'server-only'
 
-import { and, eq, like } from 'drizzle-orm'
+import { like } from 'drizzle-orm'
 
 import {
   SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES,
   SITE_SETTINGS_COMPAT_WRITE_BLOCKED_KEYS,
   SITE_SETTINGS_MIGRATED_CORE_KEYS,
   SITE_SETTINGS_RULES_KEYS,
-  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
   SITE_SETTINGS_SITE_CONFIG_ID,
-  SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/constants/site-settings'
-import {
-  SITE_SETTINGS_RULES_SCALAR_KEYS,
-  SITE_SETTINGS_RULES_STRING_LIST_KEYS,
-  SITE_SETTINGS_SCHEDULE_SCALAR_KEYS,
-  SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS,
-  SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS,
-  SITE_SETTINGS_THEME_SCALAR_KEYS,
-} from '@/constants/site-settings-storage'
 import { SKILLS_SECRET_KEYS } from '@/constants/skills'
 import { clearActivityFeedDataCache } from '@/lib/activity-feed'
-import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { db } from '@/lib/db'
 import {
   rateLimitBackups,
-  siteConfigV2Entries,
   siteSettingsMigrationMeta,
-  siteSettingsV2RuleGroups,
-  siteSettingsV2RuleTitleRules,
-  siteSettingsV2ScheduleCoursePeriodIds,
-  siteSettingsV2ScheduleCourses,
-  siteSettingsV2ScheduleCourseTimeSessions,
-  siteSettingsV2ScheduleGridDays,
-  siteSettingsV2SchedulePeriods,
-  siteSettingsV2ThemeCustomSurface,
-  siteSettingsV2ThemeCustomSurfaceImagePool,
-  siteSettingsV2ThemePublicFontOptions,
   systemSecrets,
 } from '@/lib/drizzle-schema'
-import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { clearSiteConfigCaches } from '@/lib/site-config-cache'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
-import {
-  pickSiteConfigBodyFields,
-  readLegacySiteConfigRow,
-  upsertSiteConfigV2Entries,
-} from '@/lib/site-config-v2'
+import { readLegacySiteConfigRow } from '@/lib/site-config-v2'
 import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
 import {
   readEffectiveSiteConfig,
@@ -56,25 +29,20 @@ import {
 } from '@/lib/site-settings-read'
 import {
   hasAnyRecordKey,
-  omitRecordKeys,
   pickRecordKeys,
 } from '@/lib/site-settings-record'
-import {
-  BuildSiteSettingsScalarEntryRows,
-  BuildSiteSettingsStringListEntryRows,
-  ReplaceSiteSettingsScalarEntries,
-  ReplaceSiteSettingsStringListEntries,
-} from '@/lib/site-settings-write-entries'
+import { ReplaceSiteConfigCoreEntries } from '@/lib/site-settings-write-core'
+import { ReplaceRulesSettingsRows } from '@/lib/site-settings-write-rules'
+import { ReplaceScheduleSettingsRows } from '@/lib/site-settings-write-schedule'
+import { ReplaceThemeSettingsRows } from '@/lib/site-settings-write-theme'
 import {
   CreateSiteSettingsCategoryApiRequiredError,
   CreateSiteSettingsConflictError,
   CreateSiteSettingsMigrationRequiredError,
   CreateSiteSettingsNotFoundError,
-  NormalizeSiteSettingsStringOrNull,
   WithSiteSettingsTransaction,
 } from '@/lib/site-settings-write-utils'
 import { sqlTimestamp } from '@/lib/sql-timestamp'
-import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
 import type {
   SiteSettingsMigrationState,
   SiteSettingsRecord,
@@ -84,373 +52,6 @@ async function clearSiteSettingsCaches(): Promise<void> {
   await Promise.all([clearSiteConfigCaches(), clearActivityFeedDataCache()])
 }
 
-function pickCoreSiteConfigValues(values: SiteSettingsRecord): SiteSettingsRecord {
-  return omitRecordKeys(pickSiteConfigBodyFields(values), [
-    ...SITE_SETTINGS_THEME_CATEGORY_KEYS,
-    ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-    ...SITE_SETTINGS_RULES_KEYS,
-  ])
-}
-
-async function replaceSiteConfigCoreEntries(
-  executor: any,
-  values: SiteSettingsRecord,
-): Promise<void> {
-  await executor
-    .delete(siteConfigV2Entries)
-    .where(eq(siteConfigV2Entries.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-
-  const coreValues = pickCoreSiteConfigValues(values)
-  if (Object.keys(coreValues).length > 0) {
-    await upsertSiteConfigV2Entries(coreValues, executor)
-  }
-}
-
-function buildThemeCustomSurfaceRow(rawSurface: unknown): {
-  row: SiteSettingsRecord | null
-  imagePoolRows: SiteSettingsRecord[]
-} {
-  const surface = parseThemeCustomSurface(rawSurface)
-  const now = sqlTimestamp()
-  const row: SiteSettingsRecord = {
-    siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-    createdAt: now,
-    updatedAt: now,
-  }
-  let hasRowValue = false
-
-  for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS) {
-    const value = NormalizeSiteSettingsStringOrNull(surface[key])
-    row[key] = value
-    if (value !== null) {
-      hasRowValue = true
-    }
-  }
-
-  for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS) {
-    const value = typeof surface[key] === 'boolean' ? surface[key] : null
-    row[key] = value
-    if (value !== null) {
-      hasRowValue = true
-    }
-  }
-
-  const imagePool = Array.isArray(surface.backgroundImagePool)
-    ? surface.backgroundImagePool.map((item) => String(item ?? '')).filter((item) => item.length > 0)
-    : []
-
-  const imagePoolRows = imagePool.map((imageUrl, position) => ({
-    siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-    imageUrl,
-    position,
-    createdAt: now,
-    updatedAt: now,
-  }))
-
-  if (imagePoolRows.length > 0) {
-    hasRowValue = true
-  }
-
-  return {
-    row: hasRowValue ? row : null,
-    imagePoolRows,
-  }
-}
-
-async function replaceThemeSettingsRows(
-  executor: any,
-  values: SiteSettingsRecord,
-): Promise<void> {
-  await ReplaceSiteSettingsScalarEntries(
-    executor,
-    'theme',
-    BuildSiteSettingsScalarEntryRows('theme', values, SITE_SETTINGS_THEME_SCALAR_KEYS),
-  )
-
-  const { row, imagePoolRows } = buildThemeCustomSurfaceRow(values.themeCustomSurface)
-
-  await executor
-    .delete(siteSettingsV2ThemeCustomSurfaceImagePool)
-    .where(
-      eq(siteSettingsV2ThemeCustomSurfaceImagePool.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID),
-    )
-
-  if (imagePoolRows.length > 0) {
-    await executor.insert(siteSettingsV2ThemeCustomSurfaceImagePool).values(imagePoolRows as never)
-  }
-
-  if (!row) {
-    await executor
-      .delete(siteSettingsV2ThemeCustomSurface)
-      .where(eq(siteSettingsV2ThemeCustomSurface.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-  } else {
-    await executor
-      .insert(siteSettingsV2ThemeCustomSurface)
-      .values(row as never)
-      .onConflictDoUpdate({
-        target: siteSettingsV2ThemeCustomSurface.siteConfigId,
-        set: {
-          ...omitRecordKeys(row, ['siteConfigId', 'createdAt']),
-          updatedAt: row.updatedAt,
-        } as never,
-      })
-  }
-
-  await executor
-    .delete(siteSettingsV2ThemePublicFontOptions)
-    .where(eq(siteSettingsV2ThemePublicFontOptions.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-
-  const publicFontOptions = normalizePublicPageFontOptions(values.publicFontOptions)
-  if (publicFontOptions.length > 0) {
-    const now = sqlTimestamp()
-    await executor.insert(siteSettingsV2ThemePublicFontOptions).values(
-      publicFontOptions.map((option, position) => ({
-        siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-        mode: option.mode,
-        label: option.label,
-        family: option.family,
-        url: option.url ?? null,
-        position,
-        createdAt: now,
-        updatedAt: now,
-      })) as never,
-    )
-  }
-}
-
-async function replaceScheduleSettingsRows(
-  executor: any,
-  values: SiteSettingsRecord,
-): Promise<void> {
-  await ReplaceSiteSettingsScalarEntries(
-    executor,
-    'schedule',
-    BuildSiteSettingsScalarEntryRows('schedule', values, SITE_SETTINGS_SCHEDULE_SCALAR_KEYS),
-  )
-
-  await executor
-    .delete(siteSettingsV2ScheduleCourseTimeSessions)
-    .where(
-      eq(siteSettingsV2ScheduleCourseTimeSessions.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID),
-    )
-  await executor
-    .delete(siteSettingsV2ScheduleCoursePeriodIds)
-    .where(eq(siteSettingsV2ScheduleCoursePeriodIds.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-  await executor
-    .delete(siteSettingsV2ScheduleCourses)
-    .where(eq(siteSettingsV2ScheduleCourses.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-  await executor
-    .delete(siteSettingsV2SchedulePeriods)
-    .where(eq(siteSettingsV2SchedulePeriods.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-  await executor
-    .delete(siteSettingsV2ScheduleGridDays)
-    .where(eq(siteSettingsV2ScheduleGridDays.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-
-  const now = sqlTimestamp()
-
-  const periodTemplate = Array.isArray(values.schedulePeriodTemplate)
-    ? values.schedulePeriodTemplate
-    : []
-  if (periodTemplate.length > 0) {
-    await executor.insert(siteSettingsV2SchedulePeriods).values(
-      periodTemplate
-        .map((item, position) => {
-          const record = item && typeof item === 'object' ? (item as SiteSettingsRecord) : {}
-          const periodId = String(record.id ?? '')
-          const label = String(record.label ?? '')
-          const part = String(record.part ?? '')
-          const startTime = String(record.startTime ?? '')
-          const endTime = String(record.endTime ?? '')
-          if (!periodId || !label || !part || !startTime || !endTime) {
-            return null
-          }
-          return {
-            siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-            periodId,
-            label,
-            part,
-            startTime,
-            endTime,
-            sortOrder: Number.isFinite(Number(record.order)) ? Number(record.order) : position,
-            position,
-            createdAt: now,
-            updatedAt: now,
-          }
-        })
-        .filter((item) => item !== null) as never,
-    )
-  }
-
-  const gridByWeekday = Array.isArray(values.scheduleGridByWeekday)
-    ? values.scheduleGridByWeekday
-    : []
-  if (gridByWeekday.length > 0) {
-    await executor.insert(siteSettingsV2ScheduleGridDays).values(
-      gridByWeekday
-        .map((item, position) => {
-          const record = item && typeof item === 'object' ? (item as SiteSettingsRecord) : {}
-          const rangeStart = String(record.rangeStart ?? '')
-          const rangeEnd = String(record.rangeEnd ?? '')
-          const intervalMinutes = Number(record.intervalMinutes)
-          if (!rangeStart || !rangeEnd || !Number.isFinite(intervalMinutes)) {
-            return null
-          }
-          return {
-            siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-            weekday: Number.isFinite(Number(record.weekday)) ? Number(record.weekday) : position,
-            rangeStart,
-            rangeEnd,
-            intervalMinutes,
-            useFixedInterval: record.useFixedInterval === true,
-            position,
-            createdAt: now,
-            updatedAt: now,
-          }
-        })
-        .filter((item) => item !== null) as never,
-    )
-  }
-
-  const courses = Array.isArray(values.scheduleCourses) ? values.scheduleCourses : []
-  const courseRows: SiteSettingsRecord[] = []
-  const timeSessionRows: SiteSettingsRecord[] = []
-  const periodIdRows: SiteSettingsRecord[] = []
-
-  courses.forEach((item, position) => {
-    const record = item && typeof item === 'object' ? (item as SiteSettingsRecord) : {}
-    const courseId = String(record.id ?? '')
-    const title = String(record.title ?? '')
-    const weekday = Number(record.weekday)
-    const startTime = String(record.startTime ?? '')
-    const endTime = String(record.endTime ?? '')
-    const anchorDate = String(record.anchorDate ?? '')
-    if (!courseId || !title || !Number.isFinite(weekday) || !startTime || !endTime || !anchorDate) {
-      return
-    }
-
-    courseRows.push({
-      siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-      courseId,
-      title,
-      location: NormalizeSiteSettingsStringOrNull(record.location),
-      teacher: NormalizeSiteSettingsStringOrNull(record.teacher),
-      weekday,
-      startTime,
-      endTime,
-      timeMode: NormalizeSiteSettingsStringOrNull(record.timeMode),
-      anchorDate,
-      untilDate: NormalizeSiteSettingsStringOrNull(record.untilDate),
-      position,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    const timeSessions = Array.isArray(record.timeSessions) ? record.timeSessions : []
-    timeSessions.forEach((timeSession, timePosition) => {
-      const sessionRecord =
-        timeSession && typeof timeSession === 'object'
-          ? (timeSession as SiteSettingsRecord)
-          : {}
-      const sessionStartTime = String(sessionRecord.startTime ?? '')
-      const sessionEndTime = String(sessionRecord.endTime ?? '')
-      if (!sessionStartTime || !sessionEndTime) return
-      timeSessionRows.push({
-        siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-        courseId,
-        startTime: sessionStartTime,
-        endTime: sessionEndTime,
-        position: timePosition,
-        createdAt: now,
-        updatedAt: now,
-      })
-    })
-
-    const periodIds = Array.isArray(record.periodIds) ? record.periodIds : []
-    periodIds.forEach((periodId, periodPosition) => {
-      const normalizedPeriodId = String(periodId ?? '')
-      if (!normalizedPeriodId) return
-      periodIdRows.push({
-        siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-        courseId,
-        periodId: normalizedPeriodId,
-        position: periodPosition,
-        createdAt: now,
-        updatedAt: now,
-      })
-    })
-  })
-
-  if (courseRows.length > 0) {
-    await executor.insert(siteSettingsV2ScheduleCourses).values(courseRows as never)
-  }
-  if (timeSessionRows.length > 0) {
-    await executor
-      .insert(siteSettingsV2ScheduleCourseTimeSessions)
-      .values(timeSessionRows as never)
-  }
-  if (periodIdRows.length > 0) {
-    await executor
-      .insert(siteSettingsV2ScheduleCoursePeriodIds)
-      .values(periodIdRows as never)
-  }
-}
-
-async function replaceRulesSettingsRows(
-  executor: any,
-  values: SiteSettingsRecord,
-): Promise<void> {
-  await ReplaceSiteSettingsScalarEntries(
-    executor,
-    'rules',
-    BuildSiteSettingsScalarEntryRows('rules', values, SITE_SETTINGS_RULES_SCALAR_KEYS),
-  )
-
-  const stringListRows = SITE_SETTINGS_RULES_STRING_LIST_KEYS.flatMap((listKey) =>
-    BuildSiteSettingsStringListEntryRows('rules', listKey, values[listKey]),
-  )
-  await ReplaceSiteSettingsStringListEntries(executor, 'rules', stringListRows)
-
-  await executor
-    .delete(siteSettingsV2RuleTitleRules)
-    .where(eq(siteSettingsV2RuleTitleRules.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-  await executor
-    .delete(siteSettingsV2RuleGroups)
-    .where(eq(siteSettingsV2RuleGroups.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID))
-
-  const rules = normalizeAppMessageRules(values.appMessageRules)
-  if (rules.length === 0) {
-    return
-  }
-
-  const now = sqlTimestamp()
-  const groupRows = rules.map((group, position) => ({
-    siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-    groupId: group.id,
-    processMatch: String(group.processMatch ?? ''),
-    defaultText: NormalizeSiteSettingsStringOrNull(group.defaultText),
-    position,
-    createdAt: now,
-    updatedAt: now,
-  }))
-  const titleRuleRows = rules.flatMap((group) =>
-    (Array.isArray(group.titleRules) ? group.titleRules : []).map((titleRule, position) => ({
-      siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-      groupId: group.id,
-      titleRuleId: titleRule.id,
-      mode: titleRule.mode === 'regex' ? 'regex' : 'plain',
-      pattern: String(titleRule.pattern ?? ''),
-      textValue: String(titleRule.text ?? ''),
-      position,
-      createdAt: now,
-      updatedAt: now,
-    })),
-  )
-
-  await executor.insert(siteSettingsV2RuleGroups).values(groupRows as never)
-  if (titleRuleRows.length > 0) {
-    await executor.insert(siteSettingsV2RuleTitleRules).values(titleRuleRows as never)
-  }
-}
 
 async function upsertMigrationMetaRow(
   executor: any,
@@ -543,10 +144,10 @@ async function writeAllV2SiteSettings(
   executor: any,
   values: SiteSettingsRecord,
 ): Promise<void> {
-  await replaceSiteConfigCoreEntries(executor, values)
-  await replaceThemeSettingsRows(executor, values)
-  await replaceScheduleSettingsRows(executor, values)
-  await replaceRulesSettingsRows(executor, values)
+  await ReplaceSiteConfigCoreEntries(executor, values)
+  await ReplaceThemeSettingsRows(executor, values)
+  await ReplaceScheduleSettingsRows(executor, values)
+  await ReplaceRulesSettingsRows(executor, values)
 }
 
 export async function persistThemeSettingsFromPrepared(
@@ -557,7 +158,7 @@ export async function persistThemeSettingsFromPrepared(
   assertMigratedState(migrationState)
 
   await WithSiteSettingsTransaction(executor, async (tx) => {
-    await replaceThemeSettingsRows(tx, preparedValues)
+    await ReplaceThemeSettingsRows(tx, preparedValues)
   })
 
   await clearSiteSettingsCaches()
@@ -583,7 +184,7 @@ export async function persistCompatibilitySiteConfigValues(
     await persistSiteConfigSubset(executor, preparedValues, Object.keys(requestedBody))
   } else {
     await WithSiteSettingsTransaction(executor, async (tx) => {
-      await replaceSiteConfigCoreEntries(tx, preparedValues)
+      await ReplaceSiteConfigCoreEntries(tx, preparedValues)
     })
   }
 
@@ -600,7 +201,7 @@ export async function persistScheduleSettingsFromPrepared(
   assertMigratedState(migrationState)
 
   await WithSiteSettingsTransaction(executor, async (tx) => {
-    await replaceScheduleSettingsRows(tx, preparedValues)
+    await ReplaceScheduleSettingsRows(tx, preparedValues)
   })
 
   await clearSiteSettingsCaches()
@@ -626,7 +227,7 @@ export async function persistCoreSettingsFromPrepared(
     await persistSiteConfigSubset(executor, preparedValues, Object.keys(requestedBody))
   } else {
     await WithSiteSettingsTransaction(executor, async (tx) => {
-      await replaceSiteConfigCoreEntries(tx, preparedValues)
+      await ReplaceSiteConfigCoreEntries(tx, preparedValues)
     })
   }
 
@@ -653,7 +254,7 @@ export async function persistRulesSettingsValues(
   }
 
   await WithSiteSettingsTransaction(executor, async (tx) => {
-    await replaceRulesSettingsRows(tx, mergedValues)
+    await ReplaceRulesSettingsRows(tx, mergedValues)
   })
 
   await clearSiteSettingsCaches()

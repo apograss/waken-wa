@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { addDays, addWeeks, format, startOfWeek } from 'date-fns'
+import { addWeeks, format, startOfWeek } from 'date-fns'
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,23 +26,34 @@ import {
   patchAdminSettingsSchedule,
 } from '@/components/admin/admin-query-mutations'
 import { ScheduleCourseEditorDialog } from '@/components/admin/schedule-course-editor-dialog'
+import { ScheduleHomeDisplayCard } from '@/components/admin/schedule-home-display-card'
 import { ScheduleIcsImportDialog } from '@/components/admin/schedule-ics-import-dialog'
 import {
+  BuildEditableScheduleCourseDraft,
+  BuildNewScheduleCourseDraft,
+  BuildScheduleBaseline,
+  BuildScheduleIcsImportMessage,
+  BuildScheduleMobileWeekDays,
+  BuildSchedulePeriodTemplateItem,
+  IsScheduleDirty,
+  PatchSchedulePeriodTemplateItem,
+  RemoveScheduleCourse,
+  RemoveSchedulePeriodFromCourses,
+  RemoveSchedulePeriodTemplateItem,
+  ReorderSchedulePeriodTemplatePart,
+  UpsertScheduleCourse,
+} from '@/components/admin/schedule-manager-actions'
+import {
   buildScheduleManagerInitialData,
-  emptyCourse,
   formatCourseTimeRanges,
-  getPeriodPartLabel,
   getWeekdayOptions,
 } from '@/components/admin/schedule-manager-utils'
+import { SchedulePeriodTemplateCard } from '@/components/admin/schedule-period-template-card'
 import { SiteSettingsMigrationCard } from '@/components/admin/site-settings-migration-card'
-import { SortablePeriodTemplatePart } from '@/components/admin/sortable-period-template-part'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
 import { WeekTimetableGrid } from '@/components/admin/week-timetable-grid'
 import { useSiteTimeFormat } from '@/components/site-timezone-provider'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
 } from '@/constants/site-config'
@@ -51,7 +62,6 @@ import {
   backfillCoursePeriodIdsFromTemplate,
   defaultSchedulePeriodTemplate,
   expandOccurrencesInWeek,
-  getCourseTimeSessions,
   parseSchedulePeriodTemplateJson,
   resolveSchedulePeriodTemplate,
   type ScheduleCourse,
@@ -196,78 +206,27 @@ const ScheduleManagerEditor = forwardRef<
     [courses, weekRef, periodTemplate],
   )
   const mobileWeekDays = useMemo(() => {
-    const weekStart = startOfWeek(weekRef, { weekStartsOn: 1 })
-    return Array.from({ length: 7 }, (_, index) => {
-      const day = addDays(weekStart, index)
-      const dayKey = format(day, 'yyyy-MM-dd')
-      const items = occurrences
-        .filter((occurrence) => format(occurrence.start, 'yyyy-MM-dd') === dayKey)
-        .sort((a, b) => a.start.getTime() - b.start.getTime())
-      return {
-        date: day,
-        label: weekdayOptions[index]?.label ?? format(day, 'EEE'),
-        items,
-      }
-    })
+    return BuildScheduleMobileWeekDays(weekRef, occurrences, weekdayOptions)
   }, [occurrences, weekRef, weekdayOptions])
 
   const patchPeriodTemplateItem = (
     id: string,
     patch: Partial<SchedulePeriodTemplateItem>,
   ) => {
-    setPeriodTemplate((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-    )
+    setPeriodTemplate((prev) => PatchSchedulePeriodTemplateItem(prev, id, patch))
   }
 
   const addPeriodTemplateItem = (part: SchedulePeriodPart) => {
-    const samePart = periodTemplate.filter((p) => p.part === part)
-    const maxOrder = Math.max(0, ...samePart.map((p) => p.order))
-    const nextOrder = maxOrder + 10
-    let nextIndex = samePart.length + 1
-    let id = `p_${part}_${nextOrder}_${nextIndex}`
-    while (periodTemplate.some((item) => item.id === id)) {
-      nextIndex += 1
-      id = `p_${part}_${nextOrder}_${nextIndex}`
-    }
-    setPeriodTemplate((prev) => [
-      ...prev,
-      {
-        id,
-        label: t('scheduleManager.newPeriodLabel', {
-          part: getPeriodPartLabel(t, part),
-        }),
-        part,
-        startTime: part === 'morning' ? '08:00' : part === 'afternoon' ? '14:00' : '19:00',
-        endTime: part === 'morning' ? '09:40' : part === 'afternoon' ? '15:40' : '20:40',
-        order: nextOrder,
-      },
-    ])
+    setPeriodTemplate((prev) => [...prev, BuildSchedulePeriodTemplateItem(t, prev, part)])
   }
 
   const removePeriodTemplateItem = (id: string) => {
-    setPeriodTemplate((prev) => prev.filter((p) => p.id !== id))
-    setCourses((prev) =>
-      prev.map((c) => ({
-        ...c,
-        periodIds: c.periodIds?.filter((pid) => pid !== id),
-      })),
-    )
+    setPeriodTemplate((prev) => RemoveSchedulePeriodTemplateItem(prev, id))
+    setCourses((prev) => RemoveSchedulePeriodFromCourses(prev, id))
   }
 
   const reorderPeriodTemplatePart = (part: SchedulePeriodPart, orderedIds: string[]) => {
-    setPeriodTemplate((prev) => {
-      const byId = new Map(prev.map((p) => [p.id, p]))
-      const reordered = orderedIds.map((id, i) => {
-        const item = byId.get(id)
-        if (!item) return null
-        return { ...item, order: (i + 1) * 10 }
-      })
-      const valid = reordered.filter((x): x is SchedulePeriodTemplateItem => x !== null)
-      if (valid.length !== orderedIds.length) return prev
-      const others = prev.filter((p) => p.part !== part)
-      return [...others, ...valid]
-    })
+    setPeriodTemplate((prev) => ReorderSchedulePeriodTemplatePart(prev, part, orderedIds))
   }
 
   const save = async () => {
@@ -317,7 +276,7 @@ const ScheduleManagerEditor = forwardRef<
       setCourses(backfilled.courses)
       setCompatWarnings(backfilled.warnings)
       setScheduleBaseline(
-        structuredClone({
+        BuildScheduleBaseline({
           periodTemplate: tpl,
           courses: backfilled.courses,
           icsRaw,
@@ -347,58 +306,27 @@ const ScheduleManagerEditor = forwardRef<
   }
 
   const openNew = () => {
-    const draft = emptyCourse(format(toDisplayWallClockDate(new Date()), 'yyyy-MM-dd'))
-    if (periodTemplate.length > 0) {
-      draft.timeMode = 'periods'
-      draft.periodIds = [periodTemplate[0].id]
-      const sessions = getCourseTimeSessions(draft, periodTemplate)
-      if (sessions[0]) {
-        draft.startTime = sessions[0].startTime
-        draft.endTime = sessions[0].endTime
-        draft.timeSessions = sessions.length > 1 ? sessions : undefined
-      }
-    } else {
-      draft.timeMode = 'custom'
-    }
+    const draft = BuildNewScheduleCourseDraft(
+      format(toDisplayWallClockDate(new Date()), 'yyyy-MM-dd'),
+      periodTemplate,
+    )
     setEditing(draft)
     setDialogOpen(true)
   }
 
   const openEdit = (c: ScheduleCourse) => {
-    const sessions = getCourseTimeSessions(c, periodTemplate)
-    const inferredMode =
-      c.timeMode === 'custom'
-        ? ('custom' as const)
-        : c.periodIds && c.periodIds.length > 0
-          ? ('periods' as const)
-          : ('custom' as const)
-    setEditing({
-      ...c,
-      timeSessions: sessions.map((s) => ({ ...s })),
-      startTime: sessions[0].startTime,
-      endTime: sessions[0].endTime,
-      periodIds: c.periodIds ?? [],
-      timeMode: c.timeMode ?? inferredMode,
-    })
+    setEditing(BuildEditableScheduleCourseDraft(c, periodTemplate))
     setDialogOpen(true)
   }
 
   const onCourseSave = (next: ScheduleCourse) => {
-    setCourses((prev) => {
-      const i = prev.findIndex((c) => c.id === next.id)
-      if (i >= 0) {
-        const copy = [...prev]
-        copy[i] = next
-        return copy
-      }
-      return [...prev, next]
-    })
+    setCourses((prev) => UpsertScheduleCourse(prev, next))
     setDialogOpen(false)
     setEditing(null)
   }
 
   const removeCourse = (id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id))
+    setCourses((prev) => RemoveScheduleCourse(prev, id))
   }
 
   const downloadIcs = () => {
@@ -422,19 +350,12 @@ const ScheduleManagerEditor = forwardRef<
     setCourses(result.courses)
     setCompatWarnings(result.compatWarnings)
     setIcsRaw(result.icsRaw)
-    const w = result.icsWarnings.length ? `（${result.icsWarnings.join('；')}）` : ''
-    setMessage(
-      t('scheduleManager.messages.importedCourses', {
-        value: result.importedCount,
-        warnings: w,
-      }),
-    )
+    setMessage(BuildScheduleIcsImportMessage(t, result))
   }
 
   const scheduleDirty = useMemo(() => {
-    if (!scheduleBaseline) return false
-    try {
-      const current: ScheduleFormBaseline = {
+    return IsScheduleDirty(
+      {
         periodTemplate,
         courses,
         icsRaw,
@@ -443,11 +364,9 @@ const ScheduleManagerEditor = forwardRef<
         homeShowTeacher,
         homeShowNextUpcoming,
         homeAfterClassesLabel,
-      }
-      return JSON.stringify(current) !== JSON.stringify(scheduleBaseline)
-    } catch {
-      return true
-    }
+      },
+      scheduleBaseline,
+    )
   }, [
     periodTemplate,
     courses,
@@ -496,145 +415,29 @@ const ScheduleManagerEditor = forwardRef<
         ) : null}
       </AnimatePresence>
 
-      <div className="rounded-lg border border-border/60 bg-muted/10 p-3 space-y-3">
-        <h4 className="text-sm font-medium text-foreground">{t('scheduleManager.homeDisplay.title')}</h4>
-        <p className="text-xs text-muted-foreground">
-          {t('scheduleManager.homeDisplay.description')}
-        </p>
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Label htmlFor="sched-in-class" className="font-normal cursor-pointer">
-            {t('scheduleManager.homeDisplay.showInClass')}
-          </Label>
-          <Switch
-            id="sched-in-class"
-            checked={inClassOnHome}
-            onCheckedChange={setInClassOnHome}
-            className="self-end sm:self-auto"
-          />
-        </div>
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Label htmlFor="sched-home-next" className="font-normal cursor-pointer">
-            {t('scheduleManager.homeDisplay.showNextUpcoming')}
-          </Label>
-          <Switch
-            id="sched-home-next"
-            checked={homeShowNextUpcoming}
-            onCheckedChange={setHomeShowNextUpcoming}
-            disabled={!inClassOnHome}
-            className="self-end sm:self-auto"
-          />
-        </div>
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Label htmlFor="sched-home-loc" className="font-normal cursor-pointer">
-            {t('scheduleManager.homeDisplay.showLocation')}
-          </Label>
-          <Switch
-            id="sched-home-loc"
-            checked={homeShowLocation}
-            onCheckedChange={setHomeShowLocation}
-            disabled={!inClassOnHome}
-            className="self-end sm:self-auto"
-          />
-        </div>
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <Label htmlFor="sched-home-teacher" className="font-normal cursor-pointer">
-            {t('scheduleManager.homeDisplay.showTeacher')}
-          </Label>
-          <Switch
-            id="sched-home-teacher"
-            checked={homeShowTeacher}
-            onCheckedChange={setHomeShowTeacher}
-            disabled={!inClassOnHome}
-            className="self-end sm:self-auto"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="sched-home-after-label">
-            {t('scheduleManager.homeDisplay.afterClassesLabel')}
-          </Label>
-          <Input
-            id="sched-home-after-label"
-            value={homeAfterClassesLabel}
-            onChange={(e) => setHomeAfterClassesLabel(e.target.value.slice(0, 40))}
-            placeholder={t('scheduleManager.homeDisplay.afterClassesPlaceholder')}
-            maxLength={40}
-            disabled={!inClassOnHome}
-            className="w-full max-w-md"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('scheduleManager.homeDisplay.afterClassesHint')}
-          </p>
-        </div>
-      </div>
+      <ScheduleHomeDisplayCard
+        inClassOnHome={inClassOnHome}
+        homeShowLocation={homeShowLocation}
+        homeShowTeacher={homeShowTeacher}
+        homeShowNextUpcoming={homeShowNextUpcoming}
+        homeAfterClassesLabel={homeAfterClassesLabel}
+        onSetInClassOnHome={setInClassOnHome}
+        onSetHomeShowLocation={setHomeShowLocation}
+        onSetHomeShowTeacher={setHomeShowTeacher}
+        onSetHomeShowNextUpcoming={setHomeShowNextUpcoming}
+        onSetHomeAfterClassesLabel={setHomeAfterClassesLabel}
+      />
 
-      <div className="rounded-lg border border-border/60 bg-muted/10 p-2.5 sm:p-3 space-y-2.5 sm:space-y-3 overflow-x-hidden min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="min-w-0 text-xs font-medium text-foreground sm:text-sm">
-            {t('scheduleManager.periodTemplate.title')}
-          </h4>
-        </div>
-        <p className="text-[11px] text-muted-foreground text-pretty leading-relaxed sm:text-xs">
-          {t('scheduleManager.periodTemplate.description')}
-        </p>
-        <AnimatePresence initial={false}>
-          {compatWarnings.length > 0 ? (
-            <motion.div
-              className="rounded-md border border-amber-400/40 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-700 sm:px-3 sm:text-xs"
-              variants={compactSectionVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={sectionTransition}
-              layout
-            >
-              {compatWarnings[0]}
-              {compatWarnings.length > 1
-                ? t('scheduleManager.periodTemplate.moreWarnings', {
-                    value: compatWarnings.length,
-                  })
-                : ''}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-        <div className="space-y-3">
-          {(['morning', 'afternoon', 'evening'] as const).map((part) => {
-            const rows = [...periodTemplate]
-              .filter((p) => p.part === part)
-              .sort((a, b) => a.order - b.order)
-            return (
-              <div key={part} className="space-y-2 min-w-0">
-                <div className="flex flex-col gap-1.5 sm:gap-2 min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between">
-                  <Label className="shrink-0 text-xs font-medium sm:text-sm">
-                    {getPeriodPartLabel(t, part)}
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-full shrink-0 px-2.5 text-xs min-[480px]:w-auto sm:px-3 sm:text-sm"
-                    onClick={() => addPeriodTemplateItem(part)}
-                  >
-                    {t('scheduleManager.periodTemplate.addPeriod')}
-                  </Button>
-                </div>
-                {rows.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground sm:text-xs">
-                    {t('scheduleManager.periodTemplate.noPeriods')}
-                  </p>
-                ) : (
-                  <SortablePeriodTemplatePart
-                    part={part}
-                    rows={rows}
-                    onReorderOrderedIds={reorderPeriodTemplatePart}
-                    patchItem={patchPeriodTemplateItem}
-                    removeItem={removePeriodTemplateItem}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      <SchedulePeriodTemplateCard
+        compatWarnings={compatWarnings}
+        periodTemplate={periodTemplate}
+        sectionTransition={sectionTransition}
+        compactSectionVariants={compactSectionVariants}
+        onAddPeriodTemplateItem={addPeriodTemplateItem}
+        onReorderPeriodTemplatePart={reorderPeriodTemplatePart}
+        onPatchPeriodTemplateItem={patchPeriodTemplateItem}
+        onRemovePeriodTemplateItem={removePeriodTemplateItem}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex w-full min-w-0 flex-wrap items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/25 p-0.5 shadow-sm sm:inline-flex sm:w-auto sm:flex-nowrap sm:justify-start">

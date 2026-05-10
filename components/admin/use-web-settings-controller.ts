@@ -15,25 +15,17 @@ import {
 } from '@/components/admin/admin-query-fetchers'
 import { adminQueryKeys } from '@/components/admin/admin-query-keys'
 import {
-  clearAdminLegacySettingsData,
-  importAdminRuleTools,
-  migrateAdminSettings,
-  patchAdminSettingsCore,
-  patchAdminSettingsSchedule,
-  patchAdminSettingsTheme,
-  patchAdminSkills,
-} from '@/components/admin/admin-query-mutations'
-import {
-  formatNumberRange,
-  parseIntegerInRange,
-} from '@/components/admin/number-setting-input'
+  ClearWebSettingsLegacyData,
+  ConfirmWebSettingsImport,
+  RevokeWebSettingsSkillsOauthByAiClientId,
+  RunWebSettingsMigration,
+  SaveWebSettings,
+  SaveWebSettingsSkillsConfig,
+} from '@/components/admin/web-settings-controller-actions'
 import {
   areValuesEqual,
   buildWebSettingsForm,
   hasKeyDiff,
-  normalizeCorePayloadForComparison,
-  normalizeStringList,
-  uploadImportedImageSources,
 } from '@/components/admin/web-settings-controller-utils'
 import {
   webSettingsBaselineFormAtom,
@@ -63,36 +55,17 @@ import {
   webSettingsSkillsSavingAtom,
 } from '@/components/admin/web-settings-store'
 import {
-  extractRuleToolsImportFromWebPayload,
   normalizeSkillsAiAuthorizations,
   normalizeSkillsEditableConfig,
-  parseExportPayload,
-  webPayloadToFormPatch,
 } from '@/components/admin/web-settings-utils'
-import {
-  REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
-  REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/constants/activity-api'
-import {
-  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
-  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
-  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-} from '@/constants/site-config'
 import {
   SITE_SETTINGS_CORE_HEAVY_KEYS,
   SITE_SETTINGS_MIGRATED_CORE_KEYS,
   SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
   SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/constants/site-settings'
-import {
-  normalizeAdminThemeColor,
-  writeAdminBackgroundColor,
-  writeAdminThemeColor,
-} from '@/lib/admin-theme-color'
-import { isRemoteAvatarUrl } from '@/lib/avatar-url'
-import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
-import { omitRecordKeys, pickRecordKeys } from '@/lib/site-settings-record'
+import { writeAdminBackgroundColor, writeAdminThemeColor } from '@/lib/admin-theme-color'
+import { pickRecordKeys } from '@/lib/site-settings-record'
 import type { SiteConfig, SkillsEditableConfig } from '@/types/web-settings'
 
 export function useWebSettingsController() {
@@ -342,54 +315,45 @@ export function useWebSettingsController() {
     },
     options?: { successMessage?: string | null },
   ) => {
-    setSkillsSaving(true)
-    try {
-      const json = await patchAdminSkills(patch)
-      setSkillsEnabled(json.enabled === true)
-      setSkillsAuthMode(
-        json.authMode === 'oauth' || json.authMode === 'apikey'
-          ? json.authMode
-          : '',
-      )
-      setSkillsApiKeyConfigured(json.apiKeyConfigured === true)
-      setSkillsOauthConfigured(json.oauthConfigured === true)
-      setSkillsOauthTokenTtlMinutes(
-        Number.isFinite(Number(json.oauthTokenTtlMinutes))
-          ? Number(json.oauthTokenTtlMinutes)
-          : 60,
-      )
-      setSkillsAiAuthorizations(normalizeSkillsAiAuthorizations(json.aiAuthorizations))
-      setSkillsGeneratedApiKey(
-        typeof json.generatedApiKey === 'string' ? json.generatedApiKey : '',
-      )
-      setLegacyMcpConfigured(json.legacyMcpConfigured === true)
-      setLegacyMcpGeneratedApiKey(
-        typeof json.generatedLegacyMcpApiKey === 'string'
-          ? json.generatedLegacyMcpApiKey
-          : '',
-      )
-      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.skills.settings() })
-      if (options?.successMessage !== null) {
-        toast.success(options?.successMessage || t('webSettingsSkills.toasts.saved'))
-      }
-    } catch (error) {
-      console.error(error)
-      toast.error(t('mutation.saveFailed'))
-    } finally {
-      setSkillsSaving(false)
-    }
+    await SaveWebSettingsSkillsConfig(
+      {
+        t,
+        queryClient,
+        setSkillsSaving,
+        setSkillsEnabled,
+        setSkillsAuthMode,
+        setSkillsApiKeyConfigured,
+        setSkillsOauthConfigured,
+        setSkillsOauthTokenTtlMinutes,
+        setSkillsAiAuthorizations,
+        setSkillsGeneratedApiKey,
+        setLegacyMcpConfigured,
+        setLegacyMcpGeneratedApiKey,
+      },
+      patch,
+      options,
+    )
   }
 
   const revokeSkillsOauthByAiClientId = async (aiClientId: string) => {
-    const normalized = String(aiClientId ?? '').trim().toLowerCase()
-    if (!normalized) return
-    setSkillsRevokingAiClientId(normalized)
-    try {
-      await saveSkillsConfig({ revokeOauthForAiClientId: normalized }, { successMessage: null })
-      toast.success(t('webSettingsSkills.toasts.revoked', { value: normalized }))
-    } finally {
-      setSkillsRevokingAiClientId('')
-    }
+    await RevokeWebSettingsSkillsOauthByAiClientId(
+      {
+        t,
+        queryClient,
+        setSkillsSaving,
+        setSkillsEnabled,
+        setSkillsAuthMode,
+        setSkillsApiKeyConfigured,
+        setSkillsOauthConfigured,
+        setSkillsOauthTokenTtlMinutes,
+        setSkillsAiAuthorizations,
+        setSkillsGeneratedApiKey,
+        setLegacyMcpConfigured,
+        setLegacyMcpGeneratedApiKey,
+        setSkillsRevokingAiClientId,
+      },
+      aiClientId,
+    )
   }
 
   const refreshSettingsData = useCallback(async () => {
@@ -446,281 +410,49 @@ export function useWebSettingsController() {
     (themeSettingsDirty || scheduleSettingsDirty || coreHeavySettingsDirty || migratedCoreSettingsDirty)
 
   const runSettingsMigration = async () => {
-    setMigrationActionPending(true)
-    try {
-      await migrateAdminSettings()
-      await Promise.all([
-        refreshSettingsData(),
-        refreshMigrationData(),
-        queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.summary() }),
-        queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.config() }),
-        queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.rulesPreview() }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'rule-tools', 'rules'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'rule-tools', 'list'] }),
-      ])
-      toast.success(t('webSettingsMigration.toasts.migrated'))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('common.networkErrorRetry'))
-    } finally {
-      setMigrationActionPending(false)
-    }
+    await RunWebSettingsMigration({
+      t,
+      queryClient,
+      setMigrationActionPending,
+      refreshSettingsData,
+      refreshMigrationData,
+    })
   }
 
   const clearLegacyData = async () => {
-    setMigrationActionPending(true)
-    try {
-      await clearAdminLegacySettingsData()
-      await Promise.all([
-        refreshSettingsData(),
-        refreshMigrationData(),
-      ])
-      toast.success(t('webSettingsMigration.toasts.legacyDataCleared'))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('common.networkErrorRetry'))
-    } finally {
-      setMigrationActionPending(false)
-    }
+    await ClearWebSettingsLegacyData({
+      t,
+      queryClient,
+      setMigrationActionPending,
+      refreshSettingsData,
+      refreshMigrationData,
+    })
   }
 
   const save = async () => {
-    setSaving(true)
-    try {
-      const poTrim = form.profileOnlineAccentColor.trim()
-      if (poTrim && !normalizeProfileOnlineAccentColor(poTrim)) {
-        toast.error(t('webSettingsActivity.profileOnlineAccentInvalid'))
-        setSaving(false)
-        return
-      }
-      if (hasLockedLegacyChanges) {
-        toast.error(t('webSettingsMigration.lockedToast'))
-        setSaving(false)
-        return
-      }
-
-      const adminThemeColor = normalizeAdminThemeColor(form.adminThemeColor)
-      const adminBackgroundColor = normalizeAdminThemeColor(form.adminBackgroundColor)
-
-      const {
-        adminThemeColor: _formAdminThemeColor,
-        adminBackgroundColor: _formAdminBackgroundColor,
-        inspirationDeviceRestrictionEnabled,
-        inspirationAllowedDeviceHashes: inspirationHashSelection,
-        hcaptchaSecretKey: hcaptchaSecretKeyForm,
-        steamApiKey: steamApiKeyForm,
-        ...formRest
-      } = form
-
-      const validateRange = (
-        label: string,
-        raw: unknown,
-        min: number,
-        max: number,
-      ): number | null => {
-        const value = parseIntegerInRange(raw, min, max)
-        if (value !== null) return value
-        toast.error(`${label}: ${t('common.numberRange', { range: formatNumberRange(min, max) })}`)
-        return null
-      }
-
-      const normalizedHistoryWindowMinutes = validateRange(
-        t('webSettingsActivity.historyWindowLabel'),
-        formRest.historyWindowMinutes,
-        SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-        SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
-      )
-      const normalizedProcessStaleSeconds = validateRange(
-        t('webSettingsActivity.processStaleLabel'),
-        formRest.processStaleSeconds,
-        SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-        SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
-      )
-      const normalizedMediaCoverMaxCount = validateRange(
-        t('webSettingsActivity.mediaCoverMaxCountLabel'),
-        formRest.mediaCoverMaxCount,
-        0,
-        500,
-      )
-      const normalizedRedisTtl = validateRange(
-        t('webSettingsActivity.redisCacheTtlLabel'),
-        formRest.redisCacheTtlSeconds,
-        1,
-        REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-      )
-      const normalizedStatusCardWidth = validateRange(
-        t('webSettingsActivity.statusCard.widthLabel'),
-        formRest.statusCardWidth,
-        280,
-        1200,
-      )
-      const normalizedStatusCardHeight = validateRange(
-        t('webSettingsActivity.statusCard.heightLabel'),
-        formRest.statusCardHeight,
-        1,
-        720,
-      )
-      const normalizedStatusCardRadius = validateRange(
-        t('webSettingsActivity.statusCard.radiusLabel'),
-        formRest.statusCardRadius,
-        0,
-        80,
-      )
-      const normalizedSkillsOauthTokenTtlMinutes = validateRange(
-        t('webSettingsSkills.oauthTtlTitle'),
-        skillsOauthTokenTtlMinutes,
-        5,
-        1440,
-      )
-      if (
-        normalizedHistoryWindowMinutes === null ||
-        normalizedProcessStaleSeconds === null ||
-        normalizedMediaCoverMaxCount === null ||
-        normalizedRedisTtl === null ||
-        normalizedStatusCardWidth === null ||
-        normalizedStatusCardHeight === null ||
-        normalizedStatusCardRadius === null ||
-        normalizedSkillsOauthTokenTtlMinutes === null
-      ) {
-        setSaving(false)
-        return
-      }
-
-      const hcaptchaPatch: Record<string, unknown> = {
-        hcaptchaEnabled: formRest.hcaptchaEnabled,
-        hcaptchaSiteKey: formRest.hcaptchaSiteKey || null,
-      }
-      if (hcaptchaSecretKeyForm.trim()) {
-        hcaptchaPatch.hcaptchaSecretKey = hcaptchaSecretKeyForm.trim()
-      }
-
-      const steamPatch: Record<string, unknown> = {}
-      if (steamApiKeyForm.trim()) {
-        steamPatch.steamApiKey = steamApiKeyForm.trim()
-      }
-
-      const settingsPayload = {
-        ...formRest,
-        adminThemeColor,
-        adminBackgroundColor,
-        avatarFetchByServerEnabled:
-          isRemoteAvatarUrl(formRest.avatarUrl) && formRest.avatarFetchByServerEnabled === true,
-        historyWindowMinutes: normalizedHistoryWindowMinutes,
-        processStaleSeconds: normalizedProcessStaleSeconds,
-        mcpThemeToolsEnabled: form.mcpThemeToolsEnabled,
-        redisCacheTtlSeconds: normalizedRedisTtl,
-        mediaCoverMaxCount: normalizedMediaCoverMaxCount,
-        statusCardWidth: normalizedStatusCardWidth,
-        statusCardHeight: normalizedStatusCardHeight,
-        statusCardRadius: normalizedStatusCardRadius,
-        profileOnlineAccentColor: normalizeProfileOnlineAccentColor(poTrim || '') ?? null,
-        inspirationAllowedDeviceHashes: inspirationDeviceRestrictionEnabled
-          ? normalizeStringList(inspirationHashSelection)
-          : null,
-        ...hcaptchaPatch,
-        ...steamPatch,
-      } satisfies Record<string, unknown>
-
-      const formSnapshot = structuredClone(form)
-      const themePayload = pickRecordKeys(settingsPayload, SITE_SETTINGS_THEME_CATEGORY_KEYS)
-      const schedulePayload = pickRecordKeys(settingsPayload, SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS)
-      const corePayload = omitRecordKeys(settingsPayload, [
-        ...SITE_SETTINGS_THEME_CATEGORY_KEYS,
-        ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-      ])
-      const coreKeys = Object.keys(corePayload)
-      const coreDiff = !baselineForm
-        ? true
-        : !areValuesEqual(
-            corePayload,
-            normalizeCorePayloadForComparison(baselineForm as unknown as Record<string, unknown>),
-          )
-
-      const settingsSaveSteps: Array<{
-        keys: readonly string[]
-        run: () => Promise<Record<string, any>>
-      }> = []
-
-      if (themeSettingsDirty) {
-        settingsSaveSteps.push({
-          keys: SITE_SETTINGS_THEME_CATEGORY_KEYS,
-          run: () => patchAdminSettingsTheme(themePayload),
-        })
-      }
-      if (scheduleSettingsDirty) {
-        settingsSaveSteps.push({
-          keys: SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-          run: () => patchAdminSettingsSchedule(schedulePayload),
-        })
-      }
-      if (coreDiff) {
-        settingsSaveSteps.push({
-          keys: coreKeys,
-          run: () => patchAdminSettingsCore(corePayload),
-        })
-      }
-
-      let lastSavedSettingsData: Record<string, any> | null = null
-      let lastSuccessfulSettingsStepIndex = -1
-
-      try {
-        for (const [index, step] of settingsSaveSteps.entries()) {
-          lastSavedSettingsData = await step.run()
-          lastSuccessfulSettingsStepIndex = index
-        }
-
-        const skillsPatch = normalizeSkillsEditableConfig({
-          enabled: skillsEnabled,
-          authMode: skillsAuthMode,
-          oauthTokenTtlMinutes: normalizedSkillsOauthTokenTtlMinutes,
-        })
-        const skillsJson = await patchAdminSkills({
-          enabled: skillsPatch.enabled,
-          authMode: skillsPatch.authMode || undefined,
-          oauthTokenTtlMinutes: normalizedSkillsOauthTokenTtlMinutes,
-        })
-
-        const serverSkills = normalizeSkillsEditableConfig({
-          enabled: skillsJson.enabled === true,
-          authMode:
-            skillsJson.authMode === 'oauth' || skillsJson.authMode === 'apikey'
-              ? skillsJson.authMode
-              : '',
-          oauthTokenTtlMinutes: Number(skillsJson.oauthTokenTtlMinutes),
-        })
-        setSkillsEnabled(serverSkills.enabled)
-        setSkillsAuthMode(serverSkills.authMode)
-        setSkillsOauthTokenTtlMinutes(serverSkills.oauthTokenTtlMinutes)
-        setSkillsApiKeyConfigured(skillsJson.apiKeyConfigured === true)
-        setSkillsOauthConfigured(skillsJson.oauthConfigured === true)
-        setLegacyMcpConfigured(skillsJson.legacyMcpConfigured === true)
-        setSkillsAiAuthorizations(normalizeSkillsAiAuthorizations(skillsJson.aiAuthorizations))
-        setBaselineSkillsConfig(structuredClone(serverSkills))
-        void queryClient.invalidateQueries({ queryKey: adminQueryKeys.skills.settings() })
-      } catch (error) {
-        if (lastSavedSettingsData) {
-          const unsavedKeys = settingsSaveSteps
-            .slice(lastSuccessfulSettingsStepIndex + 1)
-            .flatMap((step) => step.keys)
-
-          syncPartiallySavedSettings(lastSavedSettingsData, formSnapshot, unsavedKeys)
-          toast.error(
-            error instanceof Error
-              ? `${error.message} ${t('webSettings.toasts.partialSavedHint')}`
-              : t('webSettings.toasts.partialSavedHint'),
-          )
-          setSaving(false)
-          return
-        }
-
-        throw error
-      }
-
-      await refreshSettingsData()
-      toast.success(t('webSettings.toasts.saved'))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('common.networkErrorRetry'))
-    } finally {
-      setSaving(false)
-    }
+    await SaveWebSettings({
+      t,
+      queryClient,
+      form,
+      baselineForm,
+      skillsEnabled,
+      skillsAuthMode,
+      skillsOauthTokenTtlMinutes,
+      themeSettingsDirty,
+      scheduleSettingsDirty,
+      hasLockedLegacyChanges,
+      setSaving,
+      setSkillsEnabled,
+      setSkillsAuthMode,
+      setSkillsApiKeyConfigured,
+      setSkillsOauthConfigured,
+      setSkillsOauthTokenTtlMinutes,
+      setSkillsAiAuthorizations,
+      setLegacyMcpConfigured,
+      setBaselineSkillsConfig,
+      refreshSettingsData,
+      syncPartiallySavedSettings,
+    })
   }
 
   const revertUnsavedWebSettings = () => {
@@ -755,43 +487,13 @@ export function useWebSettingsController() {
   }
 
   const confirmImportConfig = async () => {
-    const raw = importConfigInput.trim()
-    if (!raw) {
-      toast.error(t('webSettings.importDialog.empty'))
-      return
-    }
-    const compact = raw.replace(/\s+/g, '')
-    const parsed = parseExportPayload(compact)
-    if (!parsed) {
-      toast.error(t('webSettings.importDialog.invalid'))
-      return
-    }
-    const partial = await uploadImportedImageSources(webPayloadToFormPatch(parsed.web))
-    const ruleToolsPayload = extractRuleToolsImportFromWebPayload(parsed.web)
-    setForm((prev) => ({
-      ...prev,
-      ...partial,
-      pageLockPassword: '',
-    }))
-    if (ruleToolsPayload) {
-      try {
-        await importAdminRuleTools(ruleToolsPayload)
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.summary() }),
-          queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.config() }),
-          queryClient.invalidateQueries({ queryKey: adminQueryKeys.ruleTools.rulesPreview() }),
-          queryClient.invalidateQueries({ queryKey: ['admin', 'rule-tools', 'rules'] }),
-          queryClient.invalidateQueries({ queryKey: ['admin', 'rule-tools', 'list'] }),
-        ])
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : t('common.networkErrorRetry'),
-        )
-        return
-      }
-    }
-    setImportConfigDialogOpen(false)
-    toast.success(t('webSettings.importDialog.applied'))
+    await ConfirmWebSettingsImport({
+      t,
+      queryClient,
+      importConfigInput,
+      setForm,
+      setImportConfigDialogOpen,
+    })
   }
 
   const copyPlainText = async (value: string, successText: string) => {

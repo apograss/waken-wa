@@ -12,10 +12,10 @@ import {
   formatNumberRange,
   NumberSettingInput,
 } from '@/components/admin/number-setting-input'
+import { RuleToolsAppRulesDialogs } from '@/components/admin/rule-tools-app-rules-dialogs'
 import { RuleToolsGroupEditor } from '@/components/admin/rule-tools-group-editor'
-import { RuleToolsGroupList } from '@/components/admin/rule-tools-group-list'
 import { RuleToolsImportDialog } from '@/components/admin/rule-tools-import-dialog'
-import { ListDialogEditor } from '@/components/admin/rule-tools-list-dialog-editor'
+import { RuleToolsListDialogs } from '@/components/admin/rule-tools-list-dialogs'
 import { RuleToolsMediaSourceDialog } from '@/components/admin/rule-tools-media-source-dialog'
 import { RuleToolsPreview } from '@/components/admin/rule-tools-preview'
 import { getErrorMessage } from '@/components/admin/rule-tools-utils'
@@ -28,15 +28,6 @@ import {
 } from '@/components/admin/web-settings-layout'
 import { webSettingsMigrationAtom } from '@/components/admin/web-settings-store'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { REPORTED_APP_TITLE_LIMIT_MAX } from '@/lib/reported-app-title-limit'
 
@@ -404,279 +395,13 @@ export function WebSettingsRuleTools() {
         </div>
       </div>
 
-      <Dialog
-        open={dialogAppRulesOpen}
-        onOpenChange={(open) => {
-          setDialogAppRulesOpen(open)
-          if (!open) setEditingListItem(null)
-        }}
-      >
-        <DialogContent
-          className="flex h-[calc(100vh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:h-[min(90vh,56rem)] sm:max-h-[min(90vh,56rem)] sm:w-[calc(100vw-1.5rem)] sm:max-w-5xl"
-          showCloseButton
-        >
-          <DialogHeader className="shrink-0 space-y-1 border-b px-4 py-4 pr-12 text-left sm:px-6">
-            <DialogTitle>{t('webSettingsRuleTools.appRules.title')}</DialogTitle>
-            <DialogDescription>
-              <span className="md:hidden">
-                {t('webSettingsRuleTools.appRules.selectorDescription')}
-              </span>
-              <span className="hidden md:inline">
-                {t('webSettingsRuleTools.appRules.dialogDescription')}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 md:hidden">
-            <RuleToolsGroupList
-              mobile
-              isLoading={ruleToolsQuery.isLoading}
-              isFetching={ruleToolsQuery.isFetching}
-              hasPayload={Boolean(currentPayload)}
-              busy={busy}
-              ruleSearchInput={ruleSearchInput}
-              pagedRuleItems={pagedRuleItems}
-              activeSelectedRuleId={activeSelectedRuleId}
-              totalRuleCount={currentSummary?.ruleGroupCount ?? 0}
-              resolvedGroupListPage={resolvedGroupListPage}
-              filteredRuleItemCount={filteredRuleItems.length}
-              t={t}
-              setRuleSearchInput={setRuleSearchInput}
-              setGroupListPage={setGroupListPage}
-              setSelectedRuleId={setSelectedRuleId}
-              onAddRuleGroup={handleAddRuleGroup}
-              onOpenMobileRuleEditor={openMobileRuleEditor}
-            />
-          </div>
-          <div className="hidden min-h-0 flex-1 overflow-hidden md:grid md:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
-            <div className="min-h-0 border-r px-6 py-4">
-              <RuleToolsGroupList
-                mobile={false}
-                isLoading={ruleToolsQuery.isLoading}
-                isFetching={ruleToolsQuery.isFetching}
-                hasPayload={Boolean(currentPayload)}
-                busy={busy}
-                ruleSearchInput={ruleSearchInput}
-                pagedRuleItems={pagedRuleItems}
-                activeSelectedRuleId={activeSelectedRuleId}
-                totalRuleCount={currentSummary?.ruleGroupCount ?? 0}
-                resolvedGroupListPage={resolvedGroupListPage}
-                filteredRuleItemCount={filteredRuleItems.length}
-                t={t}
-                setRuleSearchInput={setRuleSearchInput}
-                setGroupListPage={setGroupListPage}
-                setSelectedRuleId={setSelectedRuleId}
-                onAddRuleGroup={handleAddRuleGroup}
-                onOpenMobileRuleEditor={openMobileRuleEditor}
-              />
-            </div>
-            <div className="min-h-0 overflow-y-auto px-6 py-4">{renderRuleGroupEditor(false)}</div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RuleToolsAppRulesDialogs
+        state={state}
+        t={t}
+        renderRuleGroupEditor={renderRuleGroupEditor}
+      />
 
-      <Dialog open={dialogAppRuleEditorOpen} onOpenChange={handleAppRuleEditorOpenChange}>
-        <DialogContent
-          className="flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0 md:hidden"
-          showCloseButton
-        >
-          <DialogHeader className="shrink-0 space-y-1 border-b px-4 py-4 pr-12 text-left sm:px-6">
-            <DialogTitle>{t('webSettingsRuleTools.appRules.groupEditorTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('webSettingsRuleTools.appRules.groupEditorDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            {renderRuleGroupEditor(true)}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={dialogAppFilterOpen}
-        onOpenChange={(open) => {
-          setDialogAppFilterOpen(open)
-          if (!open) setEditingListItem(null)
-        }}
-      >
-        <DialogContent className="flex h-[calc(100vh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:h-[min(90vh,56rem)] sm:max-h-[min(90vh,56rem)] sm:w-[calc(100vw-1.5rem)]">
-          <DialogHeader className="shrink-0 space-y-1 border-b px-4 py-4 pr-12 text-left sm:px-6">
-            <DialogTitle>{t('webSettingsRuleTools.appFilter.title')}</DialogTitle>
-            <DialogDescription>
-              {t('webSettingsRuleTools.appFilter.dialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6">
-            <div className="flex h-full min-h-0 flex-col gap-4">
-              <RadioGroup
-                value={appFilterMode}
-                disabled={busy}
-                onValueChange={(value) => {
-                  if (value !== 'blacklist' && value !== 'whitelist') return
-                  setEditingListItem(null)
-                  updateDraftPayload((current) => ({
-                    ...current,
-                    appFilterMode: value,
-                  }))
-                }}
-                className="grid gap-3 sm:grid-cols-2"
-              >
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-4">
-                  <RadioGroupItem value="blacklist" id="rule-tools-filter-blacklist" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {t('webSettingsRuleTools.appFilter.blacklistMode')}
-                    </p>
-                    <p className="text-xs leading-6 text-muted-foreground">
-                      {t('webSettingsRuleTools.appFilter.blacklistDescription')}
-                    </p>
-                  </div>
-                </label>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-4">
-                  <RadioGroupItem value="whitelist" id="rule-tools-filter-whitelist" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {t('webSettingsRuleTools.appFilter.whitelistMode')}
-                    </p>
-                    <p className="text-xs leading-6 text-muted-foreground">
-                      {t('webSettingsRuleTools.appFilter.whitelistDescription')}
-                    </p>
-                  </div>
-                </label>
-              </RadioGroup>
-
-              <ListDialogEditor
-                description={
-                  appFilterMode === 'blacklist'
-                    ? t('webSettingsRuleTools.appFilter.blacklistInputDescription')
-                    : t('webSettingsRuleTools.appFilter.whitelistInputDescription')
-                }
-                emptyText={
-                  appFilterMode === 'blacklist'
-                    ? t('webSettingsRuleTools.appFilter.blacklistEmpty')
-                    : t('webSettingsRuleTools.appFilter.whitelistEmpty')
-                }
-                inputId="rule-tools-filter-list"
-                placeholder={
-                  appFilterMode === 'blacklist'
-                    ? t('webSettingsRuleTools.appFilter.blacklistPlaceholder')
-                    : t('webSettingsRuleTools.appFilter.whitelistPlaceholder')
-                }
-                suggestions={currentFilterSuggestions}
-                suggestionsEnabled={captureReportedAppsEnabled}
-                inputValue={
-                  currentFilterListKey === 'appBlacklist' ? blacklistInput : whitelistInput
-                }
-                onInputValueChange={
-                  currentFilterListKey === 'appBlacklist' ? setBlacklistInput : setWhitelistInput
-                }
-                onAdd={handleAddFilterItem}
-                items={pagedCurrentFilterItems}
-                total={filteredCurrentFilterItems.length}
-                page={currentFilterPage}
-                onPageChange={
-                  currentFilterListKey === 'appBlacklist'
-                    ? setBlacklistListPage
-                    : setWhitelistListPage
-                }
-                savedSearchValue={currentFilterSearchInput}
-                onSavedSearchValueChange={(value) => {
-                  if (currentFilterListKey === 'appBlacklist') {
-                    setBlacklistSearchInput(value)
-                    setBlacklistListPage(0)
-                  } else {
-                    setWhitelistSearchInput(value)
-                    setWhitelistListPage(0)
-                  }
-                }}
-                loading={ruleToolsQuery.isLoading && !currentPayload}
-                refreshing={ruleToolsQuery.isFetching && !ruleToolsQuery.isLoading}
-                busy={busy}
-                editingItem={currentFilterEditingItem}
-                onEditingValueChange={(value) =>
-                  setEditingListItem((current) =>
-                    current ? { ...current, draftValue: value } : current,
-                  )
-                }
-                onStartEdit={(value) => handleStartEditListItem(currentFilterListKey, value)}
-                onCancelEdit={handleCancelEditListItem}
-                onSaveEdit={handleSaveEditedListItem}
-                onRemove={(value) => handleRemoveListItem(currentFilterListKey, value)}
-                inputClassName="font-mono"
-              />
-            </div>
-          </div>
-          <DialogFooter className="shrink-0 border-t px-4 py-4 sm:px-6">
-            <Button type="button" variant="outline" onClick={() => setDialogAppFilterOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={dialogNameOnlyOpen}
-        onOpenChange={(open) => {
-          setDialogNameOnlyOpen(open)
-          if (!open) setEditingListItem(null)
-        }}
-      >
-        <DialogContent className="flex h-[calc(100vh-1rem)] max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:h-[min(90vh,56rem)] sm:max-h-[min(90vh,56rem)] sm:w-[calc(100vw-1.5rem)]">
-          <DialogHeader className="shrink-0 space-y-1 border-b px-4 py-4 pr-12 text-left sm:px-6">
-            <DialogTitle>{t('webSettingsRuleTools.nameOnly.title')}</DialogTitle>
-            <DialogDescription>
-              {t('webSettingsRuleTools.nameOnly.dialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6">
-            <ListDialogEditor
-              description={t('webSettingsRuleTools.nameOnly.inputDescription')}
-              emptyText={t('webSettingsRuleTools.nameOnly.empty')}
-              inputId="rule-tools-name-only"
-              placeholder={t('webSettingsRuleTools.nameOnly.placeholder')}
-              suggestions={nameOnlySuggestionsQuery.data ?? []}
-              suggestionsEnabled={captureReportedAppsEnabled}
-              inputValue={nameOnlyListInput}
-              onInputValueChange={setNameOnlyListInput}
-              onAdd={handleAddNameOnlyItem}
-              items={pagedNameOnlyItems}
-              total={filteredNameOnlyItems.length}
-              page={resolvedNameOnlyListPage}
-              onPageChange={setNameOnlyListPage}
-              savedSearchValue={nameOnlyListSearchInput}
-              onSavedSearchValueChange={(value) => {
-                setNameOnlyListSearchInput(value)
-                setNameOnlyListPage(0)
-              }}
-              loading={ruleToolsQuery.isLoading && !currentPayload}
-              refreshing={ruleToolsQuery.isFetching && !ruleToolsQuery.isLoading}
-              busy={busy}
-              editingItem={
-                editingListItem?.listKey === 'appNameOnlyList'
-                  ? {
-                      currentValue: editingListItem.currentValue,
-                      draftValue: editingListItem.draftValue,
-                    }
-                  : null
-              }
-              onEditingValueChange={(value) =>
-                setEditingListItem((current) =>
-                  current ? { ...current, draftValue: value } : current,
-                )
-              }
-              onStartEdit={(value) => handleStartEditListItem('appNameOnlyList', value)}
-              onCancelEdit={handleCancelEditListItem}
-              onSaveEdit={handleSaveEditedListItem}
-              onRemove={(value) => handleRemoveListItem('appNameOnlyList', value)}
-              inputClassName="font-mono"
-            />
-          </div>
-          <DialogFooter className="shrink-0 border-t px-4 py-4 sm:px-6">
-            <Button type="button" variant="outline" onClick={() => setDialogNameOnlyOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RuleToolsListDialogs state={state} t={t} />
 
       <RuleToolsMediaSourceDialog
         open={dialogMediaSourceOpen}
