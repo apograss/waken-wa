@@ -413,6 +413,10 @@ API route 应保持薄层：
 - 设备管理表单控件拆分：`components/admin/device-create-form.tsx`、`components/admin/device-list-filters.tsx`、`components/admin/device-list-pagination.tsx` 承接创建表单、筛选条和分页摘要，让 `components/admin/device-manager.tsx` 当前降至约 627 行。
 - 设备管理状态逻辑拆分：`components/admin/use-device-custom-status-editor.ts`、`components/admin/use-device-list-query-state.ts`、`components/admin/use-device-manager-mutations.ts` 承接自定义状态编辑、设备列表查询与设备 mutation helper，让 `components/admin/device-manager.tsx` 当前降至约 312 行，暂时移出大文件拆分重点。
 - 规则工具导入导出拆分：`components/admin/rule-tools-import-export-handlers.ts` 承接复制规则 JSON、导出已用应用 JSON、确认导入规则 JSON，让 `components/admin/use-rule-tools-state.ts` 当前降至约 794 行。
+- 规则工具状态拆分：`components/admin/use-rule-tools-editing-state.ts` 承接规则组/列表/媒体源/导入弹窗等编辑态与派生逻辑，让 `components/admin/use-rule-tools-state.ts` 当前只保留保存、回滚与导入导出编排，显著缩小了主 hook 的职责面。
+- 当前状态拆分：`components/current-status-utils.ts` 承接电量、设备类型、播放时间、播放进度与媒体源标签等纯派生；`components/current-status-media-row.tsx` 承接媒体 / Steam 行与 marquee / hover / popover 展示；`components/current-status-card.tsx` 承接单卡状态与闪烁签名逻辑；`components/current-status.tsx` 现在只负责列表编排与空态。
+- 站点设置 controller 拆分：`components/admin/web-settings-controller-utils.ts` 承接表单构建、深比较、设置导入图片上传、核心 payload 对比与字符串列表去重；`components/admin/use-web-settings-controller.ts` 当前降至约 863 行，后续可继续按保存流程和迁移流程拆分。
+- Skills 设置面板拆分：`components/admin/web-settings-skills-auth-panel.tsx` 承接 Skills API Key / OAuth / AI 授权展示与操作；`components/admin/web-settings-skills-mcp-panel.tsx` 承接 legacy MCP 配置、密钥与端点展示；`components/admin/web-settings-skills-panel.tsx` 当前降至约 164 行，只保留总开关、工具模式与区块编排。
 - 分支规范补充：`components/admin/lexical-editor.tsx`、`lib/skills-auth/secrets.ts`、`lib/public-page-font.ts` 中同变量多分支已改为 `switch`。
 - 清理无用文件：删除未使用的 `lib/inspiration-admin-constants.ts`。
 - 分支规范：`components/admin/schedule-manager-utils.ts` 与状态卡相关枚举/扩展名分支已改为 `switch`。
@@ -424,12 +428,12 @@ API route 应保持薄层：
 
 | 项目 | 数量 | 说明 |
 | --- | ---: | --- |
-| 当前 `ts/tsx` 文件总数 | 399 | 不含已删除的旧迁移文件；本轮新增多个拆分组件/hook |
-| 已动到的当前 `ts/tsx` 文件 | 约 120 | 包含修改文件与新增文件，按原报告口径顺延估算 |
+| 当前 `ts/tsx` 文件总数 | 405 | 不含已删除的旧迁移文件；本轮新增多个拆分组件/hook |
+| 已动到的当前 `ts/tsx` 文件 | 约 128 | 包含修改文件与新增文件，按原报告口径顺延估算 |
 | 删除/迁移出去的旧 `ts/tsx` 文件 | 15 | 主要是旧 constants/types 文件 |
-| 仍未触碰的当前 `ts/tsx` 文件 | 约 279 | 约占当前文件的 70% |
-| 当前 400 行以上文件 | 33 | 仍是后续拆分重点 |
-| 当前 400 行以上且尚未触碰的文件 | 约 13 | 适合后续单独推进 |
+| 仍未触碰的当前 `ts/tsx` 文件 | 约 277 | 约占当前文件的 68% |
+| 当前 400 行以上文件 | 31 | 仍是后续拆分重点 |
+| 当前 400 行以上且尚未触碰的文件 | 约 11 | 适合后续单独推进 |
 | `types/` 外的 `type/interface` 声明 | 约 210 | 不等于都必须迁移，单文件私有类型可保留 |
 | `constants/` 外的大写常量声明 | 约 245 | 不等于都必须迁移，仅共享常量或固写配置优先迁移 |
 
@@ -437,9 +441,7 @@ API route 应保持薄层：
 
 | 文件 | 行数 | 后续建议 |
 | --- | ---: | --- |
-| `components/current-status.tsx` | 821 | 拆分展示子组件与活动状态派生 |
 | `components/admin/dashboard.tsx` | 801 | 拆分 dashboard 区块与数据派生 |
-| `components/admin/web-settings-skills-panel.tsx` | 647 | 拆分技能列表、鉴权状态与操作弹窗 |
 | `components/admin/token-manager.tsx` | 670 | 拆分 token 列表、创建表单与操作弹窗 |
 | `components/user-profile.tsx` | 606 | 拆分资料展示、社交链接与主题相关派生 |
 | `lib/openapi/components/schemas.ts` | 555 | 按 schema 领域拆分或生成结构梳理 |
@@ -455,13 +457,15 @@ API route 应保持薄层：
 
 - `components/admin/device-manager.tsx` 已降至约 312 行，剩余只有高亮/审核接线与轻量表单 state，暂不再作为优先拆分对象。
 - `components/admin/use-rule-tools-state.ts` 仍有约 794 行，是下一轮最划算入口：优先拆列表操作、规则组操作、编辑缓存与查询状态。
-- 仍在 700 行以上的大文件包括 `components/admin/use-web-settings-controller.ts`、`components/admin/web-settings-custom-surface.tsx`、`components/admin/schedule-manager.tsx`、`components/current-status.tsx`、`components/admin/dashboard.tsx`、`lib/site-settings-write.ts`、`lib/site-settings-read.ts`、`components/admin/web-settings-rule-tools.tsx`、`components/admin/status-card-preview-panel.tsx`。
+- `components/current-status.tsx` 已完成首轮拆分，当前只保留入口编排；`components/current-status-card.tsx` 与 `components/current-status-media-row.tsx` 承接主要展示逻辑，后续如再改动优先维持这一分层。
+- `components/admin/web-settings-skills-panel.tsx` 已完成首轮拆分，当前主文件约 164 行；后续如继续优化，优先拆 `web-settings-skills-auth-panel.tsx` 内的 AI 授权列表/弹窗。
+- `components/admin/use-web-settings-controller.ts` 已完成首轮 helper 拆分，当前仍约 863 行；后续优先拆 `save` 保存流程、skills 保存同步和迁移操作。
+- 仍在 700 行以上的大文件包括 `components/admin/use-web-settings-controller.ts`、`components/admin/web-settings-custom-surface.tsx`、`components/admin/schedule-manager.tsx`、`components/admin/dashboard.tsx`、`lib/site-settings-write.ts`、`lib/site-settings-read.ts`、`components/admin/web-settings-rule-tools.tsx`、`components/admin/status-card-preview-panel.tsx`。
 - 共享类型/常量仍然采用“触碰到哪里迁到哪里”的方式，不做清零式批量迁移。
 
 下一轮最划算的推进顺序：
 
-1. 拆 `components/admin/use-rule-tools-state.ts`，优先将列表操作、规则组操作、编辑缓存与查询状态分离。
-2. 处理 `components/admin/use-web-settings-controller.ts`，按 core/theme/schedule/rules 分出 controller helper。
-3. 渐进拆 `components/admin/web-settings-rule-tools.tsx` 剩余状态派生；避免再把新功能塞回主文件。
-4. 拆 `components/current-status.tsx` 展示子组件与活动状态派生。
-5. 渐进迁移仍散落的共享类型与共享常量；不要为了数字清零批量移动私有类型或局部常量。
+1. 继续处理 `components/admin/use-web-settings-controller.ts`，优先把 `save` 保存流程和 skills 同步保存拆成独立 helper/hook。
+2. 渐进拆 `components/admin/web-settings-rule-tools.tsx` 剩余状态派生；避免再把新功能塞回主文件。
+3. 渐进拆 `components/admin/dashboard.tsx`、`components/admin/token-manager.tsx` 或 `components/user-profile.tsx`，优先挑最容易独立抽出的展示区块。
+4. 渐进迁移仍散落的共享类型与共享常量；不要为了数字清零批量移动私有类型或局部常量。
