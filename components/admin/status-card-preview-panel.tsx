@@ -120,6 +120,12 @@ function getStatusCardDimensions(
   }
 }
 
+function formatStatusCardDimensionValue(value: number | string): string {
+  return typeof value === 'string' && value.trim().toLowerCase() === 'auto'
+    ? 'auto'
+    : String(value)
+}
+
 async function hashText(value: string): Promise<string> {
   const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -400,6 +406,8 @@ export function StatusCardPreviewPanel() {
   }
 
   const previewDimensions = getStatusCardDimensions(form.statusCardWidth, form.statusCardHeight, form.statusCardRadius)
+  const previewWidthInput = formatStatusCardDimensionValue(form.statusCardWidth)
+  const previewHeightInput = formatStatusCardDimensionValue(form.statusCardHeight)
 
   return (
     <WebSettingsInset className="space-y-4">
@@ -684,7 +692,7 @@ export function StatusCardPreviewPanel() {
                 id="status-card-width"
                 min={280}
                 max={1200}
-                value={form.statusCardWidth}
+                value={previewWidthInput}
                 rangeMessage={formatNumberRange(280, 1200)}
                 onValueChange={(value) => patchForm('statusCardWidth', value)}
               />
@@ -697,7 +705,7 @@ export function StatusCardPreviewPanel() {
                 id="status-card-height"
                 min={1}
                 max={720}
-                value={form.statusCardHeight}
+                value={previewHeightInput}
                 rangeMessage={formatNumberRange(1, 720)}
                 onValueChange={(value) => patchForm('statusCardHeight', value)}
               />

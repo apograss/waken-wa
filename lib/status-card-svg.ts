@@ -60,7 +60,9 @@ type StatusCardDetailRow = {
 export type StatusCardOptions = {
   variant: StatusCardVariant
   width: number
+  widthAuto: boolean
   height: number
+  heightAuto: boolean
   radius: number
   bg: string
   signatureBg: string
@@ -115,6 +117,23 @@ function parseIntegerParam(
   const value = Number(raw)
   if (!Number.isFinite(value)) return fallback
   return clampNumber(Math.round(value), min, max)
+}
+
+function parseIntegerParamWithAuto(
+  searchParams: URLSearchParams,
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): { value: number; auto: boolean } {
+  const raw = searchParams.get(key)
+  if (raw == null || raw.trim() === '') {
+    return { value: fallback, auto: false }
+  }
+  if (raw.trim().toLowerCase() === 'auto') {
+    return { value: fallback, auto: true }
+  }
+  return { value: parseIntegerParam(searchParams, key, fallback, min, max), auto: false }
 }
 
 function parseBooleanParam(
@@ -378,20 +397,8 @@ export function parseStatusCardOptions(
     ? SIGNATURE_WIDTH
     : getConfiguredNumber(config, 'statusCardWidth', DEFAULT_WIDTH, 280, 1200)
   const fallbackHeight = variant === 'signature' ? SIGNATURE_HEIGHT : defaultHeight
-  const width = parseIntegerParam(
-    searchParams,
-    'width',
-    defaultWidth,
-    280,
-    1200,
-  )
-  const height = parseIntegerParam(
-    searchParams,
-    'height',
-    fallbackHeight,
-    1,
-    720,
-  )
+  const widthResult = parseIntegerParamWithAuto(searchParams, 'width', defaultWidth, 280, 1200)
+  const heightResult = parseIntegerParamWithAuto(searchParams, 'height', fallbackHeight, 1, 720)
   const deviceIdRaw = searchParams.get('deviceId')
   const deviceId = deviceIdRaw == null || deviceIdRaw.trim() === ''
     ? null
@@ -399,8 +406,10 @@ export function parseStatusCardOptions(
 
   return {
     variant,
-    width,
-    height,
+    width: widthResult.value,
+    widthAuto: widthResult.auto,
+    height: heightResult.value,
+    heightAuto: heightResult.auto,
     radius: parseIntegerParam(
       searchParams,
       'radius',
@@ -431,6 +440,95 @@ export function parseStatusCardOptions(
     deviceId: Number.isFinite(deviceId) && Number(deviceId) > 0 ? Math.round(Number(deviceId)) : null,
     deviceKey: getTrimmedText(searchParams.get('deviceKey')).slice(0, 256) || null,
   }
+}
+
+function estimateStatusCardWidth(
+  texts: string[],
+  minWidth: number,
+  maxWidth: number,
+  basePadding: number,
+  pixelsPerUnit: number,
+): number {
+  const widest = texts.reduce((max, text) => Math.max(max, estimateTextUnits(text) * pixelsPerUnit), 0)
+  return clampNumber(Math.round(widest + basePadding), minWidth, maxWidth)
+}
+
+export function resolveStatusCardAutoDimensions(
+  options: StatusCardOptions,
+  profile: StatusCardProfile,
+  activity: ActivityFeedItem | null,
+  state: StatusCardState,
+  inClassStatusActive = false,
+  inClassOccurrence: ScheduleOccurrence | null = null,
+): Pick<StatusCardOptions, 'width' | 'height'> {
+  if (!options.widthAuto && !options.heightAuto) {
+    return { width: options.width, height: options.height }
+  }
+
+  const steamLine = state === 'active' ? getSteamGameName(activity) : ''
+  const appLine = state === 'active' ? getStatusLine(activity) : ''
+  const shouldPrioritizeGame = Boolean(options.preferGame && steamLine)
+  const shouldUseInClassStatus = Boolean(
+    inClassStatusActive &&
+    options.showInClassStatus &&
+    state === 'active',
+  )
+  const statusLine = state === 'locked'
+    ? 'Status locked'
+    : state === 'disabled'
+      ? 'Status card disabled'
+      : state === 'empty'
+        ? 'No active status'
+        : shouldUseInClassStatus
+          ? getInClassStatusLine(inClassOccurrence)
+          : shouldPrioritizeGame
+            ? steamLine
+            : appLine
+  const deviceLine = state === 'active' && activity
+    ? shouldPrioritizeGame
+      ? `Steam · ${getTrimmedText(activity.device, 'Unknown device')}`
+      : getTrimmedText(activity.device, 'Unknown device')
+    : state === 'locked'
+      ? 'Unlock the site to view this card'
+      : state === 'disabled'
+        ? 'Enable the status card in admin settings'
+        : 'Waiting for the next activity report'
+  const mediaLine = state === 'active' ? getMediaLine(activity) : ''
+  const bio = getTrimmedText(profile.bio)
+  const note = getTrimmedText(profile.note)
+  const name = getTrimmedText(profile.name || 'Waken')
+  const commonTexts = [name, bio, note, statusLine, deviceLine, mediaLine, steamLine]
+
+  let width = options.width
+  let height = options.height
+
+  if (options.variant === 'signature') {
+    width = SIGNATURE_WIDTH
+    height = options.heightAuto ? 0 : options.height
+    return { width, height }
+  }
+
+  if (options.variant === 'cover') {
+    if (options.widthAuto) {
+      width = estimateStatusCardWidth(commonTexts, 320, 1200, 180, 8.2)
+    }
+    height = options.heightAuto ? 0 : options.height
+    return { width, height }
+  }
+
+  if (options.variant === 'aurora') {
+    if (options.widthAuto) {
+      width = estimateStatusCardWidth(commonTexts, 320, 1200, 160, 8.4)
+    }
+    height = options.heightAuto ? 0 : options.height
+    return { width, height }
+  }
+
+  if (options.widthAuto) {
+    width = estimateStatusCardWidth(commonTexts, 280, 1200, 140, 8.8)
+  }
+  height = options.heightAuto ? 0 : options.height
+  return { width, height }
 }
 
 export function getStatusCardProfile(config?: Record<string, unknown> | null): StatusCardProfile {
@@ -1673,9 +1771,25 @@ export function renderStatusCardSvg({
   statusPageUrl: string
   state: StatusCardState
 }): string {
-  if (options.variant === 'signature') {
+  const resolvedDimensions = resolveStatusCardAutoDimensions(
+    options,
+    profile,
+    activity,
+    state,
+    inClassStatusActive,
+    inClassOccurrence,
+  )
+  const resolvedOptions: StatusCardOptions = {
+    ...options,
+    width: resolvedDimensions.width,
+    height: resolvedDimensions.height,
+    widthAuto: false,
+    heightAuto: false,
+  }
+
+  if (resolvedOptions.variant === 'signature') {
     return renderSignatureStatusCardSvg({
-      options,
+      options: resolvedOptions,
       profile,
       activity,
       avatarDataUri,
@@ -1687,9 +1801,9 @@ export function renderStatusCardSvg({
     })
   }
 
-  if (options.variant === 'cover') {
+  if (resolvedOptions.variant === 'cover') {
     return renderCoverStatusCardSvg({
-      options,
+      options: resolvedOptions,
       profile,
       activity,
       avatarDataUri,
@@ -1701,9 +1815,9 @@ export function renderStatusCardSvg({
     })
   }
 
-  if (options.variant === 'aurora') {
+  if (resolvedOptions.variant === 'aurora') {
     return renderAuroraStatusCardSvg({
-      options,
+      options: resolvedOptions,
       profile,
       activity,
       avatarDataUri,
@@ -1714,8 +1828,8 @@ export function renderStatusCardSvg({
     })
   }
 
-  const width = options.width
-  let height = options.height
+  const width = resolvedOptions.width
+  let height = resolvedOptions.height
   const padding = 24
   const innerWidth = width - padding * 2
   const headerEnabled = options.showHeader
