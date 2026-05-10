@@ -2,6 +2,10 @@ import { and, eq } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
 import {
+  GENERATED_HASH_KEY_MAX_LENGTH,
+  WEB_ADMIN_QUICK_ADD_DEVICE_HASH_KEY,
+} from '@/constants/device'
+import {
   clearActivityFeedDataCache,
 } from '@/lib/activity-feed'
 import { recordReportedActivityHistory } from '@/lib/activity-history-pending'
@@ -20,17 +24,13 @@ import {
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { db } from '@/lib/db'
 import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
-import {
-  GENERATED_HASH_KEY_MAX_LENGTH,
-  WEB_ADMIN_QUICK_ADD_DEVICE_HASH_KEY,
-} from '@/lib/device-constants'
 import { devices, userActivities } from '@/lib/drizzle-schema'
 import { getRequestLanguage } from '@/lib/i18n/request-locale'
 import { getT } from '@/lib/i18n/server'
 import { removeRealtimeActivity, upsertRealtimeActivity } from '@/lib/realtime-activity-cache'
 import { readJsonObject } from '@/lib/request-json'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import { parseProcessStaleSeconds } from '@/lib/site-config-constants'
+import { parseProcessStaleSeconds } from '@/lib/site-config-values'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 import { toDbJsonValue } from '@/lib/sqlite-json'
 

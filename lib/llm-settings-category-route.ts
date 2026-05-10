@@ -6,8 +6,8 @@ import {
   prepareSiteConfigValuesFromPayload,
 } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
-import { pickRecordKeys } from '@/lib/site-settings-constants'
 import { readEffectiveSiteConfig } from '@/lib/site-settings-read'
+import { pickRecordKeys } from '@/lib/site-settings-record'
 import { verifySkillsRequest } from '@/lib/skills-auth'
 
 const LLM_SETTINGS_CATEGORY_RATE_LIMIT_MAX = 60

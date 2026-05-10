@@ -2,6 +2,18 @@ import 'server-only'
 
 import { and, asc, eq } from 'drizzle-orm'
 
+import {
+  SITE_SETTINGS_CLEAR_LEGACY_VALUES,
+  SITE_SETTINGS_COVERED_CATEGORIES,
+  SITE_SETTINGS_RULES_KEYS,
+  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
+  SITE_SETTINGS_SITE_CONFIG_ID,
+  SITE_SETTINGS_THEME_CATEGORY_KEYS,
+} from '@/constants/site-settings'
+import {
+  SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS,
+  SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS,
+} from '@/constants/site-settings-storage'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { db } from '@/lib/db'
 import {
@@ -19,7 +31,6 @@ import {
   siteSettingsV2ThemePublicFontOptions,
   siteSettingsV2ValueEntries,
 } from '@/lib/drizzle-schema'
-import { parseJsonString } from '@/lib/json-parse'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
 import {
@@ -29,27 +40,26 @@ import {
 } from '@/lib/site-config-v2'
 import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
 import {
+  DecodeSiteSettingsScalarEntryValue,
+  ParseSiteSettingsArrayLike,
+  ReadSiteSettingsBooleanLike,
+  ReadSiteSettingsNonEmptyString,
+  RunOrNullWhenMissingTables,
+  ToSiteSettingsRecord,
+  ToSiteSettingsRecords,
+} from '@/lib/site-settings-read-utils'
+import {
   isSiteSettingsMigrationState,
   omitRecordKeys,
   pickRecordKeys,
-  SITE_SETTINGS_CLEAR_LEGACY_VALUES,
-  SITE_SETTINGS_COVERED_CATEGORIES,
-  SITE_SETTINGS_RULES_KEYS,
-  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-  SITE_SETTINGS_THEME_CATEGORY_KEYS,
-  type SiteSettingsMigrationState,
-} from '@/lib/site-settings-constants'
+} from '@/lib/site-settings-record'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
-
-export const SITE_SETTINGS_SITE_CONFIG_ID = 1
-
-type SiteSettingsRecord = Record<string, unknown>
-type ManagedCategory = 'theme' | 'schedule' | 'rules'
-
-type SiteSettingsSectionSnapshot = {
-  values: SiteSettingsRecord
-  rowCount: number
-}
+import type {
+  SiteSettingsManagedCategory,
+  SiteSettingsMigrationState,
+  SiteSettingsRecord,
+  SiteSettingsSectionSnapshot,
+} from '@/types/site-settings'
 
 export type SiteSettingsMigrationSnapshot = {
   siteConfigId: number
@@ -72,89 +82,12 @@ export type SiteSettingsSnapshot = {
   rulesRowCount: number
 }
 
-const THEME_CUSTOM_SURFACE_STRING_KEYS = [
-  'background',
-  'bodyBackground',
-  'animatedBg',
-  'primary',
-  'secondary',
-  'accent',
-  'online',
-  'foreground',
-  'card',
-  'border',
-  'muted',
-  'mutedForeground',
-  'homeCardOverlay',
-  'homeCardOverlayDark',
-  'homeCardInsetHighlight',
-  'animatedBgTint1',
-  'animatedBgTint2',
-  'animatedBgTint3',
-  'floatingOrbColor1',
-  'floatingOrbColor2',
-  'floatingOrbColor3',
-  'radius',
-  'backgroundImageMode',
-  'backgroundImageUrl',
-  'backgroundRandomApiUrl',
-  'paletteMode',
-  'paletteLiveScope',
-  'paletteSeedImageUrl',
-] as const
-
-const THEME_CUSTOM_SURFACE_BOOLEAN_KEYS = [
-  'hideFloatingOrbs',
-  'transparentAnimatedBg',
-  'paletteLiveEnabled',
-] as const
-
-function toRecord(value: unknown): SiteSettingsRecord | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null
-  }
-  return value as SiteSettingsRecord
-}
-
-function getSqliteMissingTable(error: unknown): string | null {
-  const message = String((error as { message?: unknown })?.message ?? '')
-  const match = message.match(/no such table:\s*(\S+)/i)
-  return match?.[1] ?? null
-}
-
-function getPostgresMissingTable(error: unknown): string | null {
-  const message = String((error as { message?: unknown })?.message ?? '')
-  const match = message.match(/relation\s+"([^"]+)"\s+does not exist/i)
-  return match?.[1] ?? null
-}
-
-function isMissingTableError(error: unknown, tableNames: readonly string[]): boolean {
-  const tableName = (getSqliteMissingTable(error) ?? getPostgresMissingTable(error) ?? '')
-    .trim()
-    .replace(/^["']|["']$/g, '')
-  return tableNames.includes(tableName)
-}
-
-async function runOrNullWhenMissingTables<T>(
-  tableNames: readonly string[],
-  run: () => Promise<T>,
-): Promise<T | null> {
-  try {
-    return await run()
-  } catch (error) {
-    if (isMissingTableError(error, tableNames)) {
-      return null
-    }
-    throw error
-  }
-}
-
 async function selectValueEntryRows(
   executor: any,
-  category: ManagedCategory,
+  category: SiteSettingsManagedCategory,
 ): Promise<SiteSettingsRecord[]> {
   const rows =
-    (await runOrNullWhenMissingTables<unknown[]>(['site_settings_v2_value_entries'], () =>
+    (await RunOrNullWhenMissingTables<unknown[]>(['site_settings_v2_value_entries'], () =>
       executor
         .select()
         .from(siteSettingsV2ValueEntries)
@@ -166,17 +99,15 @@ async function selectValueEntryRows(
         ),
     )) ?? []
 
-  return rows
-    .map((row: unknown) => toRecord(row))
-    .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null)
+  return ToSiteSettingsRecords(rows)
 }
 
 async function selectListEntryRows(
   executor: any,
-  category: ManagedCategory,
+  category: SiteSettingsManagedCategory,
 ): Promise<SiteSettingsRecord[]> {
   const rows =
-    (await runOrNullWhenMissingTables<unknown[]>(['site_settings_v2_list_entries'], () =>
+    (await RunOrNullWhenMissingTables<unknown[]>(['site_settings_v2_list_entries'], () =>
       executor
         .select()
         .from(siteSettingsV2ListEntries)
@@ -192,40 +123,7 @@ async function selectListEntryRows(
         ),
     )) ?? []
 
-  return rows
-    .map((row: unknown) => toRecord(row))
-    .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null)
-}
-
-function decodeScalarEntryValue(row: SiteSettingsRecord): unknown {
-  const valueKind = String(row.valueKind ?? '').trim().toLowerCase()
-  if (valueKind === 'string') {
-    return typeof row.stringValue === 'string' ? row.stringValue : ''
-  }
-  if (valueKind === 'number') {
-    const value = Number(row.numberValue)
-    return Number.isFinite(value) ? value : null
-  }
-  if (valueKind === 'boolean') {
-    return row.booleanValue === true || row.booleanValue === 1
-  }
-  return null
-}
-
-function readBooleanLike(value: unknown): boolean | undefined {
-  if (value === true || value === 1) return true
-  if (value === false || value === 0) return false
-  return undefined
-}
-
-function readNonEmptyString(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined
-  return value.length > 0 ? value : undefined
-}
-
-function parseArrayLike(raw: unknown): unknown[] {
-  const parsed = parseJsonString(raw)
-  return Array.isArray(parsed) ? parsed : []
+  return ToSiteSettingsRecords(rows)
 }
 
 function hasThemeCustomSurfaceData(raw: unknown): boolean {
@@ -260,9 +158,9 @@ function hasLegacyManagedData(siteConfigRow: SiteSettingsRecord | null): boolean
     normalizePublicPageFontOptions(siteConfigRow.publicFontOptions).length > 0 ||
     String(siteConfigRow.customCss ?? '').trim().length > 0 ||
     Number(siteConfigRow.scheduleSlotMinutes ?? scheduleSlotDefault) !== scheduleSlotDefault ||
-    parseArrayLike(siteConfigRow.schedulePeriodTemplate).length > 0 ||
-    parseArrayLike(siteConfigRow.scheduleGridByWeekday).length > 0 ||
-    parseArrayLike(siteConfigRow.scheduleCourses).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.schedulePeriodTemplate).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.scheduleGridByWeekday).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.scheduleCourses).length > 0 ||
     String(siteConfigRow.scheduleIcs ?? '').trim().length > 0 ||
     siteConfigRow.scheduleInClassOnHome === true ||
     siteConfigRow.scheduleInClassOnHome === 1 ||
@@ -278,12 +176,12 @@ function hasLegacyManagedData(siteConfigRow: SiteSettingsRecord | null): boolean
     siteConfigRow.appMessageRulesShowProcessName === false ||
     siteConfigRow.appMessageRulesShowProcessName === 0 ||
     String(siteConfigRow.appFilterMode ?? 'blacklist').trim().toLowerCase() !== 'blacklist' ||
-    parseArrayLike(siteConfigRow.appBlacklist).length > 0 ||
-    parseArrayLike(siteConfigRow.appWhitelist).length > 0 ||
-    parseArrayLike(siteConfigRow.appNameOnlyList).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.appBlacklist).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.appWhitelist).length > 0 ||
+    ParseSiteSettingsArrayLike(siteConfigRow.appNameOnlyList).length > 0 ||
     siteConfigRow.captureReportedAppsEnabled === false ||
     siteConfigRow.captureReportedAppsEnabled === 0 ||
-    parseArrayLike(siteConfigRow.mediaPlaySourceBlocklist).length > 0
+    ParseSiteSettingsArrayLike(siteConfigRow.mediaPlaySourceBlocklist).length > 0
   )
 }
 
@@ -311,7 +209,7 @@ function normalizeMigrationSnapshot(
 }
 
 async function readMigrationMetaRow(executor: any): Promise<SiteSettingsRecord | null> {
-  const rows = await runOrNullWhenMissingTables<unknown[]>(
+  const rows = await RunOrNullWhenMissingTables<unknown[]>(
     ['site_settings_v2_migration_meta'],
     () =>
       executor
@@ -325,11 +223,11 @@ async function readMigrationMetaRow(executor: any): Promise<SiteSettingsRecord |
     return null
   }
 
-  return toRecord(rows[0])
+  return ToSiteSettingsRecord(rows[0])
 }
 
 async function readThemeSettingsSnapshot(executor: any): Promise<SiteSettingsSectionSnapshot> {
-  const result = await runOrNullWhenMissingTables(
+  const result = await RunOrNullWhenMissingTables(
     [
       'site_settings_v2_theme_custom_surface',
       'site_settings_v2_theme_custom_surface_image_pool',
@@ -363,16 +261,10 @@ async function readThemeSettingsSnapshot(executor: any): Promise<SiteSettingsSec
       ])
 
       return {
-        scalarRows: scalarRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        customSurfaceRow: toRecord(customSurfaceRows[0]),
-        imagePoolRows: imagePoolRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        fontRows: fontRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
+        scalarRows: ToSiteSettingsRecords(scalarRows),
+        customSurfaceRow: ToSiteSettingsRecord(customSurfaceRows[0]),
+        imagePoolRows: ToSiteSettingsRecords(imagePoolRows),
+        fontRows: ToSiteSettingsRecords(fontRows),
       }
     },
   )
@@ -386,21 +278,21 @@ async function readThemeSettingsSnapshot(executor: any): Promise<SiteSettingsSec
   for (const row of result.scalarRows) {
     const settingKey = String(row.settingKey ?? '').trim()
     if (!settingKey) continue
-    values[settingKey] = decodeScalarEntryValue(row)
+    values[settingKey] = DecodeSiteSettingsScalarEntryValue(row)
   }
 
   if (result.customSurfaceRow || result.imagePoolRows.length > 0) {
     const surface: SiteSettingsRecord = {}
 
-    for (const key of THEME_CUSTOM_SURFACE_STRING_KEYS) {
-      const value = readNonEmptyString(result.customSurfaceRow?.[key])
+    for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS) {
+      const value = ReadSiteSettingsNonEmptyString(result.customSurfaceRow?.[key])
       if (value !== undefined) {
         surface[key] = value
       }
     }
 
-    for (const key of THEME_CUSTOM_SURFACE_BOOLEAN_KEYS) {
-      const value = readBooleanLike(result.customSurfaceRow?.[key])
+    for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS) {
+      const value = ReadSiteSettingsBooleanLike(result.customSurfaceRow?.[key])
       if (value !== undefined) {
         surface[key] = value
       }
@@ -435,7 +327,7 @@ async function readThemeSettingsSnapshot(executor: any): Promise<SiteSettingsSec
 }
 
 async function readScheduleSettingsSnapshot(executor: any): Promise<SiteSettingsSectionSnapshot> {
-  const result = await runOrNullWhenMissingTables(
+  const result = await RunOrNullWhenMissingTables(
     [
       'site_settings_v2_schedule_periods',
       'site_settings_v2_schedule_grid_days',
@@ -500,24 +392,12 @@ async function readScheduleSettingsSnapshot(executor: any): Promise<SiteSettings
       ])
 
       return {
-        scalarRows: scalarRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        periodRows: periodRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        gridDayRows: gridDayRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        courseRows: courseRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        timeSessionRows: timeSessionRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        periodIdRows: periodIdRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
+        scalarRows: ToSiteSettingsRecords(scalarRows),
+        periodRows: ToSiteSettingsRecords(periodRows),
+        gridDayRows: ToSiteSettingsRecords(gridDayRows),
+        courseRows: ToSiteSettingsRecords(courseRows),
+        timeSessionRows: ToSiteSettingsRecords(timeSessionRows),
+        periodIdRows: ToSiteSettingsRecords(periodIdRows),
       }
     },
   )
@@ -531,7 +411,7 @@ async function readScheduleSettingsSnapshot(executor: any): Promise<SiteSettings
   for (const row of result.scalarRows) {
     const settingKey = String(row.settingKey ?? '').trim()
     if (!settingKey) continue
-    values[settingKey] = decodeScalarEntryValue(row)
+    values[settingKey] = DecodeSiteSettingsScalarEntryValue(row)
   }
 
   if (result.periodRows.length > 0) {
@@ -552,7 +432,7 @@ async function readScheduleSettingsSnapshot(executor: any): Promise<SiteSettings
       intervalMinutes: Number.isFinite(Number(row.intervalMinutes))
         ? Number(row.intervalMinutes)
         : 30,
-      useFixedInterval: readBooleanLike(row.useFixedInterval) === true,
+      useFixedInterval: ReadSiteSettingsBooleanLike(row.useFixedInterval) === true,
     }))
   }
 
@@ -632,7 +512,7 @@ async function readScheduleSettingsSnapshot(executor: any): Promise<SiteSettings
 }
 
 async function readRulesSettingsSnapshot(executor: any): Promise<SiteSettingsSectionSnapshot> {
-  const result = await runOrNullWhenMissingTables(
+  const result = await RunOrNullWhenMissingTables(
     [
       'site_settings_v2_rule_groups',
       'site_settings_v2_rule_title_rules',
@@ -657,18 +537,10 @@ async function readRulesSettingsSnapshot(executor: any): Promise<SiteSettingsSec
       ])
 
       return {
-        scalarRows: scalarRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        stringListRows: stringListRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        groupRows: groupRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
-        titleRuleRows: titleRuleRows
-          .map((row: unknown) => toRecord(row))
-          .filter((row: SiteSettingsRecord | null): row is SiteSettingsRecord => row !== null),
+        scalarRows: ToSiteSettingsRecords(scalarRows),
+        stringListRows: ToSiteSettingsRecords(stringListRows),
+        groupRows: ToSiteSettingsRecords(groupRows),
+        titleRuleRows: ToSiteSettingsRecords(titleRuleRows),
       }
     },
   )
@@ -682,7 +554,7 @@ async function readRulesSettingsSnapshot(executor: any): Promise<SiteSettingsSec
   for (const row of result.scalarRows) {
     const settingKey = String(row.settingKey ?? '').trim()
     if (!settingKey) continue
-    values[settingKey] = decodeScalarEntryValue(row)
+    values[settingKey] = DecodeSiteSettingsScalarEntryValue(row)
   }
 
   const stringListRowsByKey = new Map<string, string[]>()

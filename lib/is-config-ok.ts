@@ -1,9 +1,9 @@
 import { count } from 'drizzle-orm'
 
+import { SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES } from '@/constants/site-config'
 import { db } from '@/lib/db'
 import { adminUsers } from '@/lib/drizzle-schema'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import { SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES } from '@/lib/site-config-constants'
 import type { SetupInitialConfig } from '@/types/components'
 import type { AdminSetupSnapshot } from '@/types/setup'
 

@@ -17,7 +17,6 @@ import {
   webSettingsFormAtom,
   webSettingsMigrationAtom,
 } from '@/components/admin/web-settings-store'
-import type { ThemeCustomSurfaceForm } from '@/components/admin/web-settings-types'
 import { hasThemeImageSourceConfigured } from '@/components/admin/web-settings-utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,24 +30,22 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { THEME_CUSTOM_SURFACE_DEFAULTS } from '@/lib/theme-custom-surface'
+import {
+  CreateEmptyThemePreviewAsset,
+  GetThemeCustomSurfaceBackgroundInputValue,
+  GetThemeCustomSurfacePreviewHint,
+  GetThemeCustomSurfaceUploadUsageKey,
+  ResolveThemeBackgroundImageMode,
+  ResolveThemePaletteLiveScope,
+  ResolveThemePaletteMode,
+} from '@/lib/theme-custom-surface-preview'
 import { extractThemeSurfaceFromImageAsset, loadPaletteImage } from '@/lib/theme-image-palette'
 import { loadThemeSurfaceActiveImageAsset } from '@/lib/theme-image-source'
 import { cn } from '@/lib/utils'
-
-type ThemePreviewAssetState = {
-  displayUrl: string
-  seedUrl: string
-  image: HTMLImageElement | null
-  revoke?: () => void
-}
-
-function createEmptyThemePreviewAsset(): ThemePreviewAssetState {
-  return {
-    displayUrl: '',
-    seedUrl: '',
-    image: null,
-  }
-}
+import type {
+  ThemeCustomSurfaceForm,
+  ThemeCustomSurfacePreviewAssetState,
+} from '@/types/web-settings'
 
 export function WebSettingsCustomSurface() {
   const { t } = useT('admin')
@@ -59,7 +56,9 @@ export function WebSettingsCustomSurface() {
   const [themePreviewImageUrl, setThemePreviewImageUrl] = useState('')
   const [themePreviewLoading, setThemePreviewLoading] = useState(false)
   const [themePaletteApplying, setThemePaletteApplying] = useState(false)
-  const themePreviewAssetRef = useRef<ThemePreviewAssetState>(createEmptyThemePreviewAsset())
+  const themePreviewAssetRef = useRef<ThemeCustomSurfacePreviewAssetState>(
+    CreateEmptyThemePreviewAsset(),
+  )
   const prefersReducedMotion = Boolean(useReducedMotion())
   const sectionTransition = getAdminPanelTransition(prefersReducedMotion)
   const sectionVariants = getAdminSectionVariants(prefersReducedMotion, {
@@ -95,13 +94,12 @@ export function WebSettingsCustomSurface() {
   }
 
   const currentThemePreviewHint = useMemo(() => {
-    if (value.backgroundImageMode === 'manual') {
-      return value.backgroundImageUrl.trim()
-    }
-    if (value.backgroundImageMode === 'randomPool') {
-      return value.backgroundImagePool[0] ?? ''
-    }
-    return value.backgroundRandomApiUrl.trim()
+    return GetThemeCustomSurfacePreviewHint({
+      backgroundImageMode: value.backgroundImageMode,
+      backgroundImageUrl: value.backgroundImageUrl,
+      backgroundImagePool: value.backgroundImagePool,
+      backgroundRandomApiUrl: value.backgroundRandomApiUrl,
+    })
   }, [
     value.backgroundImageMode,
     value.backgroundImagePool,
@@ -111,7 +109,7 @@ export function WebSettingsCustomSurface() {
 
   function clearThemePreviewAsset() {
     themePreviewAssetRef.current.revoke?.()
-    themePreviewAssetRef.current = createEmptyThemePreviewAsset()
+    themePreviewAssetRef.current = CreateEmptyThemePreviewAsset()
   }
 
   useEffect(() => {
@@ -128,17 +126,15 @@ export function WebSettingsCustomSurface() {
   useEffect(() => () => clearThemePreviewAsset(), [])
 
   useEffect(() => {
-    if (value.backgroundImageMode === 'manual') {
-      setBackgroundImageInput(value.backgroundImageUrl)
-      return
-    }
-    if (value.backgroundImageMode === 'randomApi') {
-      setBackgroundImageInput(value.backgroundRandomApiUrl)
-      return
-    }
-    setBackgroundImageInput('')
+    setBackgroundImageInput(GetThemeCustomSurfaceBackgroundInputValue({
+      backgroundImageMode: value.backgroundImageMode,
+      backgroundImageUrl: value.backgroundImageUrl,
+      backgroundImagePool: value.backgroundImagePool,
+      backgroundRandomApiUrl: value.backgroundRandomApiUrl,
+    }))
   }, [
     value.backgroundImageMode,
+    value.backgroundImagePool,
     value.backgroundImageUrl,
     value.backgroundRandomApiUrl,
   ])
@@ -234,10 +230,7 @@ export function WebSettingsCustomSurface() {
         toast.error(t('webSettingsCustomSurface.toasts.readImageFailed'))
         return
       }
-      const usageKey =
-        value.backgroundImageMode === 'randomPool'
-          ? `theme.pool.${value.backgroundImagePool.length}`
-          : 'theme.background'
+      const usageKey = GetThemeCustomSurfaceUploadUsageKey(value)
       let imageUrl = ''
       try {
         imageUrl = await uploadImageSource(result, usageKey)
@@ -293,7 +286,7 @@ export function WebSettingsCustomSurface() {
             onValueChange={(nextValue) =>
               patchThemeSurface(
                 'backgroundImageMode',
-                nextValue === 'randomPool' || nextValue === 'randomApi' ? nextValue : 'manual',
+                ResolveThemeBackgroundImageMode(nextValue),
               )
             }
           >
@@ -540,9 +533,7 @@ export function WebSettingsCustomSurface() {
                   onValueChange={(nextValue) =>
                     patchThemeSurface(
                       'paletteMode',
-                      nextValue === 'applyFromCurrent' || nextValue === 'liveFromImage'
-                        ? nextValue
-                        : 'manual',
+                      ResolveThemePaletteMode(nextValue),
                     )
                   }
                 >
@@ -569,7 +560,7 @@ export function WebSettingsCustomSurface() {
                   onValueChange={(nextValue) =>
                     patchThemeSurface(
                       'paletteLiveScope',
-                      nextValue === 'randomOnly' ? nextValue : 'randomOnly',
+                      ResolveThemePaletteLiveScope(nextValue),
                     )
                   }
                 >

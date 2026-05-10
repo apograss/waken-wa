@@ -2,6 +2,24 @@ import 'server-only'
 
 import { and, eq, like } from 'drizzle-orm'
 
+import {
+  SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES,
+  SITE_SETTINGS_COMPAT_WRITE_BLOCKED_KEYS,
+  SITE_SETTINGS_MIGRATED_CORE_KEYS,
+  SITE_SETTINGS_RULES_KEYS,
+  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
+  SITE_SETTINGS_SITE_CONFIG_ID,
+  SITE_SETTINGS_THEME_CATEGORY_KEYS,
+} from '@/constants/site-settings'
+import {
+  SITE_SETTINGS_RULES_SCALAR_KEYS,
+  SITE_SETTINGS_RULES_STRING_LIST_KEYS,
+  SITE_SETTINGS_SCHEDULE_SCALAR_KEYS,
+  SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS,
+  SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS,
+  SITE_SETTINGS_THEME_SCALAR_KEYS,
+} from '@/constants/site-settings-storage'
+import { SKILLS_SECRET_KEYS } from '@/constants/skills'
 import { clearActivityFeedDataCache } from '@/lib/activity-feed'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { db } from '@/lib/db'
@@ -9,7 +27,6 @@ import {
   rateLimitBackups,
   siteConfigV2Entries,
   siteSettingsMigrationMeta,
-  siteSettingsV2ListEntries,
   siteSettingsV2RuleGroups,
   siteSettingsV2RuleTitleRules,
   siteSettingsV2ScheduleCoursePeriodIds,
@@ -20,10 +37,8 @@ import {
   siteSettingsV2ThemeCustomSurface,
   siteSettingsV2ThemeCustomSurfaceImagePool,
   siteSettingsV2ThemePublicFontOptions,
-  siteSettingsV2ValueEntries,
   systemSecrets,
 } from '@/lib/drizzle-schema'
-import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { clearSiteConfigCaches } from '@/lib/site-config-cache'
@@ -35,171 +50,35 @@ import {
 } from '@/lib/site-config-v2'
 import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
 import {
-  hasAnyRecordKey,
-  omitRecordKeys,
-  pickRecordKeys,
-  SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES,
-  SITE_SETTINGS_COMPAT_WRITE_BLOCKED_KEYS,
-  SITE_SETTINGS_MIGRATED_CORE_KEYS,
-  SITE_SETTINGS_RULES_KEYS,
-  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-  SITE_SETTINGS_THEME_CATEGORY_KEYS,
-  type SiteSettingsMigrationState,
-} from '@/lib/site-settings-constants'
-import {
   readEffectiveSiteConfig,
   readSiteSettingsMigrationSnapshot,
   readSiteSettingsSnapshot,
-  SITE_SETTINGS_SITE_CONFIG_ID,
 } from '@/lib/site-settings-read'
-import { SKILLS_SECRET_KEYS } from '@/lib/skills-constants'
+import {
+  hasAnyRecordKey,
+  omitRecordKeys,
+  pickRecordKeys,
+} from '@/lib/site-settings-record'
+import {
+  BuildSiteSettingsScalarEntryRows,
+  BuildSiteSettingsStringListEntryRows,
+  ReplaceSiteSettingsScalarEntries,
+  ReplaceSiteSettingsStringListEntries,
+} from '@/lib/site-settings-write-entries'
+import {
+  CreateSiteSettingsCategoryApiRequiredError,
+  CreateSiteSettingsConflictError,
+  CreateSiteSettingsMigrationRequiredError,
+  CreateSiteSettingsNotFoundError,
+  NormalizeSiteSettingsStringOrNull,
+  WithSiteSettingsTransaction,
+} from '@/lib/site-settings-write-utils'
 import { sqlTimestamp } from '@/lib/sql-timestamp'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
-
-export const SITE_SETTINGS_MIGRATION_REQUIRED_MESSAGE = '请先迁移到新方案'
-
-type SiteSettingsRecord = Record<string, unknown>
-
-type ManagedCategory = 'theme' | 'schedule' | 'rules'
-type ScalarValueKind = 'string' | 'number' | 'boolean'
-
-const THEME_SCALAR_KEYS = [
-  'themePreset',
-  'publicFontOptionsEnabled',
-  'customCss',
-] as const
-
-const SCHEDULE_SCALAR_KEYS = [
-  'scheduleSlotMinutes',
-  'scheduleIcs',
-  'scheduleInClassOnHome',
-  'scheduleHomeShowLocation',
-  'scheduleHomeShowTeacher',
-  'scheduleHomeShowNextUpcoming',
-  'scheduleHomeAfterClassesLabel',
-] as const
-
-const RULES_SCALAR_KEYS = [
-  'appMessageRulesShowProcessName',
-  'appFilterMode',
-  'captureReportedAppsEnabled',
-  'captureReportedAppTitleLimit',
-] as const
-
-const RULES_STRING_LIST_KEYS = [
-  'appBlacklist',
-  'appWhitelist',
-  'appNameOnlyList',
-  'mediaPlaySourceBlocklist',
-  'mediaPlaySourceRules',
-] as const
-
-const THEME_CUSTOM_SURFACE_STRING_KEYS = [
-  'background',
-  'bodyBackground',
-  'animatedBg',
-  'primary',
-  'secondary',
-  'accent',
-  'online',
-  'foreground',
-  'card',
-  'border',
-  'muted',
-  'mutedForeground',
-  'homeCardOverlay',
-  'homeCardOverlayDark',
-  'homeCardInsetHighlight',
-  'animatedBgTint1',
-  'animatedBgTint2',
-  'animatedBgTint3',
-  'floatingOrbColor1',
-  'floatingOrbColor2',
-  'floatingOrbColor3',
-  'radius',
-  'backgroundImageMode',
-  'backgroundImageUrl',
-  'backgroundRandomApiUrl',
-  'paletteMode',
-  'paletteLiveScope',
-  'paletteSeedImageUrl',
-] as const
-
-const THEME_CUSTOM_SURFACE_BOOLEAN_KEYS = [
-  'hideFloatingOrbs',
-  'transparentAnimatedBg',
-  'paletteLiveEnabled',
-] as const
-
-function createSiteSettingsError(message: string, status: number, code: string): Error {
-  const error = new Error(message)
-  ;(error as Error & { status?: number; code?: string }).status = status
-  ;(error as Error & { status?: number; code?: string }).code = code
-  return error
-}
-
-export function createSiteSettingsMigrationRequiredError(
-  message: string = SITE_SETTINGS_MIGRATION_REQUIRED_MESSAGE,
-): Error {
-  return createSiteSettingsError(message, 409, 'SITE_SETTINGS_MIGRATION_REQUIRED')
-}
-
-function createSiteSettingsConflictError(message: string): Error {
-  return createSiteSettingsError(message, 409, 'SITE_SETTINGS_CONFLICT')
-}
-
-function createSiteSettingsCategoryApiRequiredError(message: string): Error {
-  return createSiteSettingsError(message, 409, 'SITE_SETTINGS_CATEGORY_API_REQUIRED')
-}
-
-function createSiteSettingsNotFoundError(message: string): Error {
-  return createSiteSettingsError(message, 400, 'SITE_SETTINGS_NOT_FOUND')
-}
-
-function isBetterSqlite3Client(client: unknown): client is {
-  exec: (sql: string) => unknown
-  inTransaction?: boolean
-} {
-  return (
-    !!client &&
-    typeof client === 'object' &&
-    typeof (client as { exec?: unknown }).exec === 'function'
-  )
-}
-
-function withTransaction<T>(executor: any, run: (tx: any) => Promise<T>): Promise<T> {
-  const sqliteClient = executor?.$client
-  if (isBetterSqlite3Client(sqliteClient)) {
-    const startedHere = sqliteClient.inTransaction !== true
-    if (startedHere) {
-      sqliteClient.exec('BEGIN IMMEDIATE')
-    }
-
-    return Promise.resolve(run(executor)).then(
-      (value) => {
-        if (startedHere) {
-          sqliteClient.exec('COMMIT')
-        }
-        return value
-      },
-      (error) => {
-        if (startedHere) {
-          try {
-            sqliteClient.exec('ROLLBACK')
-          } catch {
-            // Ignore rollback failures so the original error is preserved.
-          }
-        }
-        throw error
-      },
-    )
-  }
-
-  if (executor && typeof executor.transaction === 'function') {
-    return executor.transaction((tx: any) => run(tx))
-  }
-  return run(executor)
-}
+import type {
+  SiteSettingsMigrationState,
+  SiteSettingsRecord,
+} from '@/types/site-settings'
 
 async function clearSiteSettingsCaches(): Promise<void> {
   await Promise.all([clearSiteConfigCaches(), clearActivityFeedDataCache()])
@@ -211,140 +90,6 @@ function pickCoreSiteConfigValues(values: SiteSettingsRecord): SiteSettingsRecor
     ...SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
     ...SITE_SETTINGS_RULES_KEYS,
   ])
-}
-
-function normalizeStringOrNull(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  return value.length > 0 ? value : null
-}
-
-function normalizeScalarValue(
-  value: unknown,
-): { valueKind: ScalarValueKind; stringValue?: string | null; numberValue?: number | null; booleanValue?: boolean | null } | null {
-  if (typeof value === 'string') {
-    return {
-      valueKind: 'string',
-      stringValue: value,
-      numberValue: null,
-      booleanValue: null,
-    }
-  }
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return {
-      valueKind: 'number',
-      stringValue: null,
-      numberValue: value,
-      booleanValue: null,
-    }
-  }
-  if (typeof value === 'boolean') {
-    return {
-      valueKind: 'boolean',
-      stringValue: null,
-      numberValue: null,
-      booleanValue: value,
-    }
-  }
-  if (value instanceof Date) {
-    return {
-      valueKind: 'string',
-      stringValue: value.toISOString(),
-      numberValue: null,
-      booleanValue: null,
-    }
-  }
-  return null
-}
-
-function buildScalarEntryRows(
-  category: ManagedCategory,
-  values: SiteSettingsRecord,
-  keys: readonly string[],
-): SiteSettingsRecord[] {
-  const now = sqlTimestamp()
-  const rows: SiteSettingsRecord[] = []
-
-  for (const settingKey of keys) {
-    if (!(settingKey in values)) continue
-    const encoded = normalizeScalarValue(values[settingKey])
-    if (!encoded) continue
-    rows.push({
-      siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-      category,
-      settingKey,
-      ...encoded,
-      createdAt: now,
-      updatedAt: now,
-    })
-  }
-
-  return rows
-}
-
-async function replaceScalarEntries(
-  executor: any,
-  category: ManagedCategory,
-  rows: SiteSettingsRecord[],
-): Promise<void> {
-  await executor
-    .delete(siteSettingsV2ValueEntries)
-    .where(
-      and(
-        eq(siteSettingsV2ValueEntries.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID),
-        eq(siteSettingsV2ValueEntries.category, category),
-      ),
-    )
-
-  if (rows.length > 0) {
-    await executor.insert(siteSettingsV2ValueEntries).values(rows as never)
-  }
-}
-
-function buildStringListEntryRows(
-  category: ManagedCategory,
-  settingKey: string,
-  rawList: unknown,
-): SiteSettingsRecord[] {
-  if (!Array.isArray(rawList)) {
-    return []
-  }
-
-  const now = sqlTimestamp()
-  const normalizedItems =
-    settingKey === 'mediaPlaySourceRules'
-      ? normalizeMediaPlaySourceRules(rawList).map((item) => JSON.stringify(item))
-      : rawList.map((item) => String(item ?? ''))
-
-  return normalizedItems
-    .filter((item) => item.length > 0)
-    .map((itemValue, position) => ({
-      siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
-      category,
-      settingKey,
-      itemValue,
-      position,
-      createdAt: now,
-      updatedAt: now,
-    }))
-}
-
-async function replaceStringListEntries(
-  executor: any,
-  category: ManagedCategory,
-  rows: SiteSettingsRecord[],
-): Promise<void> {
-  await executor
-    .delete(siteSettingsV2ListEntries)
-    .where(
-      and(
-        eq(siteSettingsV2ListEntries.siteConfigId, SITE_SETTINGS_SITE_CONFIG_ID),
-        eq(siteSettingsV2ListEntries.category, category),
-      ),
-    )
-
-  if (rows.length > 0) {
-    await executor.insert(siteSettingsV2ListEntries).values(rows as never)
-  }
 }
 
 async function replaceSiteConfigCoreEntries(
@@ -374,15 +119,15 @@ function buildThemeCustomSurfaceRow(rawSurface: unknown): {
   }
   let hasRowValue = false
 
-  for (const key of THEME_CUSTOM_SURFACE_STRING_KEYS) {
-    const value = normalizeStringOrNull(surface[key])
+  for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS) {
+    const value = NormalizeSiteSettingsStringOrNull(surface[key])
     row[key] = value
     if (value !== null) {
       hasRowValue = true
     }
   }
 
-  for (const key of THEME_CUSTOM_SURFACE_BOOLEAN_KEYS) {
+  for (const key of SITE_SETTINGS_THEME_CUSTOM_SURFACE_BOOLEAN_KEYS) {
     const value = typeof surface[key] === 'boolean' ? surface[key] : null
     row[key] = value
     if (value !== null) {
@@ -416,7 +161,11 @@ async function replaceThemeSettingsRows(
   executor: any,
   values: SiteSettingsRecord,
 ): Promise<void> {
-  await replaceScalarEntries(executor, 'theme', buildScalarEntryRows('theme', values, THEME_SCALAR_KEYS))
+  await ReplaceSiteSettingsScalarEntries(
+    executor,
+    'theme',
+    BuildSiteSettingsScalarEntryRows('theme', values, SITE_SETTINGS_THEME_SCALAR_KEYS),
+  )
 
   const { row, imagePoolRows } = buildThemeCustomSurfaceRow(values.themeCustomSurface)
 
@@ -473,10 +222,10 @@ async function replaceScheduleSettingsRows(
   executor: any,
   values: SiteSettingsRecord,
 ): Promise<void> {
-  await replaceScalarEntries(
+  await ReplaceSiteSettingsScalarEntries(
     executor,
     'schedule',
-    buildScalarEntryRows('schedule', values, SCHEDULE_SCALAR_KEYS),
+    BuildSiteSettingsScalarEntryRows('schedule', values, SITE_SETTINGS_SCHEDULE_SCALAR_KEYS),
   )
 
   await executor
@@ -583,14 +332,14 @@ async function replaceScheduleSettingsRows(
       siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
       courseId,
       title,
-      location: normalizeStringOrNull(record.location),
-      teacher: normalizeStringOrNull(record.teacher),
+      location: NormalizeSiteSettingsStringOrNull(record.location),
+      teacher: NormalizeSiteSettingsStringOrNull(record.teacher),
       weekday,
       startTime,
       endTime,
-      timeMode: normalizeStringOrNull(record.timeMode),
+      timeMode: NormalizeSiteSettingsStringOrNull(record.timeMode),
       anchorDate,
-      untilDate: normalizeStringOrNull(record.untilDate),
+      untilDate: NormalizeSiteSettingsStringOrNull(record.untilDate),
       position,
       createdAt: now,
       updatedAt: now,
@@ -650,12 +399,16 @@ async function replaceRulesSettingsRows(
   executor: any,
   values: SiteSettingsRecord,
 ): Promise<void> {
-  await replaceScalarEntries(executor, 'rules', buildScalarEntryRows('rules', values, RULES_SCALAR_KEYS))
-
-  const stringListRows = RULES_STRING_LIST_KEYS.flatMap((listKey) =>
-    buildStringListEntryRows('rules', listKey, values[listKey]),
+  await ReplaceSiteSettingsScalarEntries(
+    executor,
+    'rules',
+    BuildSiteSettingsScalarEntryRows('rules', values, SITE_SETTINGS_RULES_SCALAR_KEYS),
   )
-  await replaceStringListEntries(executor, 'rules', stringListRows)
+
+  const stringListRows = SITE_SETTINGS_RULES_STRING_LIST_KEYS.flatMap((listKey) =>
+    BuildSiteSettingsStringListEntryRows('rules', listKey, values[listKey]),
+  )
+  await ReplaceSiteSettingsStringListEntries(executor, 'rules', stringListRows)
 
   await executor
     .delete(siteSettingsV2RuleTitleRules)
@@ -674,7 +427,7 @@ async function replaceRulesSettingsRows(
     siteConfigId: SITE_SETTINGS_SITE_CONFIG_ID,
     groupId: group.id,
     processMatch: String(group.processMatch ?? ''),
-    defaultText: normalizeStringOrNull(group.defaultText),
+    defaultText: NormalizeSiteSettingsStringOrNull(group.defaultText),
     position,
     createdAt: now,
     updatedAt: now,
@@ -771,7 +524,7 @@ async function readMigrationState(executor: any): Promise<SiteSettingsMigrationS
 
 function assertMigratedState(migrationState: SiteSettingsMigrationState): void {
   if (migrationState === 'legacy') {
-    throw createSiteSettingsMigrationRequiredError()
+    throw CreateSiteSettingsMigrationRequiredError()
   }
 }
 
@@ -803,7 +556,7 @@ export async function persistThemeSettingsFromPrepared(
   const migrationState = await readMigrationState(executor)
   assertMigratedState(migrationState)
 
-  await withTransaction(executor, async (tx) => {
+  await WithSiteSettingsTransaction(executor, async (tx) => {
     await replaceThemeSettingsRows(tx, preparedValues)
   })
 
@@ -820,16 +573,16 @@ export async function persistCompatibilitySiteConfigValues(
   if (hasAnyRecordKey(requestedBody, SITE_SETTINGS_COMPAT_WRITE_BLOCKED_KEYS)) {
     const migrationState = await readMigrationState(executor)
     if (migrationState === 'legacy') {
-      throw createSiteSettingsMigrationRequiredError()
+      throw CreateSiteSettingsMigrationRequiredError()
     }
-    throw createSiteSettingsCategoryApiRequiredError('该配置已迁移到分类接口，请使用新的分类保存接口')
+    throw CreateSiteSettingsCategoryApiRequiredError('该配置已迁移到分类接口，请使用新的分类保存接口')
   }
 
   const migrationState = await readMigrationState(executor)
   if (migrationState === 'legacy') {
     await persistSiteConfigSubset(executor, preparedValues, Object.keys(requestedBody))
   } else {
-    await withTransaction(executor, async (tx) => {
+    await WithSiteSettingsTransaction(executor, async (tx) => {
       await replaceSiteConfigCoreEntries(tx, preparedValues)
     })
   }
@@ -846,7 +599,7 @@ export async function persistScheduleSettingsFromPrepared(
   const migrationState = await readMigrationState(executor)
   assertMigratedState(migrationState)
 
-  await withTransaction(executor, async (tx) => {
+  await WithSiteSettingsTransaction(executor, async (tx) => {
     await replaceScheduleSettingsRows(tx, preparedValues)
   })
 
@@ -866,13 +619,13 @@ export async function persistCoreSettingsFromPrepared(
     migrationState === 'legacy' &&
     hasAnyRecordKey(requestedBody, SITE_SETTINGS_MIGRATED_CORE_KEYS)
   ) {
-    throw createSiteSettingsMigrationRequiredError()
+    throw CreateSiteSettingsMigrationRequiredError()
   }
 
   if (migrationState === 'legacy') {
     await persistSiteConfigSubset(executor, preparedValues, Object.keys(requestedBody))
   } else {
-    await withTransaction(executor, async (tx) => {
+    await WithSiteSettingsTransaction(executor, async (tx) => {
       await replaceSiteConfigCoreEntries(tx, preparedValues)
     })
   }
@@ -891,7 +644,7 @@ export async function persistRulesSettingsValues(
 
   const effectiveConfig = await readEffectiveSiteConfig(executor)
   if (!effectiveConfig) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   const mergedValues = {
@@ -899,7 +652,7 @@ export async function persistRulesSettingsValues(
     ...pickRecordKeys(values, SITE_SETTINGS_RULES_KEYS),
   }
 
-  await withTransaction(executor, async (tx) => {
+  await WithSiteSettingsTransaction(executor, async (tx) => {
     await replaceRulesSettingsRows(tx, mergedValues)
   })
 
@@ -910,7 +663,7 @@ export async function bootstrapSiteSettingsSplitStorage(executor: any = db): Pro
   const snapshot = await readSiteSettingsSnapshot(executor)
   const legacySiteConfigRow = snapshot.legacySiteConfigRow ?? (await readLegacySiteConfigRow(executor))
   if (!legacySiteConfigRow) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   const sourceValues =
@@ -919,14 +672,14 @@ export async function bootstrapSiteSettingsSplitStorage(executor: any = db): Pro
       : await readEffectiveSiteConfig(executor)
 
   if (!sourceValues) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   const migratedAt = snapshot.migration.migratedAt ?? sqlTimestamp()
   const migrationState =
     snapshot.migration.migrationState === 'legacy_cleared' ? 'legacy_cleared' : 'migrated'
 
-  await withTransaction(executor, async (tx) => {
+  await WithSiteSettingsTransaction(executor, async (tx) => {
     await writeAllV2SiteSettings(tx, sourceValues)
     await upsertMigrationMetaRow(tx, {
       migrationState,
@@ -949,7 +702,7 @@ export async function migrateLegacySiteSettings(
 }> {
   const snapshot = await readSiteSettingsSnapshot(executor)
   if (!snapshot.legacySiteConfigRow) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   if (snapshot.migration.migrationState !== 'legacy') {
@@ -984,23 +737,23 @@ export async function clearLegacySiteSettingsData(
 }> {
   const snapshot = await readSiteSettingsSnapshot(executor)
   if (!snapshot.legacySiteConfigRow) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   if (snapshot.migration.migrationState === 'legacy') {
-    throw createSiteSettingsMigrationRequiredError('请先完成迁移，再清理旧数据')
+    throw CreateSiteSettingsMigrationRequiredError('请先完成迁移，再清理旧数据')
   }
   if (snapshot.migration.migrationState === 'legacy_cleared') {
-    throw createSiteSettingsConflictError('旧数据已清理')
+    throw CreateSiteSettingsConflictError('旧数据已清理')
   }
 
   const effectiveConfig = await readEffectiveSiteConfig(executor)
   if (!effectiveConfig) {
-    throw createSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
+    throw CreateSiteSettingsNotFoundError('未找到网页配置，请先完成初始化配置')
   }
 
   const legacyDataClearedAt = sqlTimestamp()
-  await withTransaction(executor, async (tx) => {
+  await WithSiteSettingsTransaction(executor, async (tx) => {
     await writeAllV2SiteSettings(tx, effectiveConfig)
     await clearLegacyAuxiliaryData(tx)
     await safeSiteConfigUpsert(

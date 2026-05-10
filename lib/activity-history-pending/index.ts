@@ -24,16 +24,16 @@ import {
   getCaptureReportedActivityHistorySettings,
 } from '@/lib/activity-history-pending/persistence'
 import { memoryPending } from '@/lib/activity-history-pending/state'
-import type {
-  FlushResult,
-  PendingHistoryEntry,
-} from '@/lib/activity-history-pending/types'
 import { shouldUseRedisCache } from '@/lib/cache-runtime-toggle'
 import {
   redisHDelMany,
   redisHGetAll,
   redisHSetManyAndIncrWithExpire,
 } from '@/lib/redis-client'
+import type {
+  FlushResult,
+  PendingHistoryEntry,
+} from '@/types/activity-history-pending'
 
 let memoryFlushTimer: NodeJS.Timeout | null = null
 
@@ -220,4 +220,4 @@ export async function flushPendingReportedPlaySourceHistory(options?: {
   return flushPendingReportedActivityHistory({ maxEntries: options?.maxKeys })
 }
 
-export type { AppHistoryBuckets } from '@/lib/activity-history-pending/types'
+export type { AppHistoryBuckets } from '@/types/activity-history-pending'

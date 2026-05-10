@@ -1,14 +1,14 @@
-import type {
-  AppHistoryBuckets,
-  PendingHistoryEntry,
-  Platform,
-  PlatformBucket,
-} from '@/lib/activity-history-pending/types'
 import {
   normalizeReportedAppTitleLimit,
   REPORTED_APP_TITLE_LIMIT_MAX,
 } from '@/lib/reported-app-title-limit'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
+import type {
+  AppHistoryBuckets,
+  PendingHistoryEntry,
+  Platform,
+  PlatformBucket,
+} from '@/types/activity-history-pending'
 
 export function normalizeProcessName(raw: string): string {
   return raw.trim().toLowerCase()

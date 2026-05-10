@@ -3,7 +3,7 @@ import type { UserNoteHitokotoEncode } from '@/lib/hitokoto'
 import type { PublicPageFontOptionMode } from '@/lib/public-page-font'
 import type { ScheduleCourse, SchedulePeriodTemplateItem } from '@/lib/schedule-courses'
 import type { ScheduleDayGrid } from '@/lib/schedule-grid-by-weekday'
-import type { SiteSettingsMigrationState } from '@/lib/site-settings-constants'
+import type { SiteSettingsMigrationState } from '@/types/site-settings'
 import type {
   ThemeBackgroundImageMode,
   ThemePaletteLiveScope,
@@ -43,6 +43,18 @@ export type ThemeCustomSurfaceForm = {
   paletteLiveEnabled: boolean
   paletteLiveScope: ThemePaletteLiveScope
   paletteSeedImageUrl: string
+}
+
+export type ThemeCustomSurfacePreviewAssetState = {
+  displayUrl: string
+  seedUrl: string
+  image: HTMLImageElement | null
+  revoke?: () => void
+}
+
+export type WebSettingsCustomSurfaceTypes = {
+  form: ThemeCustomSurfaceForm
+  previewAsset: ThemeCustomSurfacePreviewAssetState
 }
 
 export type PublicPageFontOptionForm = {

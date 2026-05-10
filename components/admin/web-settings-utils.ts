@@ -1,13 +1,11 @@
-import type {
-  PublicPageFontOptionForm,
-  SiteConfig,
-  SkillsAiAuthorizationItem,
-  SkillsEditableConfig,
-  ThemeCustomSurfaceForm,
-} from '@/components/admin/web-settings-types'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
+import {
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
+} from '@/constants/site-config'
 import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import {
   type AppMessageRuleGroup,
@@ -36,10 +34,7 @@ import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
 import {
   clampSiteConfigHistoryWindowMinutes,
   clampSiteConfigProcessStaleSeconds,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
+} from '@/lib/site-config-values'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import {
   normalizeStatusCardCoverKey,
@@ -54,6 +49,13 @@ import {
   THEME_CUSTOM_SURFACE_DEFAULTS,
 } from '@/lib/theme-custom-surface'
 import type { RuleToolsExportPayload } from '@/types/rule-tools'
+import type {
+  PublicPageFontOptionForm,
+  SiteConfig,
+  SkillsAiAuthorizationItem,
+  SkillsEditableConfig,
+  ThemeCustomSurfaceForm,
+} from '@/types/web-settings'
 
 export function emptyThemeCustomSurfaceForm(): ThemeCustomSurfaceForm {
   return {

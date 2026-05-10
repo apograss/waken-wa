@@ -3,7 +3,16 @@ import bcrypt from 'bcryptjs'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
+import {
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
+} from '@/constants/site-config'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import {
@@ -44,19 +53,12 @@ import {
   normalizeScheduleGridByWeekday,
 } from '@/lib/schedule-grid-by-weekday'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
+import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
 import {
   parseHistoryWindowMinutes,
   parseIntegerInRangeForWrite,
   parseProcessStaleSeconds,
-  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
-  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
-  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
-import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
+} from '@/lib/site-config-values'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { unsanitizeSiteConfigImageInputs } from '@/lib/site-image-urls'
 import { persistCompatibilitySiteConfigValues } from '@/lib/site-settings-write'

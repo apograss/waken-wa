@@ -18,13 +18,13 @@ import {
   parseIntegerInRange,
 } from '@/components/admin/number-setting-input'
 import { Switch } from '@/components/ui/switch'
-import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
-import { DEFAULT_PAGE_TITLE, PAGE_TITLE_MAX_LEN } from '@/lib/default-page-title'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
   SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-} from '@/lib/site-config-constants'
+} from '@/constants/site-config'
+import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
+import { DEFAULT_PAGE_TITLE, PAGE_TITLE_MAX_LEN } from '@/lib/default-page-title'
 import type { SetupInitialConfig } from '@/types/components'
 
 export type { SetupInitialConfig } from '@/types/components'

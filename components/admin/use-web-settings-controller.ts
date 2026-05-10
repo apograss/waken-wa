@@ -55,7 +55,6 @@ import {
   webSettingsSkillsRevokingAiClientIdAtom,
   webSettingsSkillsSavingAtom,
 } from '@/components/admin/web-settings-store'
-import type { SiteConfig, SkillsEditableConfig } from '@/components/admin/web-settings-types'
 import {
   extractRuleToolsImportFromWebPayload,
   normalizeSkillsAiAuthorizations,
@@ -68,7 +67,24 @@ import {
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
+import {
+  SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
+} from '@/constants/site-config'
+import {
+  SITE_SETTINGS_CORE_HEAVY_KEYS,
+  SITE_SETTINGS_MIGRATED_CORE_KEYS,
+  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
+  SITE_SETTINGS_THEME_CATEGORY_KEYS,
+} from '@/constants/site-settings'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import {
   normalizeAdminThemeColor,
@@ -81,28 +97,11 @@ import { normalizeHitokotoCategories, normalizeHitokotoEncode } from '@/lib/hito
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import { isAllowedSlotMinutes, resolveSchedulePeriodTemplate, type ScheduleCourse } from '@/lib/schedule-courses'
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
-import {
-  SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
-  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
-  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
-  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
-  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
-import {
-  omitRecordKeys,
-  pickRecordKeys,
-  SITE_SETTINGS_CORE_HEAVY_KEYS,
-  SITE_SETTINGS_MIGRATED_CORE_KEYS,
-  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-  SITE_SETTINGS_THEME_CATEGORY_KEYS,
-} from '@/lib/site-settings-constants'
+import { omitRecordKeys, pickRecordKeys } from '@/lib/site-settings-record'
 import { normalizeStatusCardSettings } from '@/lib/status-card-options'
 import { normalizeTimezone } from '@/lib/timezone'
+import type { SiteConfig, SkillsEditableConfig } from '@/types/web-settings'
 
 function hasKeyDiff(
   left: Record<string, unknown>,

@@ -1,5 +1,5 @@
+import { SITE_SETTINGS_RULES_KEYS } from '@/constants/site-settings'
 import { createLlmSettingsCategoryRoute } from '@/lib/llm-settings-category-route'
-import { SITE_SETTINGS_RULES_KEYS } from '@/lib/site-settings-constants'
 import { pickRulesSettingsFromConfig } from '@/lib/site-settings-read'
 import { persistRulesSettingsValues } from '@/lib/site-settings-write'
 

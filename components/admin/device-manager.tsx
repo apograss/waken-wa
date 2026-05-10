@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Copy, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useT } from 'next-i18next/client'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -27,6 +27,7 @@ import {
   deleteAdminDevice,
   patchAdminDevice,
 } from '@/components/admin/admin-query-mutations'
+import { DeviceListItemActions } from '@/components/admin/device-list-item-actions'
 import { FormattedTime } from '@/components/formatted-time'
 import {
   AlertDialog,
@@ -58,75 +59,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import {
+  DEVICE_LIST_MAX_HEIGHT,
+  DEVICE_LIST_PAGE_SIZE,
+} from '@/constants/device'
 import { toastSwitchLabel } from '@/lib/admin-switch-toast'
 import { cn } from '@/lib/utils'
 import type { AdminDeviceSummary } from '@/types'
 import type { AdminDeviceItem, AdminTokenOption } from '@/types'
-
-function DeviceListItemActions({
-  item,
-  variant,
-  t,
-  onCopyHash,
-  onToggleActive,
-  onReview,
-}: {
-  item: AdminDeviceItem
-  variant: 'mobile' | 'desktop'
-  t: (key: string, values?: Record<string, string | number>) => string
-  onCopyHash: () => void
-  onToggleActive: () => void
-  onReview: () => void
-}) {
-  if (variant === 'mobile') {
-    return (
-      <div className="flex w-full flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-9 h-auto gap-1.5 py-2"
-            onClick={onCopyHash}
-          >
-            <Copy className="h-4 w-4 shrink-0" />
-            <span className="truncate text-left">{t('devices.copyIdentity')}</span>
-          </Button>
-          <Button type="button" variant="outline" size="sm" className="min-h-9" onClick={onToggleActive}>
-            {item.status === 'active' ? t('devices.disable') : t('devices.enable')}
-          </Button>
-        </div>
-        {item.status === 'pending' ? (
-          <Button type="button" variant="outline" size="sm" className="min-h-9 w-full" onClick={onReview}>
-            {t('devices.review')}
-          </Button>
-        ) : null}
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-      <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5" onClick={onCopyHash}>
-        <Copy className="h-4 w-4 shrink-0" />
-        {t('devices.copyIdentity')}
-      </Button>
-      <Button type="button" variant="outline" size="sm" className="h-8" onClick={onToggleActive}>
-        {item.status === 'active' ? t('devices.disable') : t('devices.enable')}
-      </Button>
-      {item.status === 'pending' ? (
-        <Button type="button" variant="outline" size="sm" className="h-8" onClick={onReview}>
-          {t('devices.review')}
-        </Button>
-      ) : null}
-    </div>
-  )
-}
-
-/** Server page size; smaller pages keep the admin panel from growing too tall. */
-const DEVICE_LIST_PAGE_SIZE = 10
-/** Max scroll height for the device list block inside the card. */
-const DEVICE_LIST_MAX_HEIGHT = 'min(70vh,48rem)'
 
 export function DeviceManager({
   initialHashKey,

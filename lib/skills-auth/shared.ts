@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 
-import type { SkillsAuthMode, SkillsScope } from '@/lib/skills-auth/types'
-import { SKILLS_HEADER_PREFIX } from '@/lib/skills-constants'
+import { SKILLS_HEADER_PREFIX } from '@/constants/skills'
+import type { SkillsAuthMode, SkillsScope } from '@/types/skills-auth'
 
 const SKILLS_OAUTH_TOKEN_TTL_MINUTES_DEFAULT = 60
 const SKILLS_OAUTH_TOKEN_TTL_MINUTES_MIN = 5

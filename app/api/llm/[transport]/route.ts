@@ -2,6 +2,12 @@ import { createMcpHandler, experimental_withMcpAuth } from 'mcp-handler'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+import {
+  SITE_SETTINGS_CORE_CATEGORY_KEYS,
+  SITE_SETTINGS_RULES_KEYS,
+  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
+  SITE_SETTINGS_THEME_CATEGORY_KEYS,
+} from '@/constants/site-settings'
 import { exportActivityAppsSnapshot } from '@/lib/activity-app-export'
 import { enforceApiRateLimit } from '@/lib/api-rate-limit'
 import {
@@ -9,19 +15,13 @@ import {
   prepareSiteConfigValuesFromPayload,
 } from '@/lib/llm-site-config'
 import {
-  pickRecordKeys,
-  SITE_SETTINGS_CORE_CATEGORY_KEYS,
-  SITE_SETTINGS_RULES_KEYS,
-  SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
-  SITE_SETTINGS_THEME_CATEGORY_KEYS,
-} from '@/lib/site-settings-constants'
-import {
   pickCoreSettingsFromConfig,
   pickRulesSettingsFromConfig,
   pickScheduleSettingsFromConfig,
   pickThemeSettingsFromConfig,
   readEffectiveSiteConfig,
 } from '@/lib/site-settings-read'
+import { pickRecordKeys } from '@/lib/site-settings-record'
 import {
   persistCoreSettingsFromPrepared,
   persistRulesSettingsValues,

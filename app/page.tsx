@@ -15,6 +15,10 @@ import { SiteLockForm } from '@/components/site-lock-form'
 import { SiteReveal } from '@/components/site-reveal'
 import { SiteThemeRuntime } from '@/components/site-theme-runtime'
 import { UserProfile, UserProfileNoteSection } from '@/components/user-profile'
+import {
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+} from '@/constants/site-config'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { verifySiteLockSession } from '@/lib/auth'
@@ -34,10 +38,6 @@ import {
   type ScheduleCourse,
 } from '@/lib/schedule-courses'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import {
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-} from '@/lib/site-config-constants'
 import { getThemePresetCss } from '@/lib/theme-css'
 import { coerceDbTimestampToIsoUtc, normalizeTimezone } from '@/lib/timezone'
 import packageJson from '@/package.json'

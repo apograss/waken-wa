@@ -30,15 +30,15 @@ import {
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import { InspirationEntryList } from '@/components/admin/inspiration-entry-list'
 import { InspirationFormCard } from '@/components/admin/inspiration-form-card'
-import {
-  INSPIRATION_DRAFT_STORAGE_KEY,
-  INSPIRATION_LIST_PAGE_SIZE,
-  INSPIRATION_MAX_OUTPUT_EDGE,
-} from '@/components/admin/inspiration-manager-constants'
 import { InspirationPreviewDialog } from '@/components/admin/inspiration-preview-dialog'
 import { createLexicalTextContent } from '@/components/admin/lexical-editor'
 import { useInspirationDraft } from '@/components/admin/use-inspiration-draft'
 import { useSiteTimeFormat } from '@/components/site-timezone-provider'
+import {
+  INSPIRATION_DRAFT_STORAGE_KEY,
+  INSPIRATION_LIST_PAGE_SIZE,
+  INSPIRATION_MAX_OUTPUT_EDGE,
+} from '@/constants/inspiration-manager'
 import { appendParagraphTextToLexical, lexicalTextContent } from '@/lib/inspiration-lexical'
 import type { AdminInspirationEntry } from '@/types'
 

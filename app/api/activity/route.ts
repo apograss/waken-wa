@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import {
   ACTIVITY_FEED_DEFAULT_LIMIT,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
+import { DEVICE_LAST_SEEN_WRITE_THROTTLE_MS } from '@/constants/activity-report'
 import { clearActivityFeedDataCache, getActivityFeedData } from '@/lib/activity-feed'
 import { recordReportedActivityHistory } from '@/lib/activity-history-pending'
-import { DEVICE_LAST_SEEN_WRITE_THROTTLE_MS } from '@/lib/activity-report-constants'
 import {
   parseActivityReportBody,
   PUBLIC_ACTIVITY_RESERVED_METADATA_KEYS,
@@ -28,7 +28,7 @@ import { findMediaPlaySourceRuleMatch } from '@/lib/media-play-source-rules'
 import { buildDeviceApprovalUrl, getPublicOrigin } from '@/lib/public-request-url'
 import { removeRealtimeActivity, upsertRealtimeActivity } from '@/lib/realtime-activity-cache'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import { parseProcessStaleSeconds } from '@/lib/site-config-constants'
+import { parseProcessStaleSeconds } from '@/lib/site-config-values'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 import { toDbJsonValue } from '@/lib/sqlite-json'
 

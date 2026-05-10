@@ -2,16 +2,16 @@ import 'server-only'
 
 import { randomBytes } from 'node:crypto'
 
+import {
+  VIEWER_PRESENCE_REDIS_CLEANUP_INTERVAL_MS,
+  VIEWER_PRESENCE_TTL_MS,
+} from '@/constants/viewer-presence'
 import { shouldUseRedisCache } from '@/lib/cache-runtime-toggle'
 import {
   redisZAdd,
   redisZCountByScore,
   redisZRemRangeByScore,
 } from '@/lib/redis-client'
-import {
-  VIEWER_PRESENCE_REDIS_CLEANUP_INTERVAL_MS,
-  VIEWER_PRESENCE_TTL_MS,
-} from '@/lib/viewer-presence-constants'
 
 const VIEWER_PRESENCE_ZSET_KEY = 'waken:viewers:presence:v1'
 const VIEWER_PRESENCE_ID_RE = /^[A-Za-z0-9_-]{16,128}$/

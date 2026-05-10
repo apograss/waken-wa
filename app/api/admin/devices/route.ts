@@ -3,19 +3,19 @@ import { createHash, randomBytes } from 'node:crypto'
 import { asc, count, eq, getTableColumns, sql } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { clearActivityFeedDataCache } from '@/lib/activity-feed'
-import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import {
   ADMIN_DEVICE_LIST_MAX_LIMIT,
   ADMIN_LIST_DEFAULT_PAGE_SIZE,
-} from '@/lib/admin-list-constants'
-import { db } from '@/lib/db'
-import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
+} from '@/constants/admin-list'
 import {
   GENERATED_HASH_KEY_MAX_LENGTH,
   GENERATED_HASH_KEY_MIN_LENGTH,
   WEB_ADMIN_QUICK_ADD_DEVICE_HASH_KEY,
-} from '@/lib/device-constants'
+} from '@/constants/device'
+import { clearActivityFeedDataCache } from '@/lib/activity-feed'
+import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
+import { db } from '@/lib/db'
+import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
 import { apiTokens, devices } from '@/lib/drizzle-schema'
 import { getRequestLanguage } from '@/lib/i18n/request-locale'
 import { getT } from '@/lib/i18n/server'

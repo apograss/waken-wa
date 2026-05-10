@@ -1,58 +1,10 @@
-import { parseIntegerInRangeForWrite } from '@/lib/site-config-constants'
-
-export type StatusCardVariant = 'classic' | 'aurora' | 'cover' | 'signature'
-
-export type StatusCardSettings = {
-  statusCardEnabled: boolean
-  statusCardVariant: StatusCardVariant
-  statusCardTag: string
-  statusCardBackgroundKey: string
-  statusCardBackgroundRev: string
-  statusCardCoverKey: string
-  statusCardCoverRev: string
-  statusCardShowHeader: boolean
-  statusCardShowAvatar: boolean
-  statusCardShowName: boolean
-  statusCardShowBio: boolean
-  statusCardShowNote: boolean
-  statusCardPreferGame: boolean
-  statusCardShowInClassStatus: boolean
-  statusCardWidth: number
-  statusCardHeight: number
-  statusCardRadius: number
-  statusCardBg: string
-  statusCardSignatureBg: string
-  statusCardFg: string
-  statusCardMuted: string
-  statusCardAccent: string
-  statusCardBorder: string
-}
-
-const STATUS_CARD_DEFAULTS: StatusCardSettings = {
-  statusCardEnabled: false,
-  statusCardVariant: 'aurora',
-  statusCardTag: '',
-  statusCardBackgroundKey: '',
-  statusCardBackgroundRev: '',
-  statusCardCoverKey: '',
-  statusCardCoverRev: '',
-  statusCardShowHeader: true,
-  statusCardShowAvatar: true,
-  statusCardShowName: true,
-  statusCardShowBio: true,
-  statusCardShowNote: false,
-  statusCardPreferGame: false,
-  statusCardShowInClassStatus: false,
-  statusCardWidth: 520,
-  statusCardHeight: 310,
-  statusCardRadius: 20,
-  statusCardBg: '#FFFFFF',
-  statusCardSignatureBg: '#F4F0FF',
-  statusCardFg: '#111827',
-  statusCardMuted: '#6B7280',
-  statusCardAccent: '#22C55E',
-  statusCardBorder: '#E5E7EB',
-}
+import { STATUS_CARD_DEFAULTS } from '@/constants/status-card'
+import { parseIntegerInRangeForWrite } from '@/lib/site-config-values'
+import type {
+  StatusCardDimensionParser,
+  StatusCardSettings,
+  StatusCardVariant,
+} from '@/types/status-card'
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -62,7 +14,7 @@ function getTrimmedText(value: unknown): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : ''
 }
 
-function normalizeHexColor(value: unknown): string | null {
+export function normalizeStatusCardRawHexColor(value: unknown): string | null {
   const raw = typeof value === 'string' ? value.trim() : ''
   const short = /^#([0-9a-f]{3})$/i.exec(raw)
   if (short?.[1]) {
@@ -77,9 +29,17 @@ function normalizeHexColor(value: unknown): string | null {
 
 export function normalizeStatusCardVariant(value: unknown): StatusCardVariant {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : ''
-  if (normalized === 'signature') return 'signature'
-  if (normalized === 'cover') return 'cover'
-  return normalized === 'classic' ? 'classic' : 'aurora'
+
+  switch (normalized) {
+    case 'signature':
+      return 'signature'
+    case 'cover':
+      return 'cover'
+    case 'classic':
+      return 'classic'
+    default:
+      return 'aurora'
+  }
 }
 
 export function normalizeStatusCardCoverKey(value: unknown): string | null {
@@ -88,7 +48,7 @@ export function normalizeStatusCardCoverKey(value: unknown): string | null {
 }
 
 export function normalizeStatusCardHexColor(value: unknown, fallback: string): string {
-  return normalizeHexColor(value) ?? fallback
+  return normalizeStatusCardRawHexColor(value) ?? fallback
 }
 
 export function normalizeStatusCardDimension(
@@ -111,14 +71,6 @@ export function normalizeStatusCardTag(value: unknown): string {
   if (!normalized) return ''
   return normalized.startsWith('#') ? normalized : `#${normalized}`
 }
-
-type StatusCardDimensionParser = (
-  value: unknown,
-  fallback: number,
-  min: number,
-  max: number,
-  key: string,
-) => number
 
 function resolveStatusCardValue<T>(
   source: Record<string, unknown>,

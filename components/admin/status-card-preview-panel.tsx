@@ -34,160 +34,29 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
-  normalizeStatusCardSettings,
-  normalizeStatusCardTag,
-} from '@/lib/status-card-options'
-
-type DeviceMode = 'auto' | 'deviceId' | 'deviceKey'
-type StatusCardVariant = 'classic' | 'aurora' | 'cover' | 'signature'
-
-type StatusCardDraft = {
-  deviceMode: DeviceMode
-  deviceValue: string
-}
-
-const DEFAULT_DRAFT: StatusCardDraft = {
-  deviceMode: 'auto',
-  deviceValue: '',
-}
-
-type StatusCardPreviewSource = {
-  statusCardVariant: StatusCardVariant
-  statusCardTag: string
-  statusCardBackgroundKey: string
-  statusCardBackgroundRev: string
-  statusCardCoverKey: string
-  statusCardCoverRev: string
-  statusCardShowHeader: boolean
-  statusCardShowAvatar: boolean
-  statusCardShowName: boolean
-  statusCardShowBio: boolean
-  statusCardShowNote: boolean
-  statusCardPreferGame: boolean
-  statusCardShowInClassStatus: boolean
-  statusCardWidth: number | string
-  statusCardHeight: number | string
-  statusCardRadius: number | string
-  statusCardBg: string
-  statusCardSignatureBg: string
-  statusCardFg: string
-  statusCardMuted: string
-  statusCardAccent: string
-  statusCardBorder: string
-}
-
-function toHexColor(value: string, fallback: string): string {
-  const normalized = value.trim()
-  if (/^#[0-9a-f]{6}$/i.test(normalized)) return normalized.toUpperCase()
-  return fallback
-}
-
-const COVER_CROP_ASPECT_RATIO = 520 / 100
-const COVER_CROP_OUTPUT_EDGE = 1400
-const BACKGROUND_CROP_ASPECT_RATIO = 700 / 220
-const SIGNATURE_CARD_WIDTH = 700
-const SIGNATURE_CARD_HEIGHT = 220
-
-function normalizeCoverKey(value: string): string {
-  const normalized = value.trim()
-  return /^[0-9a-f-]{16,64}$/i.test(normalized) ? normalized : ''
-}
-
-function extractCoverKeyFromImageSourceUrl(value: string): string {
-  const normalized = value.trim()
-  const match = /\/api\/image-src\/([0-9a-f-]{16,64})/i.exec(normalized)
-  return match?.[1] ?? normalizeCoverKey(normalized)
-}
-
-function getStatusCardDimensions(
-  width: unknown,
-  height: unknown,
-  radius: unknown,
-): {
-  width: number
-  height: number
-  radius: number
-} {
-  const normalized = normalizeStatusCardSettings({
-    statusCardWidth: width,
-    statusCardHeight: height,
-    statusCardRadius: radius,
-  })
-  return {
-    width: normalized.statusCardWidth,
-    height: normalized.statusCardHeight,
-    radius: normalized.statusCardRadius,
-  }
-}
-
-function formatStatusCardDimensionValue(value: number | string): string {
-  return typeof value === 'string' && value.trim().toLowerCase() === 'auto'
-    ? 'auto'
-    : String(value)
-}
-
-async function hashText(value: string): Promise<string> {
-  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
-  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
-function buildStatusCardPath(draft: StatusCardDraft, form: StatusCardPreviewSource): string {
-  const dimensions = getStatusCardDimensions(
-    form.statusCardWidth,
-    form.statusCardHeight,
-    form.statusCardRadius,
-  )
-  const params = new URLSearchParams()
-  params.set('variant', form.statusCardVariant)
-  const tag = normalizeStatusCardTag(form.statusCardTag)
-  if (tag) params.set('tag', tag)
-  const backgroundKey = normalizeCoverKey(form.statusCardBackgroundKey)
-  if (form.statusCardVariant === 'signature' && backgroundKey) {
-    params.set('bgImage', backgroundKey)
-    if (form.statusCardBackgroundRev.trim()) {
-      params.set('bgRev', form.statusCardBackgroundRev.trim())
-    }
-  }
-  const coverKey = normalizeCoverKey(form.statusCardCoverKey)
-  if (form.statusCardVariant === 'cover' && coverKey) {
-    params.set('cover', coverKey)
-    if (form.statusCardCoverRev.trim()) {
-      params.set('coverRev', form.statusCardCoverRev.trim())
-    }
-  }
-  params.set('showHeader', form.statusCardShowHeader ? '1' : '0')
-  if (form.statusCardShowHeader) {
-    params.set('showAvatar', form.statusCardShowAvatar ? '1' : '0')
-    params.set('showName', form.statusCardShowName ? '1' : '0')
-    params.set('showBio', form.statusCardShowBio ? '1' : '0')
-    params.set('showNote', form.statusCardShowNote ? '1' : '0')
-  }
-  if (draft.deviceMode !== 'auto' && draft.deviceValue) {
-    params.set(draft.deviceMode, draft.deviceValue)
-  }
-  params.set('preferGame', form.statusCardPreferGame ? '1' : '0')
-  params.set('showInClassStatus', form.statusCardShowInClassStatus ? '1' : '0')
-  params.set('width', String(dimensions.width))
-  params.set('height', String(dimensions.height))
-  params.set('radius', String(dimensions.radius))
-  params.set('bg', form.statusCardBg)
-  if (form.statusCardVariant === 'signature') {
-    params.set('signatureBg', form.statusCardSignatureBg)
-  }
-  params.set('fg', form.statusCardFg)
-  params.set('muted', form.statusCardMuted)
-  params.set('accent', form.statusCardAccent)
-  params.set('border', form.statusCardBorder)
-  return `/api/status-card?${params.toString()}`
-}
-
-function escapeHtmlAttribute(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-}
+  STATUS_CARD_BACKGROUND_CROP_ASPECT_RATIO,
+  STATUS_CARD_COVER_CROP_ASPECT_RATIO,
+  STATUS_CARD_COVER_CROP_OUTPUT_EDGE,
+  STATUS_CARD_DEFAULTS,
+  STATUS_CARD_PREVIEW_DEFAULT_DRAFT,
+  STATUS_CARD_SIGNATURE_HEIGHT,
+  STATUS_CARD_SIGNATURE_WIDTH,
+} from '@/constants/status-card'
+import { normalizeStatusCardTag } from '@/lib/status-card-options'
+import {
+  BuildStatusCardPreviewPath,
+  EscapeHtmlAttribute,
+  ExtractStatusCardAssetKeyFromImageSourceUrl,
+  FormatStatusCardDimensionValue,
+  GetStatusCardDimensions,
+  HashStatusCardPreviewText,
+  ToStatusCardHexColor,
+} from '@/lib/status-card-preview'
+import type {
+  StatusCardPreviewDeviceMode,
+  StatusCardPreviewDraft,
+  StatusCardVariant,
+} from '@/types/status-card'
 
 function StatusCardColorInput({
   id,
@@ -215,7 +84,7 @@ function StatusCardColorInput({
         />
         <Input
           value={value}
-          onChange={(event) => onChange(toHexColor(event.target.value, value))}
+          onChange={(event) => onChange(ToStatusCardHexColor(event.target.value, value))}
           className="font-mono text-xs"
         />
       </div>
@@ -232,8 +101,8 @@ export function StatusCardPreviewPanel() {
     () => window.location.origin,
     () => '',
   )
-  const [draft, setDraft] = useState<StatusCardDraft>(() => ({
-    ...DEFAULT_DRAFT,
+  const [draft, setDraft] = useState<StatusCardPreviewDraft>(() => ({
+    ...STATUS_CARD_PREVIEW_DEFAULT_DRAFT,
   }))
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const [isUploadingBackground, setIsUploadingBackground] = useState(false)
@@ -243,11 +112,16 @@ export function StatusCardPreviewPanel() {
   const [backgroundCropDialogOpen, setBackgroundCropDialogOpen] = useState(false)
 
   const selectedDevice = devices.find((device) => {
-    if (draft.deviceMode === 'deviceId') return String(device.id) === draft.deviceValue
-    if (draft.deviceMode === 'deviceKey') return device.generatedHashKey === draft.deviceValue
-    return false
+    switch (draft.deviceMode) {
+      case 'deviceId':
+        return String(device.id) === draft.deviceValue
+      case 'deviceKey':
+        return device.generatedHashKey === draft.deviceValue
+      case 'auto':
+        return false
+    }
   })
-  const pathDraft = buildStatusCardPath(draft, {
+  const pathDraft = BuildStatusCardPreviewPath(draft, {
     statusCardVariant: form.statusCardVariant,
     statusCardTag: form.statusCardTag,
     statusCardBackgroundKey: form.statusCardBackgroundKey,
@@ -278,7 +152,7 @@ export function StatusCardPreviewPanel() {
   }, [pathDraft])
   const absoluteUrl = `${origin}${path}`
   const embedAlt = form.currentlyText.trim() || t('webSettingsBasic.currentlyTextDefault')
-  const embedHtml = `<img src="${escapeHtmlAttribute(absoluteUrl || path)}" alt="${escapeHtmlAttribute(embedAlt)}" />`
+  const embedHtml = `<img src="${EscapeHtmlAttribute(absoluteUrl || path)}" alt="${EscapeHtmlAttribute(embedAlt)}" />`
 
   const patchForm = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -290,14 +164,17 @@ export function StatusCardPreviewPanel() {
       statusCardVariant: value,
       ...(value === 'signature'
         ? {
-            statusCardWidth: SIGNATURE_CARD_WIDTH,
-            statusCardHeight: SIGNATURE_CARD_HEIGHT,
+            statusCardWidth: STATUS_CARD_SIGNATURE_WIDTH,
+            statusCardHeight: STATUS_CARD_SIGNATURE_HEIGHT,
           }
         : {}),
     }))
   }
 
-  const patchDraft = <K extends keyof StatusCardDraft>(key: K, value: StatusCardDraft[K]) => {
+  const patchDraft = <K extends keyof StatusCardPreviewDraft>(
+    key: K,
+    value: StatusCardPreviewDraft[K],
+  ) => {
     setDraft((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -337,9 +214,9 @@ export function StatusCardPreviewPanel() {
     try {
       const [url, contentHash] = await Promise.all([
         uploadImageSource(dataUrl, 'status-card.cover'),
-        hashText(dataUrl),
+        HashStatusCardPreviewText(dataUrl),
       ])
-      const coverKey = extractCoverKeyFromImageSourceUrl(url)
+      const coverKey = ExtractStatusCardAssetKeyFromImageSourceUrl(url)
       if (!coverKey) throw new Error('Missing image key')
       setForm((prev) => ({
         ...prev,
@@ -359,9 +236,9 @@ export function StatusCardPreviewPanel() {
     try {
       const [url, contentHash] = await Promise.all([
         uploadImageSource(dataUrl, 'status-card.background'),
-        hashText(dataUrl),
+        HashStatusCardPreviewText(dataUrl),
       ])
-      const backgroundKey = extractCoverKeyFromImageSourceUrl(url)
+      const backgroundKey = ExtractStatusCardAssetKeyFromImageSourceUrl(url)
       if (!backgroundKey) throw new Error('Missing image key')
       setForm((prev) => ({
         ...prev,
@@ -377,37 +254,44 @@ export function StatusCardPreviewPanel() {
   }
 
   const reset = () => {
-    setDraft({ ...DEFAULT_DRAFT })
+    setDraft({ ...STATUS_CARD_PREVIEW_DEFAULT_DRAFT })
     setForm((prev) => ({
       ...prev,
-      statusCardVariant: 'aurora',
-      statusCardTag: '',
-      statusCardBackgroundKey: '',
-      statusCardBackgroundRev: '',
-      statusCardCoverKey: '',
-      statusCardCoverRev: '',
-      statusCardShowHeader: true,
-      statusCardShowAvatar: true,
-      statusCardShowName: true,
-      statusCardShowBio: true,
-      statusCardShowNote: false,
-      statusCardPreferGame: false,
-      statusCardShowInClassStatus: false,
-      statusCardWidth: 520,
-      statusCardHeight: 310,
-      statusCardRadius: 20,
-      statusCardBg: '#FFFFFF',
-      statusCardSignatureBg: '#F4F0FF',
-      statusCardFg: '#111827',
-      statusCardMuted: '#6B7280',
-      statusCardAccent: toHexColor(prev.profileOnlineAccentColor || '#22C55E', '#22C55E'),
-      statusCardBorder: '#E5E7EB',
+      statusCardVariant: STATUS_CARD_DEFAULTS.statusCardVariant,
+      statusCardTag: STATUS_CARD_DEFAULTS.statusCardTag,
+      statusCardBackgroundKey: STATUS_CARD_DEFAULTS.statusCardBackgroundKey,
+      statusCardBackgroundRev: STATUS_CARD_DEFAULTS.statusCardBackgroundRev,
+      statusCardCoverKey: STATUS_CARD_DEFAULTS.statusCardCoverKey,
+      statusCardCoverRev: STATUS_CARD_DEFAULTS.statusCardCoverRev,
+      statusCardShowHeader: STATUS_CARD_DEFAULTS.statusCardShowHeader,
+      statusCardShowAvatar: STATUS_CARD_DEFAULTS.statusCardShowAvatar,
+      statusCardShowName: STATUS_CARD_DEFAULTS.statusCardShowName,
+      statusCardShowBio: STATUS_CARD_DEFAULTS.statusCardShowBio,
+      statusCardShowNote: STATUS_CARD_DEFAULTS.statusCardShowNote,
+      statusCardPreferGame: STATUS_CARD_DEFAULTS.statusCardPreferGame,
+      statusCardShowInClassStatus: STATUS_CARD_DEFAULTS.statusCardShowInClassStatus,
+      statusCardWidth: STATUS_CARD_DEFAULTS.statusCardWidth,
+      statusCardHeight: STATUS_CARD_DEFAULTS.statusCardHeight,
+      statusCardRadius: STATUS_CARD_DEFAULTS.statusCardRadius,
+      statusCardBg: STATUS_CARD_DEFAULTS.statusCardBg,
+      statusCardSignatureBg: STATUS_CARD_DEFAULTS.statusCardSignatureBg,
+      statusCardFg: STATUS_CARD_DEFAULTS.statusCardFg,
+      statusCardMuted: STATUS_CARD_DEFAULTS.statusCardMuted,
+      statusCardAccent: ToStatusCardHexColor(
+        prev.profileOnlineAccentColor || STATUS_CARD_DEFAULTS.statusCardAccent,
+        STATUS_CARD_DEFAULTS.statusCardAccent,
+      ),
+      statusCardBorder: STATUS_CARD_DEFAULTS.statusCardBorder,
     }))
   }
 
-  const previewDimensions = getStatusCardDimensions(form.statusCardWidth, form.statusCardHeight, form.statusCardRadius)
-  const previewWidthInput = formatStatusCardDimensionValue(form.statusCardWidth)
-  const previewHeightInput = formatStatusCardDimensionValue(form.statusCardHeight)
+  const previewDimensions = GetStatusCardDimensions(
+    form.statusCardWidth,
+    form.statusCardHeight,
+    form.statusCardRadius,
+  )
+  const previewWidthInput = FormatStatusCardDimensionValue(form.statusCardWidth)
+  const previewHeightInput = FormatStatusCardDimensionValue(form.statusCardHeight)
 
   return (
     <WebSettingsInset className="space-y-4">
@@ -633,7 +517,7 @@ export function StatusCardPreviewPanel() {
               <Select
                 value={draft.deviceMode}
                 onValueChange={(value) => {
-                  patchDraft('deviceMode', value as DeviceMode)
+                  patchDraft('deviceMode', value as StatusCardPreviewDeviceMode)
                   patchDraft('deviceValue', '')
                 }}
               >
@@ -805,8 +689,8 @@ export function StatusCardPreviewPanel() {
         }}
         sourceUrl={coverCropSourceUrl}
         aspectMode="free"
-        aspectRatio={COVER_CROP_ASPECT_RATIO}
-        outputSize={COVER_CROP_OUTPUT_EDGE}
+        aspectRatio={STATUS_CARD_COVER_CROP_ASPECT_RATIO}
+        outputSize={STATUS_CARD_COVER_CROP_OUTPUT_EDGE}
         outputFormat="webp"
         outputQuality={0.9}
         title={t('webSettingsActivity.statusCard.coverCropTitle')}
@@ -828,8 +712,8 @@ export function StatusCardPreviewPanel() {
         }}
         sourceUrl={backgroundCropSourceUrl}
         aspectMode="free"
-        aspectRatio={BACKGROUND_CROP_ASPECT_RATIO}
-        outputSize={COVER_CROP_OUTPUT_EDGE}
+        aspectRatio={STATUS_CARD_BACKGROUND_CROP_ASPECT_RATIO}
+        outputSize={STATUS_CARD_COVER_CROP_OUTPUT_EDGE}
         outputFormat="webp"
         outputQuality={0.88}
         title={t('webSettingsActivity.statusCard.backgroundCropTitle')}

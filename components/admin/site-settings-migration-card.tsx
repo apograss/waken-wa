@@ -2,7 +2,6 @@
 
 import { useT } from 'next-i18next/client'
 
-import type { SiteSettingsMigrationInfo } from '@/components/admin/web-settings-types'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import type { SiteSettingsMigrationInfo } from '@/types/web-settings'
 
 function formatMigrationTime(value: string | null): string {
   if (!value) return '—'

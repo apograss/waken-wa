@@ -25,6 +25,11 @@ export {
   normalizeAiClientId,
   normalizeSkillsOauthTokenTtlMinutes,
 } from '@/lib/skills-auth/shared'
+export {
+  isLegacyMcpEnabled,
+  requireAdminOrSkills,
+  verifySkillsRequest,
+} from '@/lib/skills-auth/verify'
 export type {
   GuardFail,
   GuardOk,
@@ -35,9 +40,4 @@ export type {
   SkillsScope,
   SkillsVerifyFail,
   SkillsVerifyOk,
-} from '@/lib/skills-auth/types'
-export {
-  isLegacyMcpEnabled,
-  requireAdminOrSkills,
-  verifySkillsRequest,
-} from '@/lib/skills-auth/verify'
+} from '@/types/skills-auth'

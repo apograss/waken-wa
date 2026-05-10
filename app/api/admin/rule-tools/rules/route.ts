@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { ADMIN_LIST_DEFAULT_PAGE_SIZE, ADMIN_LIST_MAX_PAGE_SIZE } from '@/constants/admin-list'
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
-import { ADMIN_LIST_DEFAULT_PAGE_SIZE, ADMIN_LIST_MAX_PAGE_SIZE } from '@/lib/admin-list-constants'
 import { parsePaginationParams } from '@/lib/pagination'
 import { readJsonObject } from '@/lib/request-json'
 import { getRuleToolsRulesPage, patchRuleToolsRules } from '@/lib/rule-tools-config'

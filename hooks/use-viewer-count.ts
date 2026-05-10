@@ -6,7 +6,7 @@ import {
   VIEWER_HEARTBEAT_INTERVAL_MS,
   VIEWER_PRESENCE_COOKIE_MAX_AGE_SECONDS,
   VIEWER_PRESENCE_COOKIE_NAME,
-} from '@/lib/viewer-presence-constants'
+} from '@/constants/viewer-presence'
 import type { ViewerCountResponse } from '@/types/viewers'
 
 type ViewerCountMode = 'heartbeat' | 'readonly'

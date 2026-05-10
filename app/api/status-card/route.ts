@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { ACTIVITY_FEED_DEFAULT_LIMIT } from '@/lib/activity-api-constants'
+import { ACTIVITY_FEED_DEFAULT_LIMIT } from '@/constants/activity-api'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { getPublicOrigin } from '@/lib/public-request-url'
@@ -12,15 +12,19 @@ import {
 } from '@/lib/schedule-courses'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
+  shouldApplyStatusCardInClassOverride,
+} from '@/lib/status-card-activity'
+import {
   getStatusCardProfile,
   parseStatusCardOptions,
-  renderStatusCardSvg,
   resolveStatusCardAvatarDataUri,
   resolveStatusCardBackgroundDataUri,
   resolveStatusCardCoverDataUri,
   resolveStatusCardProfileNote,
   selectStatusCardActivity,
-  shouldApplyStatusCardInClassOverride,
+} from '@/lib/status-card-data'
+import {
+  renderStatusCardSvg,
 } from '@/lib/status-card-svg'
 import { resolveEffectiveTimezone } from '@/lib/timezone'
 

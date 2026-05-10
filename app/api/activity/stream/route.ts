@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { ACTIVITY_FEED_DEFAULT_LIMIT } from '@/lib/activity-api-constants'
-import { getActivityFeedData } from '@/lib/activity-feed'
-import { getCachedActivityFeedData } from '@/lib/activity-feed-cache'
+import { ACTIVITY_FEED_DEFAULT_LIMIT } from '@/constants/activity-api'
 import {
   ACTIVITY_STREAM_MAX_CONCURRENT_CONNECTIONS,
   ACTIVITY_STREAM_MAX_CONSECUTIVE_PUSH_FAILURES,
   ACTIVITY_STREAM_MAX_IDLE_MS,
   ACTIVITY_STREAM_POLL_INTERVAL_MS,
-} from '@/lib/activity-stream-constants'
+} from '@/constants/activity-stream'
+import { getActivityFeedData } from '@/lib/activity-feed'
+import { getCachedActivityFeedData } from '@/lib/activity-feed-cache'
 import { enforceApiRateLimit } from '@/lib/api-rate-limit'
 import { isSiteLockSatisfied } from '@/lib/auth'
 

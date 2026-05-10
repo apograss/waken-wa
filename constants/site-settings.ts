@@ -1,10 +1,10 @@
-import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
+} from '@/constants/site-config'
+import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
 
 export const SITE_SETTINGS_MIGRATION_STATES = [
   'legacy',
@@ -12,17 +12,15 @@ export const SITE_SETTINGS_MIGRATION_STATES = [
   'legacy_cleared',
 ] as const
 
-export type SiteSettingsMigrationState =
-  (typeof SITE_SETTINGS_MIGRATION_STATES)[number]
+export const SITE_SETTINGS_MIGRATION_REQUIRED_MESSAGE = '请先迁移到新方案'
+
+export const SITE_SETTINGS_SITE_CONFIG_ID = 1
 
 export const SITE_SETTINGS_COVERED_CATEGORIES = [
   'theme',
   'schedule',
   'rules',
 ] as const
-
-export type SiteSettingsCoveredCategory =
-  (typeof SITE_SETTINGS_COVERED_CATEGORIES)[number]
 
 export const SITE_SETTINGS_THEME_CATEGORY_KEYS = [
   'themePreset',
@@ -282,46 +280,4 @@ export const SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES: Record<string, unkno
   useNoSqlAsCacheRedis: true,
   redisCacheTtlSeconds: 3600,
   activityRejectLockappSleep: false,
-}
-
-export function isSiteSettingsMigrationState(
-  value: unknown,
-): value is SiteSettingsMigrationState {
-  return (
-    typeof value === 'string' &&
-    (SITE_SETTINGS_MIGRATION_STATES as readonly string[]).includes(value)
-  )
-}
-
-export function pickRecordKeys<T extends Record<string, unknown>>(
-  source: T,
-  keys: readonly string[],
-): Record<string, unknown> {
-  const next: Record<string, unknown> = {}
-  for (const key of keys) {
-    if (key in source) {
-      next[key] = source[key]
-    }
-  }
-  return next
-}
-
-export function omitRecordKeys<T extends Record<string, unknown>>(
-  source: T,
-  keys: readonly string[],
-): Record<string, unknown> {
-  const denied = new Set(keys)
-  const next: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(source)) {
-    if (denied.has(key)) continue
-    next[key] = value
-  }
-  return next
-}
-
-export function hasAnyRecordKey(
-  source: Record<string, unknown>,
-  keys: readonly string[],
-): boolean {
-  return keys.some((key) => key in source)
 }

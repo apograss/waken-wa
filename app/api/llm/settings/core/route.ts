@@ -1,7 +1,7 @@
-import { createLlmSettingsCategoryRoute } from '@/lib/llm-settings-category-route'
 import {
   SITE_SETTINGS_CORE_CATEGORY_KEYS,
-} from '@/lib/site-settings-constants'
+} from '@/constants/site-settings'
+import { createLlmSettingsCategoryRoute } from '@/lib/llm-settings-category-route'
 import {
   pickCoreSettingsFromConfig,
 } from '@/lib/site-settings-read'

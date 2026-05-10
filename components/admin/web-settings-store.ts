@@ -1,31 +1,31 @@
 import { atom } from 'jotai'
 
-import type {
-  SiteConfig,
-  SiteSettingsMigrationInfo,
-  SkillsAiAuthorizationItem,
-  SkillsEditableConfig,
-} from '@/components/admin/web-settings-types'
 import {
   emptyPublicPageFontOptionsForm,
   emptyThemeCustomSurfaceForm,
 } from '@/components/admin/web-settings-utils'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
+import {
+  SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
+} from '@/constants/site-config'
 import {
   DEFAULT_ACTIVITY_UPDATE_MODE,
 } from '@/lib/activity-update-mode'
 import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
 import { resolveSchedulePeriodTemplate } from '@/lib/schedule-courses'
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
-import {
-  SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
-  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
 import { DEFAULT_TIMEZONE } from '@/lib/timezone'
+import type {
+  SiteConfig,
+  SiteSettingsMigrationInfo,
+  SkillsAiAuthorizationItem,
+  SkillsEditableConfig,
+} from '@/types/web-settings'
 
 export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   adminThemeColor: '',

@@ -4,7 +4,7 @@ import {
   ACTIVITY_FEED_DEFAULT_LIMIT,
   ACTIVITY_FEED_QUERY_MAX_LIMIT,
   ACTIVITY_FEED_RECENT_TOP_APPS_MAX,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
 import { clearCachedActivityFeedData, getCachedActivityFeedData, setCachedActivityFeedData } from '@/lib/activity-feed-cache'
 import { redactGeneratedHashKeyForClient } from '@/lib/activity-store'
 import {
@@ -23,7 +23,7 @@ import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import {
   parseHistoryWindowMinutes,
   parseProcessStaleSeconds,
-} from '@/lib/site-config-constants'
+} from '@/lib/site-config-values'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 import { getSteamNowPlayingByDeviceHashes } from '@/lib/steam-feed-merge'
 import { purgeExpiredUserActivitiesFromDbAndMemory } from '@/lib/user-activity-hydration'

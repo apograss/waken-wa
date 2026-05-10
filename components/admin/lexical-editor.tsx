@@ -131,11 +131,23 @@ function EditorToolbar({ editor }: { editor: LexicalEditorInstance }) {
       editor.update(() => {
         const sel = $getSelection()
         if (!$isRangeSelection(sel)) return
-        if (target === 'paragraph') $setBlocksType(sel, () => $createParagraphNode())
-        else if (target === 'h1') $setBlocksType(sel, () => $createHeadingNode('h1'))
-        else if (target === 'h2') $setBlocksType(sel, () => $createHeadingNode('h2'))
-        else if (target === 'h3') $setBlocksType(sel, () => $createHeadingNode('h3'))
-        else if (target === 'quote') $setBlocksType(sel, () => $createQuoteNode())
+        switch (target) {
+          case 'paragraph':
+            $setBlocksType(sel, () => $createParagraphNode())
+            break
+          case 'h1':
+            $setBlocksType(sel, () => $createHeadingNode('h1'))
+            break
+          case 'h2':
+            $setBlocksType(sel, () => $createHeadingNode('h2'))
+            break
+          case 'h3':
+            $setBlocksType(sel, () => $createHeadingNode('h3'))
+            break
+          case 'quote':
+            $setBlocksType(sel, () => $createQuoteNode())
+            break
+        }
       })
     },
     [editor, blockType],

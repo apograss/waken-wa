@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { createLexicalTextContent } from '@/components/admin/lexical-editor'
 import {
   INSPIRATION_DRAFT_STORAGE_KEY,
   INSPIRATION_DRAFT_STORAGE_KEY_V1,
-} from '@/components/admin/inspiration-manager-constants'
-import { createLexicalTextContent } from '@/components/admin/lexical-editor'
+} from '@/constants/inspiration-manager'
 import { lexicalTextContent } from '@/lib/inspiration-lexical'
 import type {
   ActivityFeedData,

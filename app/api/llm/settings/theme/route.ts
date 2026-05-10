@@ -1,5 +1,5 @@
+import { SITE_SETTINGS_THEME_CATEGORY_KEYS } from '@/constants/site-settings'
 import { createLlmSettingsCategoryRoute } from '@/lib/llm-settings-category-route'
-import { SITE_SETTINGS_THEME_CATEGORY_KEYS } from '@/lib/site-settings-constants'
 import { pickThemeSettingsFromConfig } from '@/lib/site-settings-read'
 import { persistThemeSettingsFromPrepared } from '@/lib/site-settings-write'
 

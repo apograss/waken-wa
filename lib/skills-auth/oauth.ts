@@ -3,21 +3,21 @@ import { randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { and, desc, eq, gt, isNull } from 'drizzle-orm'
 
-import { db } from '@/lib/db'
-import { skillsOauthAuthorizeCodes, skillsOauthTokens } from '@/lib/drizzle-schema'
-import { createRandomSecretToken } from '@/lib/skills-auth/secrets'
-import { normalizeAiClientId } from '@/lib/skills-auth/shared'
-import type {
-  SkillsOauthAuthorizeRequest,
-  SkillsOauthAuthorizeSummaryRow,
-  SkillsOauthExchangeResult,
-} from '@/lib/skills-auth/types'
 import {
   SKILLS_AUTHORIZE_CODE_DEFAULT_TTL_MS,
   SKILLS_MIN_TOKEN_TTL_MS,
   SKILLS_OAUTH_TOKEN_DEFAULT_TTL_MS,
-} from '@/lib/skills-constants'
+} from '@/constants/skills'
+import { db } from '@/lib/db'
+import { skillsOauthAuthorizeCodes, skillsOauthTokens } from '@/lib/drizzle-schema'
+import { createRandomSecretToken } from '@/lib/skills-auth/secrets'
+import { normalizeAiClientId } from '@/lib/skills-auth/shared'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
+import type {
+  SkillsOauthAuthorizeRequest,
+  SkillsOauthAuthorizeSummaryRow,
+  SkillsOauthExchangeResult,
+} from '@/types/skills-auth'
 
 export async function hasSkillsOauthTokenConfigured(): Promise<boolean> {
   const now = sqlTimestamp()

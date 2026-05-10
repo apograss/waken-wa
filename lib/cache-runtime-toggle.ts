@@ -3,7 +3,7 @@ import 'server-only'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
 import { hasRedisConfigured } from '@/lib/redis-client'
 import { readSiteConfigV2Record } from '@/lib/site-config-v2'
 

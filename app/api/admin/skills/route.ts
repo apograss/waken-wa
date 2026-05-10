@@ -4,7 +4,7 @@ import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { updateSiteConfigFromPayload } from '@/lib/llm-site-config'
 import { readJsonObject } from '@/lib/request-json'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import { parseIntegerInRangeForWrite } from '@/lib/site-config-constants'
+import { parseIntegerInRangeForWrite } from '@/lib/site-config-values'
 import {
   clearSkillsApiKey,
   getSkillsSecretEnvStatus,

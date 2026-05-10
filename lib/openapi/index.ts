@@ -5,7 +5,7 @@ import { buildDevicePaths } from '@/lib/openapi/paths/device'
 import { buildInspirationPaths } from '@/lib/openapi/paths/inspiration'
 import { buildLlmPaths } from '@/lib/openapi/paths/llm'
 import { buildMcpPaths } from '@/lib/openapi/paths/mcp'
-import type { OpenApiDocument } from '@/lib/openapi/types'
+import type { OpenApiDocument } from '@/types/openapi'
 
 export function getOpenApiDocument(baseUrl: string): OpenApiDocument {
   return {

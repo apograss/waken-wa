@@ -33,20 +33,19 @@ import {
   formatCourseTimeRanges,
   getPeriodPartLabel,
   getWeekdayOptions,
-  type ScheduleFormBaseline,
-  type ScheduleManagerHandle,
-  type ScheduleManagerInitialData,
 } from '@/components/admin/schedule-manager-utils'
 import { SiteSettingsMigrationCard } from '@/components/admin/site-settings-migration-card'
 import { SortablePeriodTemplatePart } from '@/components/admin/sortable-period-template-part'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
-import type { SiteSettingsMigrationInfo } from '@/components/admin/web-settings-types'
 import { WeekTimetableGrid } from '@/components/admin/week-timetable-grid'
 import { useSiteTimeFormat } from '@/components/site-timezone-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+} from '@/constants/site-config'
 import { buildAdminSettingsPatchBody } from '@/lib/admin-settings-patch-body'
 import {
   backfillCoursePeriodIdsFromTemplate,
@@ -61,9 +60,12 @@ import {
   validateCoursePeriodIdsAgainstTemplate,
 } from '@/lib/schedule-courses'
 import { exportCoursesToIcs } from '@/lib/schedule-ics'
-import {
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-} from '@/lib/site-config-constants'
+import type {
+  ScheduleFormBaseline,
+  ScheduleManagerHandle,
+  ScheduleManagerInitialData,
+} from '@/types/schedule-manager'
+import type { SiteSettingsMigrationInfo } from '@/types/web-settings'
 
 export type { ScheduleManagerHandle }
 

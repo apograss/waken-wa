@@ -217,27 +217,31 @@ export function normalizePublicPageFontOptions(raw: unknown): PublicPageFontOpti
       family ||
       (mode === 'default' ? 'Default font' : '')
 
-    if (mode === 'default') {
-      out.push({
-        mode,
-        label: label || 'Default font',
-        family: '',
-      })
-    } else if (mode === 'google') {
-      if (!family) continue
-      out.push({
-        mode,
-        label: label || family,
-        family,
-      })
-    } else {
-      if (!family || !isAllowedPublicPageFontUrl(url)) continue
-      out.push({
-        mode,
-        label: label || family,
-        family,
-        url,
-      })
+    switch (mode) {
+      case 'default':
+        out.push({
+          mode,
+          label: label || 'Default font',
+          family: '',
+        })
+        break
+      case 'google':
+        if (!family) continue
+        out.push({
+          mode,
+          label: label || family,
+          family,
+        })
+        break
+      case 'custom':
+        if (!family || !isAllowedPublicPageFontUrl(url)) continue
+        out.push({
+          mode,
+          label: label || family,
+          family,
+          url,
+        })
+        break
     }
 
     if (out.length >= MAX_OPTIONS) {
@@ -371,13 +375,22 @@ export function buildPublicPageFontRuntime(preferenceRaw: unknown): {
 }`)
 
   let stylesheetHref: string | null = null
-  if (preference.source === 'preset') {
-    const preset = getPublicPageFontPresetById(preference.presetId)
-    if (preset && preset.id === 'notoSerifSc') {
-      stylesheetHref = buildGoogleFontsStylesheetHref(preset.family)
+  switch (preference.source) {
+    case 'preset': {
+      const preset = getPublicPageFontPresetById(preference.presetId)
+      if (preset && preset.id === 'notoSerifSc') {
+        stylesheetHref = buildGoogleFontsStylesheetHref(preset.family)
+      }
+      break
     }
-  } else if (preference.source === 'google' && preference.googleFamily) {
-    stylesheetHref = buildGoogleFontsStylesheetHref(preference.googleFamily)
+    case 'google':
+      if (preference.googleFamily) {
+        stylesheetHref = buildGoogleFontsStylesheetHref(preference.googleFamily)
+      }
+      break
+    case 'custom':
+    case 'default':
+      break
   }
 
   return {

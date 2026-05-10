@@ -7,10 +7,6 @@ import Image from 'next/image'
 import { useT } from 'next-i18next/client'
 
 import {
-  INSPIRATION_LIST_MAX_HEIGHT,
-  INSPIRATION_LIST_PAGE_SIZE,
-} from '@/components/admin/inspiration-manager-constants'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -26,6 +22,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  INSPIRATION_LIST_MAX_HEIGHT,
+  INSPIRATION_LIST_PAGE_SIZE,
+} from '@/constants/inspiration-manager'
 import {
   inspirationPlainPreviewAny,
 } from '@/lib/inspiration-preview'

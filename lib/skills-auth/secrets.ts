@@ -3,9 +3,9 @@ import { randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 
+import { SKILLS_SECRET_ENV_KEYS, SKILLS_SECRET_KEYS } from '@/constants/skills'
 import { db } from '@/lib/db'
 import { systemSecrets } from '@/lib/drizzle-schema'
-import { SKILLS_SECRET_ENV_KEYS, SKILLS_SECRET_KEYS } from '@/lib/skills-constants'
 
 export function createRandomSecretToken(): string {
   return randomBytes(32).toString('base64url')
@@ -13,10 +13,13 @@ export function createRandomSecretToken(): string {
 
 export function getEnvSecretValue(secretDbKey: string): string | null {
   let envName: string | null = null
-  if (secretDbKey === SKILLS_SECRET_KEYS.skillsApiKey) {
-    envName = SKILLS_SECRET_ENV_KEYS.skillsApiKey
-  } else if (secretDbKey === SKILLS_SECRET_KEYS.legacyMcpApiKey) {
-    envName = SKILLS_SECRET_ENV_KEYS.legacyMcpApiKey
+  switch (secretDbKey) {
+    case SKILLS_SECRET_KEYS.skillsApiKey:
+      envName = SKILLS_SECRET_ENV_KEYS.skillsApiKey
+      break
+    case SKILLS_SECRET_KEYS.legacyMcpApiKey:
+      envName = SKILLS_SECRET_ENV_KEYS.legacyMcpApiKey
+      break
   }
   if (!envName) return null
   const value = String(process.env[envName] ?? '').trim()

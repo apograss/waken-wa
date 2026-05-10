@@ -2,6 +2,12 @@ import bcrypt from 'bcryptjs'
 import { count } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
+import {
+  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
+  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
+  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
+  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
+} from '@/constants/site-config'
 import { hashPassword, validatePasswordStrength } from '@/lib/auth'
 import { getSession } from '@/lib/auth'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
@@ -12,16 +18,12 @@ import { getRequestLanguage } from '@/lib/i18n/request-locale'
 import { getT } from '@/lib/i18n/server'
 import { safeSiteConfigUpsert } from '@/lib/safe-site-config-upsert'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
+import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
 import {
   parseHistoryWindowMinutes,
   parseIntegerInRangeForWrite,
   parseProcessStaleSeconds,
-  SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
-  SITE_CONFIG_HISTORY_WINDOW_MIN_MINUTES,
-  SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
-  SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-} from '@/lib/site-config-constants'
-import { storeSiteConfigInlineImageSources } from '@/lib/site-config-image-sources'
+} from '@/lib/site-config-values'
 import { bootstrapSiteSettingsSplitStorage } from '@/lib/site-settings-write'
 import { normalizeCustomCss } from '@/lib/theme-css'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'

@@ -1,4 +1,8 @@
 import {
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+} from '@/constants/site-config'
+import {
   backfillCoursePeriodIdsFromTemplate,
   getCourseTimeSessions,
   newScheduleCourseId,
@@ -7,10 +11,9 @@ import {
   type SchedulePeriodPart,
   type SchedulePeriodTemplateItem,
 } from '@/lib/schedule-courses'
-import {
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-} from '@/lib/site-config-constants'
+import type {
+  ScheduleManagerInitialData,
+} from '@/types/schedule-manager'
 
 export function getWeekdayOptions(t: (key: string) => string): { value: number; label: string }[] {
   return [
@@ -28,35 +31,15 @@ export function getPeriodPartLabel(
   t: (key: string) => string,
   part: SchedulePeriodPart,
 ): string {
-  if (part === 'morning') return t('scheduleManager.periodParts.morning')
-  if (part === 'afternoon') return t('scheduleManager.periodParts.afternoon')
-  return t('scheduleManager.periodParts.evening')
-}
-
-/** Fields that PATCH together; used for dirty detection vs last load/save. */
-export type ScheduleFormBaseline = {
-  periodTemplate: SchedulePeriodTemplateItem[]
-  courses: ScheduleCourse[]
-  icsRaw: string
-  inClassOnHome: boolean
-  homeShowLocation: boolean
-  homeShowTeacher: boolean
-  homeShowNextUpcoming: boolean
-  homeAfterClassesLabel: string
-}
-
-export type ScheduleManagerInitialData = {
-  serverData: Record<string, unknown>
-  periodTemplate: SchedulePeriodTemplateItem[]
-  courses: ScheduleCourse[]
-  compatWarnings: string[]
-  icsRaw: string
-  inClassOnHome: boolean
-  homeShowLocation: boolean
-  homeShowTeacher: boolean
-  homeShowNextUpcoming: boolean
-  homeAfterClassesLabel: string
-  scheduleBaseline: ScheduleFormBaseline
+  switch (part) {
+    case 'morning':
+      return t('scheduleManager.periodParts.morning')
+    case 'afternoon':
+      return t('scheduleManager.periodParts.afternoon')
+    case 'evening':
+    default:
+      return t('scheduleManager.periodParts.evening')
+  }
 }
 
 export function buildScheduleManagerInitialData(
@@ -131,9 +114,4 @@ export function formatCourseTimeRanges(
     if (labels.length > 0) return labels.join('、')
   }
   return getCourseTimeSessions(c, periodTemplate).map((s) => `${s.startTime}–${s.endTime}`).join('、')
-}
-
-export interface ScheduleManagerHandle {
-  openImport: () => void
-  downloadIcs: () => void
 }

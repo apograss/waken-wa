@@ -40,11 +40,7 @@ import { Switch } from '@/components/ui/switch'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
-} from '@/lib/activity-api-constants'
-import {
-  ACTIVITY_UPDATE_MODE_OPTIONS,
-  type ActivityUpdateMode,
-} from '@/lib/activity-update-mode'
+} from '@/constants/activity-api'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_HISTORY_WINDOW_MAX_MINUTES,
@@ -52,7 +48,11 @@ import {
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
   SITE_CONFIG_PROCESS_STALE_MAX_SECONDS,
   SITE_CONFIG_PROCESS_STALE_MIN_SECONDS,
-} from '@/lib/site-config-constants'
+} from '@/constants/site-config'
+import {
+  ACTIVITY_UPDATE_MODE_OPTIONS,
+  type ActivityUpdateMode,
+} from '@/lib/activity-update-mode'
 import { TIMEZONE_OPTIONS } from '@/lib/timezone'
 
 function ToggleRow(props: {

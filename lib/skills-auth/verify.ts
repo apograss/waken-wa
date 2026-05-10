@@ -3,6 +3,7 @@ import { and, desc, eq, gt, isNull } from 'drizzle-orm'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
+import { SKILLS_SECRET_KEYS } from '@/constants/skills'
 import { db } from '@/lib/db'
 import { skillsOauthTokens } from '@/lib/drizzle-schema'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
@@ -19,14 +20,13 @@ import {
   parseMode,
   parseScope,
 } from '@/lib/skills-auth/shared'
+import { sqlTimestamp } from '@/lib/sql-timestamp'
 import type {
   GuardFail,
   GuardOk,
   SkillsVerifyFail,
   SkillsVerifyOk,
-} from '@/lib/skills-auth/types'
-import { SKILLS_SECRET_KEYS } from '@/lib/skills-constants'
-import { sqlTimestamp } from '@/lib/sql-timestamp'
+} from '@/types/skills-auth'
 
 async function verifyBcryptSecret(
   secretKey: string,

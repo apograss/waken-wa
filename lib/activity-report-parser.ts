@@ -4,7 +4,7 @@ import {
   ACTIVITY_METADATA_MAX_KEYS,
   DEVICE_BATTERY_PERCENT_MAX,
   DEVICE_BATTERY_PERCENT_MIN,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
 import {
   DEVICE_BATTERY_CHARGING_METADATA_KEY,
   parseIsChargingFromBody,

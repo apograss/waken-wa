@@ -1,4 +1,4 @@
-import type { JsonSchema } from '@/lib/openapi/types'
+import type { JsonSchema } from '@/types/openapi'
 
 export function jsonContent(schema: JsonSchema, examples?: Record<string, unknown>) {
   return {

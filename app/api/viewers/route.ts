@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import {
+  VIEWER_PRESENCE_COOKIE_MAX_AGE_SECONDS,
+  VIEWER_PRESENCE_COOKIE_NAME,
+} from '@/constants/viewer-presence'
 import { getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { resolveCookieSecureFlag } from '@/lib/cookie-security'
 import {
@@ -8,10 +12,6 @@ import {
   normalizeViewerPresenceId,
   touchViewerPresence,
 } from '@/lib/viewer-presence'
-import {
-  VIEWER_PRESENCE_COOKIE_MAX_AGE_SECONDS,
-  VIEWER_PRESENCE_COOKIE_NAME,
-} from '@/lib/viewer-presence-constants'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

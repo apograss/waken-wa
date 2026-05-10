@@ -25,7 +25,7 @@ import {
 import {
   DEVICE_BATTERY_PERCENT_MAX,
   DEVICE_BATTERY_PERCENT_MIN,
-} from '@/lib/activity-api-constants'
+} from '@/constants/activity-api'
 import {
   USER_ACTIVITY_PERSIST_MAX_MINUTES,
   USER_ACTIVITY_PERSIST_MIN_MINUTES_UI,

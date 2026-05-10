@@ -8,7 +8,6 @@ import { useT } from 'next-i18next/client'
 import type { RefObject } from 'react'
 
 import { FileSelectTrigger } from '@/components/admin/file-select-trigger'
-import { INSPIRATION_MAX_OUTPUT_EDGE } from '@/components/admin/inspiration-manager-constants'
 import { LexicalEditor } from '@/components/admin/lexical-editor'
 import { MarkdownContent } from '@/components/admin/markdown-content'
 import { LexicalContent } from '@/components/lexical-content'
@@ -18,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { INSPIRATION_MAX_OUTPUT_EDGE } from '@/constants/inspiration-manager'
 import {
   inspirationLooksLikeMarkdown,
 } from '@/lib/inspiration-preview'

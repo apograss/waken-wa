@@ -12,8 +12,11 @@ import {
   formatNumberRange,
   NumberSettingInput,
 } from '@/components/admin/number-setting-input'
+import { RuleToolsGroupEditor } from '@/components/admin/rule-tools-group-editor'
+import { RuleToolsGroupList } from '@/components/admin/rule-tools-group-list'
 import { ListDialogEditor } from '@/components/admin/rule-tools-list-dialog-editor'
-import { getErrorMessage, getTitleRuleRegexErrorMessage,summarizeAppRuleGroup } from '@/components/admin/rule-tools-utils'
+import { RuleToolsPreview } from '@/components/admin/rule-tools-preview'
+import { getErrorMessage } from '@/components/admin/rule-tools-utils'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
 import { useRuleToolsState } from '@/components/admin/use-rule-tools-state'
 import {
@@ -42,7 +45,6 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import type { AppTitleRuleMode } from '@/lib/app-message-rules'
 import { REPORTED_APP_TITLE_LIMIT_MAX } from '@/lib/reported-app-title-limit'
 import { cn } from '@/lib/utils'
 
@@ -173,517 +175,36 @@ export function WebSettingsRuleTools() {
     handleSaveDraft,
   } = state
 
-  const renderRulePreview = () => {
-    if (ruleToolsQuery.isLoading && previewItems.length === 0) {
-      return <p className="text-xs text-muted-foreground">{t('webSettings.loading')}</p>
-    }
-    if (previewItems.length === 0) {
-      return (
-        <p className="text-xs text-muted-foreground">
-          {t('webSettingsRuleTools.appRules.noRules')}
-        </p>
-      )
-    }
-
-    return (
-      <div className="space-y-3">
-        <motion.ul className="space-y-3" layout>
-          <AnimatePresence initial={false}>
-            {previewItems.map((item) => (
-              <motion.li
-                key={item.id}
-                className="rounded-xl border border-border/60 bg-background/70 px-3 py-3"
-                variants={sectionVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={sectionTransition}
-                layout
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-xs text-muted-foreground">
-                      {t('webSettingsRuleTools.appRules.ruleIndex', {
-                        index: item.position + 1,
-                        total: previewTotal,
-                      })}
-                    </p>
-                    <p className="text-sm leading-6 text-foreground">
-                      {summarizeAppRuleGroup(item, t)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={!currentPayload || busy}
-                    onClick={() => handleOpenRuleEditor(item.id)}
-                  >
-                    {t('common.edit')}
-                  </Button>
-                </div>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </motion.ul>
-        {previewOverflow > 0 ? (
-          <p className="text-xs text-muted-foreground">
-            {t('webSettingsRuleTools.appRules.moreRulesHint', { value: previewOverflow })}
-          </p>
-        ) : null}
-      </div>
-    )
+  const handleChooseRuleGroup = () => {
+    setDialogAppRuleEditorOpen(false)
+    setDialogAppRulesOpen(true)
   }
 
-  const renderRuleGroupList = (mobile: boolean) => {
-    const hasSearch = ruleSearchInput.trim().length > 0
-
-    return (
-      <div className="flex h-full min-h-0 flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              {t('webSettingsRuleTools.appRules.groupListTitle')}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t('webSettingsRuleTools.appRules.groupListDescription')}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto"
-            disabled={!currentPayload || busy}
-            onClick={() => handleAddRuleGroup(mobile)}
-          >
-            {t('webSettingsRuleTools.appRules.addGroup')}
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor={mobile ? 'app-rule-search-mobile' : 'app-rule-search-desktop'}>
-            {t('common.search')}
-          </Label>
-          <Input
-            id={mobile ? 'app-rule-search-mobile' : 'app-rule-search-desktop'}
-            value={ruleSearchInput}
-            onChange={(event) => {
-              setRuleSearchInput(event.target.value)
-              setGroupListPage(0)
-            }}
-            placeholder={t('webSettingsRuleTools.appRules.searchPlaceholder')}
-          />
-          {ruleToolsQuery.isFetching && !ruleToolsQuery.isLoading ? (
-            <p className="text-xs text-muted-foreground">{t('common.refreshing')}</p>
-          ) : null}
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {ruleToolsQuery.isLoading && !currentPayload ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 bg-background/30 px-6 py-8 text-center">
-              <p className="text-xs text-muted-foreground">{t('webSettings.loading')}</p>
-            </div>
-          ) : pagedRuleItems.length === 0 ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 bg-background/30 px-6 py-8 text-center">
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {hasSearch
-                  ? t('webSettingsRuleTools.appRules.noSearchResults')
-                  : t('webSettingsRuleTools.appRules.noGroups')}
-              </p>
-            </div>
-          ) : (
-            <div className="flex min-h-0 flex-1 flex-col gap-3">
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-background/20 p-3">
-                {pagedRuleItems.map((item) => {
-                  const isSelected = !mobile && activeSelectedRuleId === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={cn(
-                        'w-full rounded-lg border px-3 py-3 text-left transition-colors',
-                        isSelected
-                          ? 'border-primary/60 bg-background shadow-sm'
-                          : 'border-border/50 bg-background/60 hover:bg-background',
-                      )}
-                      onClick={() => {
-                        if (mobile) {
-                          openMobileRuleEditor(item)
-                          return
-                        }
-                        setSelectedRuleId(item.id)
-                      }}
-                    >
-                      <p className="text-xs font-medium text-foreground/80">
-                        {t('webSettingsRuleTools.appRules.ruleIndex', {
-                          index: item.position + 1,
-                          total: currentSummary?.ruleGroupCount ?? 0,
-                        })}
-                      </p>
-                      <p className="mt-1 break-all font-mono text-sm text-foreground">
-                        {item.processMatch || t('webSettingsRuleTools.appRules.matchEmpty')}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {summarizeAppRuleGroup(item, t)}
-                      </p>
-                    </button>
-                  )
-                })}
-              </div>
-              <ListPaginationBar
-                page={resolvedGroupListPage}
-                pageSize={SETTINGS_RULES_PAGE_SIZE}
-                total={filteredRuleItems.length}
-                onPageChange={setGroupListPage}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const renderRuleGroupEditor = (mobile: boolean) => {
-    if (ruleToolsQuery.isLoading && !selectedRule) {
-      return <p className="text-xs text-muted-foreground">{t('webSettings.loading')}</p>
-    }
-    if (!selectedRule) {
-      return (
-        <div className="flex h-full min-h-[18rem] items-center justify-center rounded-lg border border-dashed border-border/60 bg-background/30 px-6 py-8 text-center">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">
-              {t('webSettingsRuleTools.appRules.emptyEditorTitle')}
-            </p>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {t('webSettingsRuleTools.appRules.emptyEditorDescription')}
-            </p>
-            {mobile ? (
-              <div className="flex flex-wrap justify-center gap-2 pt-1">
-                <Button type="button" disabled={!currentPayload || busy} onClick={() => handleAddRuleGroup(true)}>
-                  {t('webSettingsRuleTools.appRules.addGroup')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setDialogAppRuleEditorOpen(false)
-                    setDialogAppRulesOpen(true)
-                  }}
-                >
-                  {t('webSettingsRuleTools.appRules.chooseAnotherGroup')}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )
-    }
-
-    const groupIndex = selectedRule.position
-    const total = currentSummary?.ruleGroupCount ?? 0
-
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/[0.08] p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                {t('webSettingsRuleTools.appRules.groupEditorTitle')}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t('webSettingsRuleTools.appRules.ruleIndex', {
-                  index: groupIndex + 1,
-                  total,
-                })}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {mobile ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setDialogAppRuleEditorOpen(false)
-                    setDialogAppRulesOpen(true)
-                  }}
-                >
-                  {t('webSettingsRuleTools.appRules.chooseAnotherGroup')}
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                disabled={busy || selectedRule.position <= 0}
-                onClick={() => handleMoveRuleGroup(selectedRule.id, selectedRule.position - 1)}
-              >
-                {t('webSettingsRuleTools.appRules.moveUp')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                disabled={busy || selectedRule.position >= total - 1}
-                onClick={() => handleMoveRuleGroup(selectedRule.id, selectedRule.position + 1)}
-              >
-                {t('webSettingsRuleTools.appRules.moveDown')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => handleDeleteRuleGroup(selectedRule.id)}
-              >
-                {t('common.delete')}
-              </Button>
-            </div>
-          </div>
-          <p className="text-xs leading-6 text-muted-foreground">
-            {t('webSettingsRuleTools.appRules.groupEditorDescription')}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="rule-group-process-match">
-            {t('webSettingsRuleTools.appRules.processMatchLabel')}
-          </Label>
-          <Autocomplete
-            id="rule-group-process-match"
-            items={ruleProcessSuggestionsQuery.data ?? []}
-            value={selectedRule.processMatch}
-            onValueChange={(value) =>
-              updateRuleDraft((current) => ({
-                ...current,
-                processMatch: value,
-              }))
-            }
-            placeholder={t('webSettingsRuleTools.appRules.processMatchPlaceholder')}
-            inputClassName="font-mono"
-            emptyText={
-              captureReportedAppsEnabled
-                ? t('webSettingsRuleTools.appRules.noMatchingHistoryApp')
-                : t('webSettingsRuleTools.appNameListEditor.historyDisabled')
-            }
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="rule-group-default-text">
-            {t('webSettingsRuleTools.appRules.defaultTextLabel')}
-          </Label>
-          <Textarea
-            id="rule-group-default-text"
-            rows={3}
-            value={selectedRule.defaultText ?? ''}
-            onChange={(event) =>
-              updateRuleDraft((current) => ({
-                ...current,
-                defaultText: event.target.value || undefined,
-              }))
-            }
-            placeholder={t('webSettingsRuleTools.appRules.defaultTextPlaceholder')}
-          />
-          <p className="text-xs leading-6 text-muted-foreground">
-            {t('webSettingsRuleTools.appRules.defaultTextDescription')}
-          </p>
-        </div>
-
-        <div className="space-y-3 rounded-xl border border-border/60 bg-background/70 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                {t('webSettingsRuleTools.appRules.titleRulesTitle')}
-              </p>
-              <p className="text-xs leading-6 text-muted-foreground">
-                {t('webSettingsRuleTools.appRules.titleRulesDescription')}
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={handleAddTitleRule}
-            >
-              {t('webSettingsRuleTools.appRules.addTitleRule')}
-            </Button>
-          </div>
-
-          {selectedRule.titleRules.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {t('webSettingsRuleTools.appRules.noTitleRules')}
-            </p>
-          ) : (
-            <motion.ul className="space-y-3" layout>
-              <AnimatePresence initial={false}>
-                {selectedRule.titleRules.map((titleRule, index) => {
-                  const isFirst = index <= 0
-                  const isLast = index >= selectedRule.titleRules.length - 1
-                  const regexError = getTitleRuleRegexErrorMessage(
-                    titleRule,
-                    groupIndex,
-                    index,
-                    t,
-                  )
-                  return (
-                    <motion.li
-                      key={titleRule.id}
-                      className="rounded-xl border border-border/60 bg-muted/[0.04] p-4"
-                      variants={sectionVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      transition={sectionTransition}
-                      layout
-                    >
-                      <div className="space-y-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-foreground">
-                              {t('webSettingsRuleTools.appRules.titleRuleIndex', {
-                                index: index + 1,
-                                total: selectedRule.titleRules.length,
-                              })}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {titleRule.mode === 'regex'
-                                ? t('webSettingsRuleTools.appRules.titleRuleModeRegexDescription')
-                                : t('webSettingsRuleTools.appRules.titleRuleModePlainDescription')}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              disabled={busy || isFirst}
-                              onClick={() => handleMoveTitleRule(titleRule.id, index - 1)}
-                            >
-                              {t('webSettingsRuleTools.appRules.moveUp')}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              disabled={busy || isLast}
-                              onClick={() => handleMoveTitleRule(titleRule.id, index + 1)}
-                            >
-                              {t('webSettingsRuleTools.appRules.moveDown')}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() => handleDeleteTitleRule(titleRule.id)}
-                            >
-                              {t('common.delete')}
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>{t('webSettingsRuleTools.appRules.titleRuleModeLabel')}</Label>
-                          <RadioGroup
-                            value={titleRule.mode}
-                            onValueChange={(value) => {
-                              const nextMode: AppTitleRuleMode =
-                                value === 'regex' ? 'regex' : 'plain'
-                              handleTitleRuleModeChange(titleRule.id, nextMode)
-                            }}
-                            className="grid gap-3 sm:grid-cols-2"
-                          >
-                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-3">
-                              <RadioGroupItem value="plain" id={`${titleRule.id}-plain`} />
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">
-                                  {t('webSettingsRuleTools.appRules.titleRuleModePlain')}
-                                </p>
-                                <p className="text-xs leading-6 text-muted-foreground">
-                                  {t('webSettingsRuleTools.appRules.titleRuleModePlainDescription')}
-                                </p>
-                              </div>
-                            </label>
-                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-3">
-                              <RadioGroupItem value="regex" id={`${titleRule.id}-regex`} />
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">
-                                  {t('webSettingsRuleTools.appRules.titleRuleModeRegex')}
-                                </p>
-                                <p className="text-xs leading-6 text-muted-foreground">
-                                  {t('webSettingsRuleTools.appRules.titleRuleModeRegexDescription')}
-                                </p>
-                              </div>
-                            </label>
-                          </RadioGroup>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${titleRule.id}-pattern`}>
-                            {t('webSettingsRuleTools.appRules.titleRulePatternLabel')}
-                          </Label>
-                          <Input
-                            id={`${titleRule.id}-pattern`}
-                            value={titleRule.pattern}
-                            onChange={(event) =>
-                              updateTitleRuleDraft(titleRule.id, (current) => ({
-                                ...current,
-                                pattern: event.target.value,
-                              }))
-                            }
-                            className="font-mono"
-                            placeholder={
-                              titleRule.mode === 'regex'
-                                ? t('webSettingsRuleTools.appRules.titleRulePatternRegexPlaceholder')
-                                : t('webSettingsRuleTools.appRules.titleRulePatternPlainPlaceholder')
-                            }
-                          />
-                          {regexError ? (
-                            <p className="text-xs leading-6 text-destructive">{regexError}</p>
-                          ) : null}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${titleRule.id}-text`}>
-                            {t('webSettingsRuleTools.appRules.titleRuleTextLabel')}
-                          </Label>
-                          <Textarea
-                            id={`${titleRule.id}-text`}
-                            rows={2}
-                            value={titleRule.text}
-                            onChange={(event) =>
-                              updateTitleRuleDraft(titleRule.id, (current) => ({
-                                ...current,
-                                text: event.target.value,
-                              }))
-                            }
-                            placeholder={t('webSettingsRuleTools.appRules.titleRuleTextPlaceholder')}
-                          />
-                          <p className="text-xs leading-6 text-muted-foreground">
-                            {t('webSettingsRuleTools.appRules.titleRuleTextDescription')}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.li>
-                  )
-                })}
-              </AnimatePresence>
-            </motion.ul>
-          )}
-        </div>
-
-        <p className="text-xs leading-6 text-muted-foreground">
-          {t('webSettingsRuleTools.appRules.helpText', {
-            process: '{process}',
-            title: '{title}',
-          })}
-        </p>
-      </div>
-    )
-  }
+  const renderRuleGroupEditor = (mobile: boolean) => (
+    <RuleToolsGroupEditor
+      mobile={mobile}
+      isLoading={ruleToolsQuery.isLoading}
+      hasPayload={Boolean(currentPayload)}
+      busy={busy}
+      selectedRule={selectedRule}
+      totalRuleCount={currentSummary?.ruleGroupCount ?? 0}
+      ruleProcessSuggestions={ruleProcessSuggestionsQuery.data ?? []}
+      captureReportedAppsEnabled={captureReportedAppsEnabled}
+      sectionVariants={sectionVariants}
+      sectionTransition={sectionTransition}
+      t={t}
+      onChooseGroup={handleChooseRuleGroup}
+      onAddRuleGroup={handleAddRuleGroup}
+      onMoveRuleGroup={handleMoveRuleGroup}
+      onDeleteRuleGroup={handleDeleteRuleGroup}
+      onAddTitleRule={handleAddTitleRule}
+      onDeleteTitleRule={handleDeleteTitleRule}
+      onMoveTitleRule={handleMoveTitleRule}
+      onTitleRuleModeChange={handleTitleRuleModeChange}
+      updateRuleDraft={updateRuleDraft}
+      updateTitleRuleDraft={updateTitleRuleDraft}
+    />
+  )
 
   if (ruleToolsQuery.isLoading && !currentPayload) {
     return <div className="text-sm text-muted-foreground">{t('webSettings.loading')}</div>
@@ -730,7 +251,17 @@ export function WebSettingsRuleTools() {
               <p className="text-xs font-medium tracking-wide text-muted-foreground">
                 {t('webSettingsRuleTools.appRules.previewTop3')}
               </p>
-              {renderRulePreview()}
+              <RuleToolsPreview
+                isLoading={ruleToolsQuery.isLoading}
+                previewItems={previewItems}
+                previewTotal={previewTotal}
+                previewOverflow={previewOverflow}
+                canEdit={Boolean(currentPayload) && !busy}
+                sectionVariants={sectionVariants}
+                sectionTransition={sectionTransition}
+                t={t}
+                onOpenRuleEditor={handleOpenRuleEditor}
+              />
             </div>
           </WebSettingsInset>
 
@@ -904,10 +435,48 @@ export function WebSettingsRuleTools() {
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 md:hidden">
-            {renderRuleGroupList(true)}
+            <RuleToolsGroupList
+              mobile
+              isLoading={ruleToolsQuery.isLoading}
+              isFetching={ruleToolsQuery.isFetching}
+              hasPayload={Boolean(currentPayload)}
+              busy={busy}
+              ruleSearchInput={ruleSearchInput}
+              pagedRuleItems={pagedRuleItems}
+              activeSelectedRuleId={activeSelectedRuleId}
+              totalRuleCount={currentSummary?.ruleGroupCount ?? 0}
+              resolvedGroupListPage={resolvedGroupListPage}
+              filteredRuleItemCount={filteredRuleItems.length}
+              t={t}
+              setRuleSearchInput={setRuleSearchInput}
+              setGroupListPage={setGroupListPage}
+              setSelectedRuleId={setSelectedRuleId}
+              onAddRuleGroup={handleAddRuleGroup}
+              onOpenMobileRuleEditor={openMobileRuleEditor}
+            />
           </div>
           <div className="hidden min-h-0 flex-1 overflow-hidden md:grid md:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
-            <div className="min-h-0 border-r px-6 py-4">{renderRuleGroupList(false)}</div>
+            <div className="min-h-0 border-r px-6 py-4">
+              <RuleToolsGroupList
+                mobile={false}
+                isLoading={ruleToolsQuery.isLoading}
+                isFetching={ruleToolsQuery.isFetching}
+                hasPayload={Boolean(currentPayload)}
+                busy={busy}
+                ruleSearchInput={ruleSearchInput}
+                pagedRuleItems={pagedRuleItems}
+                activeSelectedRuleId={activeSelectedRuleId}
+                totalRuleCount={currentSummary?.ruleGroupCount ?? 0}
+                resolvedGroupListPage={resolvedGroupListPage}
+                filteredRuleItemCount={filteredRuleItems.length}
+                t={t}
+                setRuleSearchInput={setRuleSearchInput}
+                setGroupListPage={setGroupListPage}
+                setSelectedRuleId={setSelectedRuleId}
+                onAddRuleGroup={handleAddRuleGroup}
+                onOpenMobileRuleEditor={openMobileRuleEditor}
+              />
+            </div>
             <div className="min-h-0 overflow-y-auto px-6 py-4">{renderRuleGroupEditor(false)}</div>
           </div>
         </DialogContent>

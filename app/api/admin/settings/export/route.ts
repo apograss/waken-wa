@@ -1,6 +1,12 @@
 import { desc, eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
+import {
+  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
+  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
+  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
+} from '@/constants/site-config'
 import { requireAdminSession, unauthorizedJson } from '@/lib/admin-api-auth'
 import { db } from '@/lib/db'
 import { apiTokens } from '@/lib/drizzle-schema'
@@ -15,12 +21,6 @@ import {
 } from '@/lib/schedule-courses'
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
-import {
-  SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
-  SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
-  SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
-} from '@/lib/site-config-constants'
 
 function getBaseUrl(request: Request): string {
   const envUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim()

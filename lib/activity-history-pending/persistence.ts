@@ -5,17 +5,17 @@ import {
   mergeBuckets,
   parseBuckets,
 } from '@/lib/activity-history-pending/helpers'
-import type {
-  PendingAppHistory,
-  PendingHistoryEntry,
-  PendingPlaySourceHistory,
-} from '@/lib/activity-history-pending/types'
 import { db } from '@/lib/db'
 import { activityAppHistory, activityPlaySourceHistory } from '@/lib/drizzle-schema'
 import { normalizeReportedAppTitleLimit } from '@/lib/reported-app-title-limit'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { sqlDate, sqlTimestamp } from '@/lib/sql-timestamp'
 import { toDbJsonValue } from '@/lib/sqlite-json'
+import type {
+  PendingAppHistory,
+  PendingHistoryEntry,
+  PendingPlaySourceHistory,
+} from '@/types/activity-history-pending'
 
 export async function getCaptureReportedActivityHistorySettings(): Promise<{
   enabled: boolean
