@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 import {
   clearApiTokenAuthCache,
@@ -67,11 +67,36 @@ export async function touchApiTokenLastUsed(id: number) {
 /** Resolve Bearer secret to token id and bump lastUsedAt. */
 export async function resolveActiveApiTokenFromPlainSecret(
   plainSecret: string,
-): Promise<{ id: number } | null> {
+): Promise<{
+  id: number
+  bypassSecondaryReview: boolean
+  bypassSecondaryReviewFirstUseOnly: boolean
+} | null> {
   const row = await findActiveApiTokenBySecret(plainSecret)
   if (!row) return null
   await touchApiTokenLastUsed(row.id)
-  return { id: row.id }
+  return {
+    id: row.id,
+    bypassSecondaryReview: row.bypassSecondaryReview === true,
+    bypassSecondaryReviewFirstUseOnly: row.bypassSecondaryReviewFirstUseOnly === true,
+  }
+}
+
+export async function consumeApiTokenSecondaryReviewBypass(id: number): Promise<boolean> {
+  const [updated] = await db
+    .update(apiTokens)
+    .set({ bypassSecondaryReviewConsumedAt: sqlTimestamp() })
+    .where(
+      and(
+        eq(apiTokens.id, id),
+        eq(apiTokens.bypassSecondaryReview, true),
+        isNull(apiTokens.bypassSecondaryReviewConsumedAt),
+      ),
+    )
+    .returning({ id: apiTokens.id })
+  if (!updated) return false
+  clearApiTokenAuthCache()
+  return true
 }
 
 export { clearApiTokenAuthCache }

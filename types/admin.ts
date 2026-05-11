@@ -19,6 +19,8 @@ export interface ApiTokenListRow {
   name: string
   token: string
   isActive: boolean
+  bypassSecondaryReview?: boolean
+  bypassSecondaryReviewFirstUseOnly?: boolean
   createdAt: string
   lastUsedAt: string | null
   recentDevices?: RecentDeviceRow[]
@@ -28,6 +30,8 @@ export interface AdminTokenOption {
   id: number
   name: string
   isActive: boolean
+  bypassSecondaryReview?: boolean
+  bypassSecondaryReviewFirstUseOnly?: boolean
 }
 
 export interface AdminDeviceItem {

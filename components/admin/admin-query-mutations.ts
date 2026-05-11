@@ -120,7 +120,11 @@ export async function deleteAdminInspirationOrphanAssets(keys: string[]): Promis
   }
 }
 
-export async function createAdminToken(name: string): Promise<{
+export async function createAdminToken(input: {
+  name: string
+  bypassSecondaryReview?: boolean
+  bypassSecondaryReviewFirstUseOnly?: boolean
+}): Promise<{
   token: string
   tokenBundleBase64: string | null
   endpoint: string | null
@@ -128,7 +132,7 @@ export async function createAdminToken(name: string): Promise<{
   const res = await fetch('/api/admin/tokens', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(input),
   })
   const data = await readJson<
     SuccessResponse<{ token?: string }> & {

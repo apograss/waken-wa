@@ -35,7 +35,16 @@ export async function GET(request: NextRequest) {
     type DeviceRow = { displayName: string; generatedHashKey: string; lastSeenAt: Date | null }
 
     const maskWithRecent = (
-      tokens: { id: number; name: string; token: string; isActive: boolean; createdAt: Date; lastUsedAt: Date | null }[],
+      tokens: {
+        id: number
+        name: string
+        token: string
+        isActive: boolean
+        bypassSecondaryReview: boolean | null
+        bypassSecondaryReviewFirstUseOnly: boolean | null
+        createdAt: Date
+        lastUsedAt: Date | null
+      }[],
       recentByToken: DeviceRow[][],
     ) =>
       tokens.map((t, i) => ({
@@ -125,7 +134,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name } = await readJsonObject(request)
+    const {
+      name,
+      bypassSecondaryReview,
+      bypassSecondaryReviewFirstUseOnly,
+    } = await readJsonObject(request)
 
     if (!name) {
       return NextResponse.json({ success: false, error: t('api.tokens.nameRequired') }, { status: 400 })
@@ -136,7 +149,17 @@ export async function POST(request: NextRequest) {
 
     const [result] = await db
       .insert(apiTokens)
-      .values({ name, token: storedToken, isActive: true })
+      .values({
+        name,
+        token: storedToken,
+        isActive: true,
+        bypassSecondaryReview:
+          typeof bypassSecondaryReview === 'boolean' ? bypassSecondaryReview : null,
+        bypassSecondaryReviewFirstUseOnly:
+          bypassSecondaryReview === true && typeof bypassSecondaryReviewFirstUseOnly === 'boolean'
+            ? bypassSecondaryReviewFirstUseOnly
+            : null,
+      })
       .returning()
     clearApiTokenAuthCache()
 

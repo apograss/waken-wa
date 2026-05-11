@@ -44,6 +44,9 @@ export async function GET(request: Request) {
           name: apiTokens.name,
           token: apiTokens.token,
           isActive: apiTokens.isActive,
+          bypassSecondaryReview: apiTokens.bypassSecondaryReview,
+          bypassSecondaryReviewFirstUseOnly: apiTokens.bypassSecondaryReviewFirstUseOnly,
+          bypassSecondaryReviewConsumedAt: apiTokens.bypassSecondaryReviewConsumedAt,
           createdAt: apiTokens.createdAt,
           lastUsedAt: apiTokens.lastUsedAt,
         })
@@ -185,12 +188,18 @@ export async function GET(request: Request) {
           id: number
           name: string
           isActive: boolean
+          bypassSecondaryReview: boolean | null
+          bypassSecondaryReviewFirstUseOnly: boolean | null
+          bypassSecondaryReviewConsumedAt: Date | null
           createdAt: Date
           lastUsedAt: Date | null
         }) => ({
           id: t.id,
           name: t.name,
           isActive: t.isActive,
+          bypassSecondaryReview: t.bypassSecondaryReview === true,
+          bypassSecondaryReviewFirstUseOnly: t.bypassSecondaryReviewFirstUseOnly === true,
+          bypassSecondaryReviewConsumedAt: t.bypassSecondaryReviewConsumedAt,
           createdAt: t.createdAt,
           lastUsedAt: t.lastUsedAt,
           token: null,

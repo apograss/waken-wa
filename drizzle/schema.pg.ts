@@ -27,6 +27,12 @@ export const apiTokens = pgTable('api_tokens', {
   name: varchar('name', { length: 200 }).notNull(),
   token: varchar('token', { length: 128 }).notNull().unique(),
   isActive: boolean('is_active').notNull().default(true),
+  bypassSecondaryReview: boolean('bypass_secondary_review'),
+  bypassSecondaryReviewFirstUseOnly: boolean('bypass_secondary_review_first_use_only'),
+  bypassSecondaryReviewConsumedAt: timestamp('bypass_secondary_review_consumed_at', {
+    mode: 'date',
+    withTimezone: true,
+  }),
   createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
     .notNull()
     .defaultNow(),

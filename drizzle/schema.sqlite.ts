@@ -27,6 +27,9 @@ export const apiTokens = sqliteTable('api_tokens', {
   name: text('name').notNull(),
   token: text('token').notNull().unique(),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  bypassSecondaryReview: integer('bypass_secondary_review', { mode: 'boolean' }),
+  bypassSecondaryReviewFirstUseOnly: integer('bypass_secondary_review_first_use_only', { mode: 'boolean' }),
+  bypassSecondaryReviewConsumedAt: tsOpt('bypass_secondary_review_consumed_at'),
   createdAt: ts('created_at'),
   lastUsedAt: tsOpt('last_used_at'),
 })

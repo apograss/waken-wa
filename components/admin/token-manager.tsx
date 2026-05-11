@@ -79,6 +79,9 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
   const { formatPattern } = useSiteTimeFormat()
   const [page, setPage] = useState(0)
   const [newTokenName, setNewTokenName] = useState('')
+  const [newTokenBypassSecondaryReview, setNewTokenBypassSecondaryReview] = useState(false)
+  const [newTokenBypassSecondaryReviewFirstUseOnly, setNewTokenBypassSecondaryReviewFirstUseOnly] =
+    useState(false)
   const [newToken, setNewToken] = useState<string | null>(null)
   const [newTokenBundle, setNewTokenBundle] = useState<string | null>(null)
   const [newEndpoint, setNewEndpoint] = useState<string | null>(null)
@@ -123,7 +126,12 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
 
   const createTokenMutation = useMutation({
     mutationFn: async () => {
-      return createAdminToken(newTokenName)
+      return createAdminToken({
+        name: newTokenName,
+        bypassSecondaryReview: newTokenBypassSecondaryReview,
+        bypassSecondaryReviewFirstUseOnly:
+          newTokenBypassSecondaryReview && newTokenBypassSecondaryReviewFirstUseOnly,
+      })
     },
     onSuccess: async (data) => {
       setNewToken(data.token ?? null)
@@ -206,6 +214,8 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
   const closeDialog = () => {
     setDialogOpen(false)
     setNewTokenName('')
+    setNewTokenBypassSecondaryReview(false)
+    setNewTokenBypassSecondaryReviewFirstUseOnly(false)
     setNewToken(null)
     setNewTokenBundle(null)
     setNewEndpoint(null)
@@ -368,6 +378,54 @@ export const TokenManager = forwardRef<TokenManagerHandle, object>(function Toke
                   value={newTokenName}
                   onChange={(event) => setNewTokenName(event.target.value)}
                 />
+              </div>
+              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="tokenBypassSecondaryReview" className="text-sm font-medium">
+                      {t('tokens.bypassSecondaryReviewTitle')}
+                    </Label>
+                  </div>
+                  <Switch
+                    id="tokenBypassSecondaryReview"
+                    checked={newTokenBypassSecondaryReview}
+                    onCheckedChange={(checked) => {
+                      setNewTokenBypassSecondaryReview(checked)
+                      if (!checked) {
+                        setNewTokenBypassSecondaryReviewFirstUseOnly(false)
+                      }
+                    }}
+                  />
+                </div>
+                {newTokenBypassSecondaryReview ? (
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p>{t('tokens.bypassSecondaryReviewWarning')}</p>
+                  </div>
+                ) : null}
+                {newTokenBypassSecondaryReview ? (
+                  <div className="space-y-3 rounded-md border border-border/50 bg-background/70 p-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor="tokenBypassSecondaryReviewFirstUseOnly"
+                          className="text-sm font-medium"
+                        >
+                          {t('tokens.bypassSecondaryReviewFirstUseOnlyTitle')}
+                        </Label>
+                      </div>
+                      <Switch
+                        id="tokenBypassSecondaryReviewFirstUseOnly"
+                        checked={newTokenBypassSecondaryReviewFirstUseOnly}
+                        onCheckedChange={setNewTokenBypassSecondaryReviewFirstUseOnly}
+                      />
+                    </div>
+                    {newTokenBypassSecondaryReviewFirstUseOnly ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t('tokens.bypassSecondaryReviewFirstUseHint')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={closeDialog}>

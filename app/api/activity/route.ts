@@ -17,7 +17,10 @@ import {
   USER_ACTIVITY_DB_SYNCED_METADATA_KEY,
   USER_PERSIST_EXPIRES_AT_METADATA_KEY,
 } from '@/lib/activity-store'
-import { resolveActiveApiTokenFromPlainSecret } from '@/lib/api-token-secret'
+import {
+  consumeApiTokenSecondaryReviewBypass,
+  resolveActiveApiTokenFromPlainSecret,
+} from '@/lib/api-token-secret'
 import { getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
@@ -68,7 +71,13 @@ function stripMediaAppIconFields(metadata: Record<string, unknown>): Record<stri
   return { ...metadata, media: nextMedia }
 }
 
-async function validateToken(request: NextRequest): Promise<{ id: number } | null> {
+async function validateToken(
+  request: NextRequest,
+): Promise<{
+  id: number
+  bypassSecondaryReview: boolean
+  bypassSecondaryReviewFirstUseOnly: boolean
+} | null> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -128,6 +137,11 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       )
     }
+    const canBypassSecondaryReview = !tokenInfo.bypassSecondaryReview
+      ? false
+      : tokenInfo.bypassSecondaryReviewFirstUseOnly
+        ? await consumeApiTokenSecondaryReviewBypass(tokenInfo.id)
+        : true
 
     const body = await request.json()
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -174,7 +188,8 @@ export async function POST(request: NextRequest) {
 
     if (!deviceRecord) {
       const autoAccept = Boolean(siteCfg?.autoAcceptNewDevices)
-      const createdStatus = autoAccept ? 'active' : 'pending'
+      const skipReview = autoAccept || canBypassSecondaryReview
+      const createdStatus = skipReview ? 'active' : 'pending'
       const now = sqlTimestamp()
       const [created] = await db
         .insert(devices)
@@ -183,14 +198,14 @@ export async function POST(request: NextRequest) {
           displayName: device || 'Unknown Device',
           status: createdStatus,
           apiTokenId: tokenInfo.id,
-          lastSeenAt: autoAccept ? now : null,
+          lastSeenAt: skipReview ? now : null,
           updatedAt: now,
         })
         .returning()
       deviceRecord = created!
       clearDeviceAuthCache()
 
-      if (!autoAccept) {
+      if (!skipReview) {
         const approvalUrl = buildDeviceApprovalUrl(request, generatedHashKey)
         return NextResponse.json(
           {
@@ -236,10 +251,13 @@ export async function POST(request: NextRequest) {
 
     if (!deviceRecord.apiTokenId) {
       const now = sqlTimestamp()
+      const nextStatus = canBypassSecondaryReview ? 'active' : 'pending'
       const [updated] = await db
         .update(devices)
         .set({
-          status: 'pending',
+          status: nextStatus,
+          apiTokenId: tokenInfo.id,
+          lastSeenAt: canBypassSecondaryReview ? now : deviceRecord.lastSeenAt,
           updatedAt: now,
         })
         .where(eq(devices.id, deviceRecord.id))
@@ -248,6 +266,14 @@ export async function POST(request: NextRequest) {
         deviceRecord = updated
       }
       clearDeviceAuthCache()
+      if (canBypassSecondaryReview) {
+        if (deviceRecord.status !== 'active') {
+          return NextResponse.json(
+            { success: false, error: '设备不可用或不存在' },
+            { status: 403 },
+          )
+        }
+      } else {
       const approvalUrl = buildDeviceApprovalUrl(request, generatedHashKey)
       return NextResponse.json(
         {
@@ -263,15 +289,18 @@ export async function POST(request: NextRequest) {
         },
         { status: 202 },
       )
+      }
     }
 
     if (deviceRecord.apiTokenId && deviceRecord.apiTokenId !== tokenInfo.id) {
       const now = sqlTimestamp()
+      const nextStatus = canBypassSecondaryReview ? 'active' : 'pending'
       const [updated] = await db
         .update(devices)
         .set({
-          status: 'pending',
+          status: nextStatus,
           apiTokenId: tokenInfo.id,
+          lastSeenAt: canBypassSecondaryReview ? now : deviceRecord.lastSeenAt,
           updatedAt: now,
         })
         .where(eq(devices.id, deviceRecord.id))
@@ -280,6 +309,14 @@ export async function POST(request: NextRequest) {
         deviceRecord = updated
       }
       clearDeviceAuthCache()
+      if (canBypassSecondaryReview) {
+        if (deviceRecord.status !== 'active') {
+          return NextResponse.json(
+            { success: false, error: '设备不可用或不存在' },
+            { status: 403 },
+          )
+        }
+      } else {
       const approvalUrl = buildDeviceApprovalUrl(request, generatedHashKey)
       return NextResponse.json(
         {
@@ -295,6 +332,7 @@ export async function POST(request: NextRequest) {
         },
         { status: 202 },
       )
+      }
     }
 
     if (
