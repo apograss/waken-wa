@@ -58,7 +58,9 @@
     },
     "profile": {
       "defaultName": "User",
-      "defaultBio": "Building something awesome"
+      "defaultBio": "Building something awesome",
+      "todayStatusLabel": "Today's status",
+      "todayStatusBusy": "Busy right now"
     },
     "footer": {
       "watchingPrefix": "Online now:",

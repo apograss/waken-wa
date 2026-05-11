@@ -48,6 +48,12 @@ import {
   parseThemeCustomSurface,
   THEME_CUSTOM_SURFACE_DEFAULTS,
 } from '@/lib/theme-custom-surface'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 import type { RuleToolsExportPayload } from '@/types/rule-tools'
 import type {
   PublicPageFontOptionForm,
@@ -369,6 +375,18 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
   }
   if ('profileOnlinePulseEnabled' in web && typeof web.profileOnlinePulseEnabled === 'boolean') {
     patch.profileOnlinePulseEnabled = web.profileOnlinePulseEnabled
+  }
+  if ('todayStatusEmoji' in web) {
+    patch.todayStatusEmoji = normalizeTodayStatusEmoji(web.todayStatusEmoji)
+  }
+  if ('todayStatusText' in web) {
+    patch.todayStatusText = normalizeTodayStatusText(web.todayStatusText)
+  }
+  if ('todayStatusExpiresAt' in web) {
+    patch.todayStatusExpiresAt = normalizeTodayStatusExpiresAt(web.todayStatusExpiresAt)
+  }
+  if ('todayStatusBusy' in web) {
+    patch.todayStatusBusy = normalizeTodayStatusBusy(web.todayStatusBusy)
   }
   if ('userNote' in web && typeof web.userNote === 'string') patch.userNote = web.userNote.trim()
   if ('userNoteHitokotoEnabled' in web && typeof web.userNoteHitokotoEnabled === 'boolean') {

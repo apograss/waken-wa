@@ -58,7 +58,9 @@
     },
     "profile": {
       "defaultName": "用户",
-      "defaultBio": "正在构建一些有意思的东西"
+      "defaultBio": "正在构建一些有意思的东西",
+      "todayStatusLabel": "今日状态",
+      "todayStatusBusy": "当前繁忙"
     },
     "footer": {
       "watchingPrefix": "当前在线",

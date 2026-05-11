@@ -31,6 +31,7 @@ import {
   LLM_DENIED_SITE_CONFIG_KEYS,
   normalizeAiToolMode,
   resolveColorSettings,
+  resolveTodayStatusSettings,
 } from '@/lib/llm-site-config-helpers'
 import {
   mediaPlaySourceBlocklistFromRules,
@@ -601,6 +602,12 @@ export async function prepareSiteConfigValuesFromPayload(
     adminThemeColor,
     adminBackgroundColor,
   } = resolveColorSettings(normalizedBody, existing)
+  const {
+    todayStatusEmoji,
+    todayStatusText,
+    todayStatusExpiresAt,
+    todayStatusBusy,
+  } = resolveTodayStatusSettings(normalizedBody, existing)
 
   const siteConfigValues = {
     adminThemeColor,
@@ -613,6 +620,10 @@ export async function prepareSiteConfigValuesFromPayload(
     avatarFetchByServerEnabled,
     profileOnlineAccentColor,
     profileOnlinePulseEnabled,
+    todayStatusEmoji,
+    todayStatusText,
+    todayStatusExpiresAt,
+    todayStatusBusy,
     userNote,
     userNoteHitokotoEnabled,
     userNoteTypewriterEnabled,

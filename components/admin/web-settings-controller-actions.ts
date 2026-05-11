@@ -39,6 +39,12 @@ import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import { omitRecordKeys, pickRecordKeys } from '@/lib/site-settings-record'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 import type { SiteConfig, SkillsAiAuthorizationItem, SkillsEditableConfig } from '@/types/web-settings'
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string
@@ -357,6 +363,10 @@ export async function SaveWebSettings(context: SaveSettingsContext) {
       adminBackgroundColor,
       avatarFetchByServerEnabled:
         isRemoteAvatarUrl(formRest.avatarUrl) && formRest.avatarFetchByServerEnabled === true,
+      todayStatusEmoji: normalizeTodayStatusEmoji(formRest.todayStatusEmoji) || null,
+      todayStatusText: normalizeTodayStatusText(formRest.todayStatusText) || null,
+      todayStatusExpiresAt: normalizeTodayStatusExpiresAt(formRest.todayStatusExpiresAt) || null,
+      todayStatusBusy: normalizeTodayStatusBusy(formRest.todayStatusBusy),
       historyWindowMinutes: normalizedHistoryWindowMinutes,
       processStaleSeconds: normalizedProcessStaleSeconds,
       mcpThemeToolsEnabled: context.form.mcpThemeToolsEnabled,

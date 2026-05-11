@@ -80,6 +80,10 @@ export interface SiteConfig {
   profileOnlineAccentColor: string
   /** Online status dot breathing animation (animate-pulse) */
   profileOnlinePulseEnabled: boolean
+  todayStatusEmoji: string
+  todayStatusText: string
+  todayStatusExpiresAt: string
+  todayStatusBusy: boolean
   userNote: string
   userNoteHitokotoEnabled: boolean
   userNoteTypewriterEnabled: boolean

@@ -75,6 +75,10 @@ export const SITE_SETTINGS_CORE_HEAVY_KEYS = [
 ] as const
 
 export const SITE_SETTINGS_MIGRATED_CORE_KEYS = [
+  'todayStatusEmoji',
+  'todayStatusText',
+  'todayStatusExpiresAt',
+  'todayStatusBusy',
   'mediaDisplayShowSource',
   'mediaDisplayShowCover',
   'mediaDisplayShowAppIcon',
@@ -116,6 +120,10 @@ export const SITE_SETTINGS_CORE_CATEGORY_KEYS = [
   'avatarFetchByServerEnabled',
   'profileOnlineAccentColor',
   'profileOnlinePulseEnabled',
+  'todayStatusEmoji',
+  'todayStatusText',
+  'todayStatusExpiresAt',
+  'todayStatusBusy',
   'userNote',
   'userNoteHitokotoEnabled',
   'userNoteHitokotoEncode',
@@ -191,6 +199,10 @@ export const SITE_SETTINGS_CLEAR_LEGACY_SITE_CONFIG_VALUES: Record<string, unkno
   avatarFetchByServerEnabled: false,
   profileOnlineAccentColor: null,
   profileOnlinePulseEnabled: null,
+  todayStatusEmoji: null,
+  todayStatusText: null,
+  todayStatusExpiresAt: null,
+  todayStatusBusy: false,
   userNote: '',
   userNoteHitokotoEnabled: false,
   userNoteTypewriterEnabled: false,

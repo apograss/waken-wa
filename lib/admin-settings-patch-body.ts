@@ -17,6 +17,12 @@ import {
 } from '@/lib/schedule-courses'
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
 import { normalizeSiteIconUrl } from '@/lib/site-icon'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 
 /**
  * Build JSON body for PATCH /api/admin/settings from a GET response row plus overrides.
@@ -55,6 +61,11 @@ export function buildAdminSettingsPatchBody(
       ) ?? null,
     profileOnlinePulseEnabled:
       (data as Record<string, unknown>).profileOnlinePulseEnabled !== false,
+    todayStatusEmoji: normalizeTodayStatusEmoji((data as Record<string, unknown>).todayStatusEmoji) || null,
+    todayStatusText: normalizeTodayStatusText((data as Record<string, unknown>).todayStatusText) || null,
+    todayStatusExpiresAt:
+      normalizeTodayStatusExpiresAt((data as Record<string, unknown>).todayStatusExpiresAt) || null,
+    todayStatusBusy: normalizeTodayStatusBusy((data as Record<string, unknown>).todayStatusBusy),
     userNote: data.userNote ?? '',
     userNoteHitokotoEnabled: Boolean(data.userNoteHitokotoEnabled),
     userNoteTypewriterEnabled: Boolean(data.userNoteTypewriterEnabled),

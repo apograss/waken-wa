@@ -32,6 +32,12 @@ import { normalizeSiteIconUrl } from '@/lib/site-icon'
 import { omitRecordKeys } from '@/lib/site-settings-record'
 import { normalizeStatusCardSettings } from '@/lib/status-card-options'
 import { normalizeTimezone } from '@/lib/timezone'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 import type { SiteConfig } from '@/types/web-settings'
 
 export type WebSettingsFormDefaults = {
@@ -174,6 +180,10 @@ export function buildWebSettingsForm(
         typeof data.profileOnlineAccentColor === 'string' ? data.profileOnlineAccentColor : '',
       ) ?? '',
     profileOnlinePulseEnabled: data.profileOnlinePulseEnabled !== false,
+    todayStatusEmoji: normalizeTodayStatusEmoji(data.todayStatusEmoji),
+    todayStatusText: normalizeTodayStatusText(data.todayStatusText),
+    todayStatusExpiresAt: normalizeTodayStatusExpiresAt(data.todayStatusExpiresAt),
+    todayStatusBusy: normalizeTodayStatusBusy(data.todayStatusBusy),
     userNote: data.userNote ?? '',
     userNoteHitokotoEnabled: Boolean(data.userNoteHitokotoEnabled),
     userNoteTypewriterEnabled: Boolean(data.userNoteTypewriterEnabled),

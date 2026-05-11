@@ -9,6 +9,12 @@ import {
   normalizeStatusCardSettings,
 } from '@/lib/status-card-options'
 import { parseThemeCustomSurface } from '@/lib/theme-custom-surface'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 
 function normalizeStringArrayField(raw: unknown): string[] {
   const parsed = parseJsonString(raw)
@@ -27,6 +33,10 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     siteIconUrl: normalizeSiteIconUrl(config.siteIconUrl ?? '') ?? null,
     hideInspirationOnHome: config.hideInspirationOnHome === true,
     smoothScrollEnabled: config.smoothScrollEnabled === true,
+    todayStatusEmoji: normalizeTodayStatusEmoji(config.todayStatusEmoji) || null,
+    todayStatusText: normalizeTodayStatusText(config.todayStatusText) || null,
+    todayStatusExpiresAt: normalizeTodayStatusExpiresAt(config.todayStatusExpiresAt) || null,
+    todayStatusBusy: normalizeTodayStatusBusy(config.todayStatusBusy),
     mediaDisplayShowSource: config.mediaDisplayShowSource === true,
     mediaDisplayShowCover: config.mediaDisplayShowCover === true,
     mediaDisplayShowAppIcon: config.mediaDisplayShowAppIcon === true,

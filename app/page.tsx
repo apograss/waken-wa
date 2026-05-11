@@ -40,6 +40,12 @@ import {
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { getThemePresetCss } from '@/lib/theme-css'
 import { coerceDbTimestampToIsoUtc, normalizeTimezone } from '@/lib/timezone'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 import packageJson from '@/package.json'
 
 // Force dynamic rendering so each request gets fresh data.
@@ -66,6 +72,12 @@ export default async function Home() {
   const avatarUrl = config.avatarUrl
   const avatarSrc = resolveAvatarUrl(avatarUrl, config.avatarFetchByServerEnabled === true, 'public')
   const shouldPrefetchAvatar = isRemoteAvatarUrl(avatarUrl)
+  // Config object for later use
+  const cfg = config as Record<string, unknown>
+  const todayStatusEmoji = normalizeTodayStatusEmoji(cfg.todayStatusEmoji)
+  const todayStatusText = normalizeTodayStatusText(cfg.todayStatusText)
+  const todayStatusExpiresAt = normalizeTodayStatusExpiresAt(cfg.todayStatusExpiresAt)
+  const todayStatusBusy = normalizeTodayStatusBusy(cfg.todayStatusBusy)
   const userNote = config.userNote
   const currentlyText = config.currentlyText
   const earlierText = config.earlierText
@@ -73,9 +85,6 @@ export default async function Home() {
   const themePresetCss = getThemePresetCss(config.themePreset, config.themeCustomSurface)
   const customCss = String(config.customCss ?? '')
   const themeCss = `${themePresetCss}\n${customCss}`.trim()
-
-  // Config object for later use
-  const cfg = config as Record<string, unknown>
 
   const [activityInitialFeed, inspirationRows, [countRow]] = await Promise.all([
     getActivityFeedData(undefined, { forPublicFeed: true }),
@@ -203,6 +212,10 @@ export default async function Home() {
                             avatarUrl={avatarSrc}
                             profileOnlineAccentColor={config.profileOnlineAccentColor ?? null}
                             profileOnlinePulseEnabled={config.profileOnlinePulseEnabled ?? null}
+                            todayStatusEmoji={todayStatusEmoji}
+                            todayStatusText={todayStatusText}
+                            todayStatusExpiresAt={todayStatusExpiresAt}
+                            todayStatusBusy={todayStatusBusy}
                           />
                         </div>
                         {showScheduleHomeColumn ? (

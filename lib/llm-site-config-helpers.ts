@@ -4,6 +4,12 @@ import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-c
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { normalizeSiteConfigShape } from '@/lib/site-config-normalize'
 import { sanitizeSiteConfigImagesForClient } from '@/lib/site-image-urls'
+import {
+  normalizeTodayStatusBusy,
+  normalizeTodayStatusEmoji,
+  normalizeTodayStatusExpiresAt,
+  normalizeTodayStatusText,
+} from '@/lib/today-status'
 
 export type SiteConfigClientMode = 'public' | 'admin' | 'masked'
 
@@ -179,5 +185,37 @@ export function resolveColorSettings(
     profileOnlinePulseEnabled,
     adminThemeColor,
     adminBackgroundColor,
+  }
+}
+
+export function resolveTodayStatusSettings(
+  body: Record<string, unknown>,
+  existing: SiteConfigRecord | null,
+) {
+  let todayStatusEmoji = normalizeTodayStatusEmoji(existing?.todayStatusEmoji)
+  if ('todayStatusEmoji' in body) {
+    todayStatusEmoji = normalizeTodayStatusEmoji(body.todayStatusEmoji)
+  }
+
+  let todayStatusText = normalizeTodayStatusText(existing?.todayStatusText)
+  if ('todayStatusText' in body) {
+    todayStatusText = normalizeTodayStatusText(body.todayStatusText)
+  }
+
+  let todayStatusExpiresAt = normalizeTodayStatusExpiresAt(existing?.todayStatusExpiresAt)
+  if ('todayStatusExpiresAt' in body) {
+    todayStatusExpiresAt = normalizeTodayStatusExpiresAt(body.todayStatusExpiresAt)
+  }
+
+  let todayStatusBusy = normalizeTodayStatusBusy(existing?.todayStatusBusy)
+  if ('todayStatusBusy' in body) {
+    todayStatusBusy = normalizeTodayStatusBusy(body.todayStatusBusy)
+  }
+
+  return {
+    todayStatusEmoji,
+    todayStatusText,
+    todayStatusExpiresAt,
+    todayStatusBusy,
   }
 }
