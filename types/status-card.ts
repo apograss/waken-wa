@@ -20,8 +20,8 @@ export type StatusCardSettings = {
   statusCardShowNote: boolean
   statusCardPreferGame: boolean
   statusCardShowInClassStatus: boolean
-  statusCardWidth: number
-  statusCardHeight: number
+  statusCardWidth: number | 'auto'
+  statusCardHeight: number | 'auto'
   statusCardRadius: number
   statusCardBg: string
   statusCardSignatureBg: string
@@ -37,7 +37,7 @@ export type StatusCardDimensionParser = (
   min: number,
   max: number,
   key: string,
-) => number
+) => number | 'auto'
 
 export type StatusCardState = 'active' | 'empty' | 'locked' | 'disabled'
 

@@ -81,9 +81,9 @@ export function renderAuroraStatusCardSvg({
   const nodes: string[] = []
   const defs: string[] = [
     `<linearGradient id="auroraBg" x1="0" y1="0" x2="${width}" y2="${options.height}">
-      <stop offset="0%" stop-color="${options.bg}"/>
-      <stop offset="54%" stop-color="${options.bg}"/>
-      <stop offset="100%" stop-color="${options.accent}" stop-opacity="0.16"/>
+      <stop offset="0%" stop-color="${options.accent}" stop-opacity="0.18"/>
+      <stop offset="46%" stop-color="${options.bg}"/>
+      <stop offset="100%" stop-color="${options.bg}"/>
     </linearGradient>`,
     `<radialGradient id="auroraGlowA" cx="18%" cy="10%" r="75%">
       <stop offset="0%" stop-color="${options.accent}" stop-opacity="0.34"/>

@@ -1,4 +1,8 @@
-import { STATUS_CARD_DEFAULTS } from '@/constants/status-card'
+import {
+  STATUS_CARD_DEFAULT_HEADER_HEIGHT,
+  STATUS_CARD_DEFAULT_WIDTH,
+  STATUS_CARD_DEFAULTS,
+} from '@/constants/status-card'
 import { parseIntegerInRangeForWrite } from '@/lib/site-config-values'
 import type {
   StatusCardDimensionParser,
@@ -51,7 +55,23 @@ export function normalizeStatusCardHexColor(value: unknown, fallback: string): s
   return normalizeStatusCardRawHexColor(value) ?? fallback
 }
 
+function numericStatusCardDimensionFallback(value: unknown, defaultValue: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : defaultValue
+}
+
 export function normalizeStatusCardDimension(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number | 'auto' {
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'auto') {
+    return 'auto'
+  }
+  return normalizeStatusCardNumericDimension(value, fallback, min, max)
+}
+
+function normalizeStatusCardNumericDimension(
   value: unknown,
   fallback: number,
   min: number,
@@ -184,25 +204,33 @@ export function normalizeStatusCardSettings(
       ),
     ),
     statusCardWidth: parseDimension(
-      resolveStatusCardValue(source, fallback, 'statusCardWidth', STATUS_CARD_DEFAULTS.statusCardWidth),
-      fallback.statusCardWidth ?? STATUS_CARD_DEFAULTS.statusCardWidth,
+      resolveStatusCardValue(source, fallback, 'statusCardWidth', STATUS_CARD_DEFAULT_WIDTH),
+      numericStatusCardDimensionFallback(
+        fallback.statusCardWidth,
+        STATUS_CARD_DEFAULT_WIDTH,
+      ),
       280,
       1200,
       'statusCardWidth',
     ),
     statusCardHeight: parseDimension(
-      resolveStatusCardValue(source, fallback, 'statusCardHeight', STATUS_CARD_DEFAULTS.statusCardHeight),
-      fallback.statusCardHeight ?? STATUS_CARD_DEFAULTS.statusCardHeight,
+      resolveStatusCardValue(source, fallback, 'statusCardHeight', STATUS_CARD_DEFAULT_HEADER_HEIGHT),
+      numericStatusCardDimensionFallback(
+        fallback.statusCardHeight,
+        STATUS_CARD_DEFAULT_HEADER_HEIGHT,
+      ),
       1,
       720,
       'statusCardHeight',
     ),
-    statusCardRadius: parseDimension(
+    statusCardRadius: normalizeStatusCardNumericDimension(
       resolveStatusCardValue(source, fallback, 'statusCardRadius', STATUS_CARD_DEFAULTS.statusCardRadius),
-      fallback.statusCardRadius ?? STATUS_CARD_DEFAULTS.statusCardRadius,
+      numericStatusCardDimensionFallback(
+        fallback.statusCardRadius,
+        STATUS_CARD_DEFAULTS.statusCardRadius,
+      ),
       0,
       80,
-      'statusCardRadius',
     ),
     statusCardBg: normalizeStatusCardHexColor(
       resolveStatusCardValue(source, fallback, 'statusCardBg', STATUS_CARD_DEFAULTS.statusCardBg),
@@ -242,6 +270,9 @@ export function parseStatusCardDimensionForWrite(
   min: number,
   max: number,
   key: string,
-): number {
+): number | 'auto' {
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'auto') {
+    return 'auto'
+  }
   return parseIntegerInRangeForWrite(value, min, max, key) ?? fallback
 }

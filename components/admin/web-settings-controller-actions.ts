@@ -289,20 +289,28 @@ export async function SaveWebSettings(context: SaveSettingsContext) {
       1,
       REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
     )
-    const normalizedStatusCardWidth = ValidateRange(
-      context.t,
-      context.t('webSettingsActivity.statusCard.widthLabel'),
-      formRest.statusCardWidth,
-      280,
-      1200,
-    )
-    const normalizedStatusCardHeight = ValidateRange(
-      context.t,
-      context.t('webSettingsActivity.statusCard.heightLabel'),
-      formRest.statusCardHeight,
-      1,
-      720,
-    )
+    const normalizedStatusCardWidth =
+      typeof formRest.statusCardWidth === 'string' &&
+      formRest.statusCardWidth.trim().toLowerCase() === 'auto'
+        ? 'auto'
+        : ValidateRange(
+            context.t,
+            context.t('webSettingsActivity.statusCard.widthLabel'),
+            formRest.statusCardWidth,
+            280,
+            1200,
+          )
+    const normalizedStatusCardHeight =
+      typeof formRest.statusCardHeight === 'string' &&
+      formRest.statusCardHeight.trim().toLowerCase() === 'auto'
+        ? 'auto'
+        : ValidateRange(
+            context.t,
+            context.t('webSettingsActivity.statusCard.heightLabel'),
+            formRest.statusCardHeight,
+            1,
+            720,
+          )
     const normalizedStatusCardRadius = ValidateRange(
       context.t,
       context.t('webSettingsActivity.statusCard.radiusLabel'),

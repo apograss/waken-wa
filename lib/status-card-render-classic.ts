@@ -108,7 +108,7 @@ export function renderClassicStatusCardSvg({
       const noteLineHeight = 17
       const noteLines = wrapTextLines(profile.note, Math.max(24, Math.floor(innerWidth / 7)), 2)
       const noteY = options.showAvatar
-        ? Math.max(headerBottom + 16, avatarY + avatarSize + 16)
+        ? Math.max(headerBottom + 24, avatarY + avatarSize + 24)
         : headerBottom + 14
       nodes.push(multilineTextElement({
         x: padding,

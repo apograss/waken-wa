@@ -1,4 +1,8 @@
 import {
+  STATUS_CARD_DEFAULT_HEADER_HEIGHT,
+  STATUS_CARD_DEFAULT_WIDTH,
+} from '@/constants/status-card'
+import {
   normalizeStatusCardCoverKey,
   normalizeStatusCardSettings,
   normalizeStatusCardTag,
@@ -35,8 +39,14 @@ export function GetStatusCardDimensions(
     statusCardRadius: radius,
   })
   return {
-    width: normalized.statusCardWidth,
-    height: normalized.statusCardHeight,
+    width:
+      normalized.statusCardWidth === 'auto'
+        ? STATUS_CARD_DEFAULT_WIDTH
+        : normalized.statusCardWidth,
+    height:
+      normalized.statusCardHeight === 'auto'
+        ? STATUS_CARD_DEFAULT_HEADER_HEIGHT
+        : normalized.statusCardHeight,
     radius: normalized.statusCardRadius,
   }
 }
@@ -104,8 +114,8 @@ export function BuildStatusCardPreviewPath(
   }
   params.set('preferGame', form.statusCardPreferGame ? '1' : '0')
   params.set('showInClassStatus', form.statusCardShowInClassStatus ? '1' : '0')
-  params.set('width', String(dimensions.width))
-  params.set('height', String(dimensions.height))
+  params.set('width', FormatStatusCardDimensionValue(form.statusCardWidth))
+  params.set('height', FormatStatusCardDimensionValue(form.statusCardHeight))
   params.set('radius', String(dimensions.radius))
   params.set('bg', form.statusCardBg)
   if (form.statusCardVariant === 'signature') {

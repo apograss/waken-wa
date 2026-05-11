@@ -259,6 +259,8 @@ export function StatusCardPreviewPanel() {
   )
   const previewWidthInput = FormatStatusCardDimensionValue(form.statusCardWidth)
   const previewHeightInput = FormatStatusCardDimensionValue(form.statusCardHeight)
+  const widthAuto = previewWidthInput === 'auto'
+  const heightAuto = previewHeightInput === 'auto'
 
   return (
     <WebSettingsInset className="space-y-4">
@@ -536,29 +538,61 @@ export function StatusCardPreviewPanel() {
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="status-card-width" className="text-xs text-muted-foreground">
-                {t('webSettingsActivity.statusCard.widthLabel')}
-              </Label>
+              <div className="flex min-h-5 items-center justify-between gap-2">
+                <Label htmlFor="status-card-width" className="text-xs text-muted-foreground">
+                  {t('webSettingsActivity.statusCard.widthLabel')}
+                </Label>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>{t('webSettingsActivity.statusCard.autoLabel')}</span>
+                  <Switch
+                    checked={widthAuto}
+                    onCheckedChange={(checked) =>
+                      patchForm(
+                        'statusCardWidth',
+                        checked ? 'auto' : STATUS_CARD_DEFAULTS.statusCardWidth,
+                      )
+                    }
+                    aria-label={t('webSettingsActivity.statusCard.widthAutoLabel')}
+                  />
+                </label>
+              </div>
               <NumberSettingInput
                 id="status-card-width"
                 min={280}
                 max={1200}
-                value={previewWidthInput}
+                value={widthAuto ? STATUS_CARD_DEFAULTS.statusCardWidth : previewWidthInput}
                 rangeMessage={formatNumberRange(280, 1200)}
                 onValueChange={(value) => patchForm('statusCardWidth', value)}
+                disabled={widthAuto}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="status-card-height" className="text-xs text-muted-foreground">
-                {t('webSettingsActivity.statusCard.heightLabel')}
-              </Label>
+              <div className="flex min-h-5 items-center justify-between gap-2">
+                <Label htmlFor="status-card-height" className="text-xs text-muted-foreground">
+                  {t('webSettingsActivity.statusCard.heightLabel')}
+                </Label>
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>{t('webSettingsActivity.statusCard.autoLabel')}</span>
+                  <Switch
+                    checked={heightAuto}
+                    onCheckedChange={(checked) =>
+                      patchForm(
+                        'statusCardHeight',
+                        checked ? 'auto' : STATUS_CARD_DEFAULTS.statusCardHeight,
+                      )
+                    }
+                    aria-label={t('webSettingsActivity.statusCard.heightAutoLabel')}
+                  />
+                </label>
+              </div>
               <NumberSettingInput
                 id="status-card-height"
                 min={1}
                 max={720}
-                value={previewHeightInput}
+                value={heightAuto ? STATUS_CARD_DEFAULTS.statusCardHeight : previewHeightInput}
                 rangeMessage={formatNumberRange(1, 720)}
                 onValueChange={(value) => patchForm('statusCardHeight', value)}
+                disabled={heightAuto}
               />
             </div>
             <div className="space-y-1.5">

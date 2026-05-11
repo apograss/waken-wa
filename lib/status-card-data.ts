@@ -118,7 +118,15 @@ function getConfiguredNumber(
   min: number,
   max: number,
 ): number {
-  return normalizeStatusCardDimension(config?.[key], fallback, min, max)
+  const normalized = normalizeStatusCardDimension(config?.[key], fallback, min, max)
+  return normalized === 'auto' ? fallback : normalized
+}
+
+function isConfiguredAuto(
+  config: Record<string, unknown> | null | undefined,
+  key: string,
+): boolean {
+  return typeof config?.[key] === 'string' && config[key].trim().toLowerCase() === 'auto'
 }
 
 function getDefaultStatusCardVariant(config?: Record<string, unknown> | null): StatusCardVariant {
@@ -252,6 +260,12 @@ export function parseStatusCardOptions(
   const fallbackHeight = variant === 'signature' ? STATUS_CARD_SIGNATURE_HEIGHT : defaultHeight
   const widthResult = parseIntegerParamWithAuto(searchParams, 'width', defaultWidth, 280, 1200)
   const heightResult = parseIntegerParamWithAuto(searchParams, 'height', fallbackHeight, 1, 720)
+  const widthAuto =
+    widthResult.auto ||
+    (searchParams.get('width') == null && isConfiguredAuto(config, 'statusCardWidth'))
+  const heightAuto =
+    heightResult.auto ||
+    (searchParams.get('height') == null && isConfiguredAuto(config, 'statusCardHeight'))
   const deviceIdRaw = searchParams.get('deviceId')
   const deviceId = deviceIdRaw == null || deviceIdRaw.trim() === ''
     ? null
@@ -260,9 +274,9 @@ export function parseStatusCardOptions(
   return {
     variant,
     width: widthResult.value,
-    widthAuto: widthResult.auto,
+    widthAuto,
     height: heightResult.value,
-    heightAuto: heightResult.auto,
+    heightAuto,
     radius: parseIntegerParam(
       searchParams,
       'radius',

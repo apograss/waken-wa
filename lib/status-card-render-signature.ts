@@ -250,7 +250,7 @@ export function renderSignatureStatusCardSvg({
     '.signatureTag{font-size:11px;font-weight:720}',
     '.signatureBio{font-size:11.5px;font-weight:660}',
     '.signatureKicker{font-size:10px;font-weight:780;letter-spacing:.02em}',
-    '.signatureStatus{font-size:14.4px;font-weight:800;letter-spacing:-.01em}',
+    '.signatureStatus{font-size:13.2px;font-weight:800;letter-spacing:-.01em}',
     '.signatureMeta{font-size:10px;font-weight:650}',
     '.signatureFooter{font-size:10px;font-weight:680;letter-spacing:.02em}',
     '.signatureAvatarInitials{font-size:17px;font-weight:850}',
