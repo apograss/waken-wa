@@ -8,6 +8,9 @@ interface WeatherState {
   icon?: string;
   description?: string;
   city?: string;
+  feelsLike?: number;
+  humidity?: number;
+  windSpeed?: string;
   error?: string;
 }
 
@@ -48,6 +51,9 @@ export function WeatherModule() {
           icon: data.icon,
           description: data.description,
           city: geo.city,
+          feelsLike: data.feelsLike,
+          humidity: data.humidity,
+          windSpeed: data.windSpeed,
         });
       } catch {
         setWeather({ status: 'error', error: 'fetchFailed' });
@@ -97,6 +103,11 @@ export function WeatherModule() {
             <span className="text-sm text-muted-foreground">
               {weather.description}
             </span>
+            {weather.feelsLike !== undefined && (
+              <span className="text-xs text-muted-foreground/70">
+                体感 {weather.feelsLike}°
+              </span>
+            )}
           </div>
         )}
 
