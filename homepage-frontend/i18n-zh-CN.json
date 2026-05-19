@@ -1,0 +1,24 @@
+{
+  "greeting": {
+    "morning": "早上好",
+    "afternoon": "下午好",
+    "evening": "晚上好"
+  },
+  "search": {
+    "placeholder": "搜索...",
+    "preferences": "搜索引擎偏好",
+    "engine": {
+      "baidu": "百度",
+      "bing": "必应",
+      "google": "谷歌",
+      "yandex": "Yandex",
+      "sogou": "搜狗搜索",
+      "360": "360 搜索"
+    }
+  },
+  "weather": {
+    "loading": "加载中...",
+    "locationFailed": "定位失败",
+    "fetchFailed": "天气不可用"
+  }
+}
