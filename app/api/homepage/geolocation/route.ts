@@ -30,10 +30,11 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Extract location data — adapt to the API response format
-    const city = data.city || data.regionName || 'Unknown';
-    const lat = parseFloat(data.lat || data.latitude || '0');
-    const lon = parseFloat(data.lon || data.longitude || '0');
+    // Extract location data from nested structure
+    const location = data.location || {};
+    const city = location.city || location.region?.name || 'Unknown';
+    const lat = parseFloat(location.latitude || '0');
+    const lon = parseFloat(location.longitude || '0');
 
     if (!lat && !lon) {
       return NextResponse.json({ error: 'geolocation_failed' }, { status: 502 });
