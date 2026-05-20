@@ -1,0 +1,710 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+  /* === waken-wa design tokens, plus image-derived accent === */
+  :root {
+    --background: oklch(0.978 0.006 80);
+    --foreground: oklch(0.22 0.01 60);
+    --card: oklch(0.99 0.004 80);
+    --muted: oklch(0.94 0.008 80);
+    --muted-foreground: oklch(0.52 0.015 60);
+    --primary: oklch(0.42 0.07 40);
+    --accent: oklch(0.72 0.06 50);
+    --border: oklch(0.90 0.008 80);
+    --online: oklch(0.62 0.14 150);
+
+    /* Orange pulled from cover.png — the highlight/wave/petal accent */
+    --hero-accent: #d97e4f;
+    --hero-accent-soft: rgba(217,126,79,0.18);
+    --hero-text: #1f1a17;
+    --hero-text-soft: rgba(31,26,23,0.62);
+    --hero-text-dim:  rgba(31,26,23,0.42);
+
+    --home-glass-border: color-mix(in srgb, var(--foreground) 10%, var(--border) 90%);
+    --home-glass-card-border: color-mix(in srgb, var(--foreground) 16%, var(--border) 84%);
+    --home-glass-highlight: color-mix(in srgb, white 84%, transparent);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans SC", -apple-system, "PingFang SC", sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === Hero (above the fold) === */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 720px;
+    overflow: hidden;
+    background-image: url('assets/cover.png');
+    background-size: cover;
+    background-position: center right;
+    background-repeat: no-repeat;
+  }
+
+  /* Soft left-side wash so text on left half stays legible without
+     dimming the girl on the right. Stops at ~55% so right is untouched. */
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      100deg,
+      rgba(255,251,243,0.78) 0%,
+      rgba(255,251,243,0.55) 25%,
+      rgba(255,251,243,0.18) 50%,
+      transparent 65%
+    );
+    pointer-events: none;
+  }
+  /* Subtle bottom fade into the next section */
+  .hero::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+    background: linear-gradient(180deg, transparent 0%, var(--background) 95%);
+    pointer-events: none;
+  }
+
+  /* === Top meta strip — inline, NO chip/box === */
+  .top-meta {
+    position: absolute; top: 28px; left: 56px; right: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 2;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--hero-text-soft);
+    letter-spacing: 0.04em;
+  }
+  .top-meta-left, .top-meta-right { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+  .top-meta .clock {
+    color: var(--hero-text);
+    font-size: 13px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    position: relative;
+    padding-right: 14px;
+  }
+  .top-meta .clock::after {
+    content: ''; position: absolute; right: 0; top: 50%;
+    width: 1px; height: 12px; background: var(--hero-text-dim);
+    transform: translateY(-50%);
+  }
+  .top-meta .sep { color: var(--hero-text-dim); }
+  .top-meta .accent-bar {
+    width: 18px; height: 1px; background: var(--hero-accent);
+    display: inline-block; margin-right: 2px;
+  }
+  .top-meta a {
+    color: var(--hero-text-soft); text-decoration: none;
+    border-bottom: 1px dashed transparent; transition: border-color .15s, color .15s;
+  }
+  .top-meta a:hover { color: var(--hero-text); border-color: var(--hero-accent); }
+
+  /* === Hero body — placed in left half, vertically centered === */
+  .hero-body {
+    position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
+    width: min(640px, 50%);
+    z-index: 2;
+  }
+
+  .hero-greeting {
+    font-family: "Fraunces", "Source Han Serif SC", serif;
+    font-size: clamp(48px, 5.6vw, 76px);
+    font-weight: 300; line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--hero-text);
+    margin: 0 0 14px;
+  }
+  .hero-subtitle {
+    font-size: 15px; color: var(--hero-text-soft);
+    line-height: 1.6; margin: 0 0 36px; max-width: 480px;
+  }
+  .hero-subtitle .countdown {
+    color: var(--hero-accent); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* === Search — underline-style, no rounded chrome === */
+  .search {
+    position: relative; max-width: 540px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 4px 14px;
+    border-bottom: 1.5px solid var(--hero-text);
+    transition: border-color .2s;
+  }
+  .search:focus-within { border-bottom-color: var(--hero-accent); }
+  .search-engine-btn {
+    width: 28px; height: 28px;
+    border: none; background: transparent; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--hero-text);
+  }
+  .search-input {
+    flex: 1; border: none; background: transparent;
+    font: inherit; font-size: 17px; color: var(--hero-text);
+    padding: 4px 0; outline: none;
+    font-family: "Noto Sans SC", sans-serif;
+  }
+  .search-input::placeholder { color: var(--hero-text-dim); }
+  .search-hint {
+    display: flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--hero-text-dim); letter-spacing: 0.06em;
+  }
+  .search-hint kbd {
+    font-family: inherit; font-size: 10px;
+    padding: 2px 5px; border: 1px solid var(--hero-text-dim);
+    border-radius: 3px; color: var(--hero-text-soft);
+  }
+
+  /* engine row under search */
+  .engine-row {
+    display: flex; gap: 10px; margin-top: 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--hero-text-dim); letter-spacing: 0.04em;
+  }
+  .engine-row .e {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 0;
+    border-bottom: 1px solid transparent;
+    cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  .engine-row .e:hover { color: var(--hero-text); }
+  .engine-row .e.active {
+    color: var(--hero-accent); border-color: var(--hero-accent);
+  }
+  .engine-row .e .k {
+    color: var(--hero-text-dim); padding-right: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* === Glance status row — single line, no card === */
+  .glance {
+    position: absolute; left: 56px; bottom: 84px; z-index: 2;
+    display: flex; align-items: center; gap: 14px;
+    color: var(--hero-text-soft); font-size: 13px;
+    white-space: nowrap;
+  }
+  .glance .dot-name {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--hero-text);
+  }
+  .glance .dot-name .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--online); box-shadow: 0 0 8px var(--online);
+  }
+  .glance .dot-name b {
+    font-weight: 600; letter-spacing: 0.02em;
+  }
+  .glance .sep {
+    width: 1px; height: 12px; background: var(--hero-text-dim);
+    display: inline-block;
+  }
+  .glance .emoji { font-size: 14px; line-height: 1; }
+
+  /* === Scroll cue, bottom center === */
+  .scroll-cue {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: var(--hero-text-dim);
+    font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    cursor: pointer; transition: color .15s;
+  }
+  .scroll-cue:hover { color: var(--hero-text); }
+  .scroll-cue .line {
+    width: 1px; height: 28px;
+    background: linear-gradient(180deg, transparent, var(--hero-text-dim));
+    animation: drift 2.4s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50%      { transform: translateY(6px); opacity: 1; }
+  }
+
+  /* ============================================================ */
+  /* === Below the fold === */
+  /* ============================================================ */
+  .scroll-section {
+    background: var(--background);
+    padding: 100px 56px 120px;
+    position: relative;
+  }
+  .scroll-inner {
+    max-width: 980px; margin: 0 auto;
+  }
+
+  /* ── Section header — numbered editorial style ── */
+  .sec {
+    margin-bottom: 56px;
+  }
+  .sec:last-of-type { margin-bottom: 0; }
+
+  .sec-head {
+    display: flex; align-items: baseline; gap: 18px;
+    padding-bottom: 22px; margin-bottom: 32px;
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+  .sec-num {
+    font-family: "Fraunces", serif;
+    font-size: 36px; font-weight: 300; line-height: 1;
+    color: var(--hero-accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .sec-title {
+    font-family: "Fraunces", "Source Han Serif SC", serif;
+    font-size: 30px; font-weight: 400; line-height: 1.1;
+    color: var(--foreground); margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .sec-rule {
+    flex: 1; height: 1px;
+    background: color-mix(in srgb, var(--foreground) 14%, transparent);
+    align-self: center;
+    margin: 0 4px;
+  }
+  .sec-meta {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--muted-foreground); letter-spacing: 0.18em;
+    text-transform: uppercase; white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .sec-meta .live-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--online); box-shadow: 0 0 6px var(--online);
+    margin-right: 6px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* ── Reusable glass card ── */
+  .gcard {
+    position: relative; isolation: isolate; overflow: hidden;
+    border: 1px solid var(--home-glass-card-border);
+    border-radius: 16px;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--card) 92%, transparent),
+      color-mix(in srgb, var(--background) 72%, transparent));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--foreground) 5%, transparent),
+      0 20px 44px color-mix(in srgb, var(--foreground) 6%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--home-glass-highlight) 65%, transparent);
+    padding: 24px 26px;
+  }
+  /* sub-surface inside a gcard */
+  .sub {
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--muted) 60%, transparent);
+    padding: 12px 14px;
+  }
+
+  /* ── 01 关于我 ── */
+  .profile {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 32px; align-items: start;
+    margin-bottom: 32px;
+  }
+  .avatar-wrap {
+    position: relative; width: 130px; height: 130px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--primary));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-family: "Fraunces", serif;
+    font-size: 56px; font-weight: 400;
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--background) 80%, transparent),
+      0 0 0 6px color-mix(in srgb, var(--online) 50%, transparent),
+      0 16px 36px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .avatar-wrap .online-dot {
+    position: absolute; right: 8px; bottom: 8px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--online);
+    border: 3px solid var(--background);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--online) 70%, transparent);
+  }
+  .profile-info { padding-top: 6px; }
+  .profile-name-row {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .profile-name {
+    font-family: "Fraunces", "Source Han Serif SC", serif;
+    font-size: 30px; font-weight: 500; color: var(--foreground);
+    margin: 0; letter-spacing: -0.01em; line-height: 1.1;
+  }
+  .profile-domain {
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--muted-foreground); letter-spacing: 0.04em;
+  }
+  .profile-bio {
+    font-size: 15px; color: var(--muted-foreground); line-height: 1.6;
+    margin: 0 0 14px; max-width: 520px;
+  }
+  .today-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px;
+    background: color-mix(in srgb, var(--hero-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--hero-accent) 30%, transparent);
+    font-size: 13px; color: var(--foreground);
+    white-space: nowrap;
+  }
+  .today-status .emoji { font-size: 15px; line-height: 1; }
+  .today-status .busy {
+    margin-left: 4px; padding: 2px 7px; border-radius: 4px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    background: var(--hero-accent); color: white;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .today-status .expire {
+    color: var(--muted-foreground); font-size: 12px;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  /* hitokoto signature note */
+  .signature-note {
+    margin-top: 20px;
+    padding: 36px 30px 26px;
+    border-left: 3px solid var(--hero-accent);
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--hero-accent) 6%, transparent),
+      transparent 70%);
+    border-radius: 0 16px 16px 0;
+    position: relative;
+  }
+  .signature-note::before {
+    content: '"';
+    position: absolute; top: 6px; left: 22px;
+    font-family: "Fraunces", serif; font-size: 56px;
+    color: color-mix(in srgb, var(--hero-accent) 50%, transparent);
+    line-height: 1; font-weight: 300;
+    pointer-events: none;
+  }
+  .signature-note .text {
+    font-family: "Fraunces", "Source Han Serif SC", serif;
+    font-size: 24px; font-weight: 300; line-height: 1.55;
+    color: var(--foreground); font-style: italic;
+    margin: 0; letter-spacing: 0.005em; position: relative;
+    padding-left: 38px;
+  }
+  .signature-note .src {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--muted-foreground); margin-top: 14px;
+    letter-spacing: 0.06em;
+    display: flex; align-items: center; gap: 8px;
+    padding-left: 38px;
+    white-space: nowrap;
+  }
+  .signature-note .src a {
+    color: var(--hero-accent); text-decoration: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color .15s;
+  }
+  .signature-note .src a:hover { border-color: var(--hero-accent); }
+
+  /* ── 02 此刻 — realtime now ── */
+  .now-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 18px; align-items: start;
+  }
+  @media (max-width: 720px) {
+    .now-grid { grid-template-columns: 1fr; }
+    .profile { grid-template-columns: 1fr; gap: 18px; }
+    .avatar-wrap { width: 96px; height: 96px; font-size: 40px; }
+  }
+
+  /* device chip */
+  .device-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .device-row svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+  .device-row .name {
+    font-size: 14px; font-weight: 500; color: var(--foreground);
+  }
+  .device-row .battery {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+  }
+  .device-row .battery svg { width: 14px; height: 14px; color: var(--muted-foreground); }
+  .device-label {
+    font-size: 11px; font-weight: 500;
+    color: color-mix(in srgb, var(--foreground) 60%, transparent);
+    letter-spacing: 0.04em; margin-bottom: 6px;
+  }
+
+  /* status line (process / window) */
+  .status-line {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 16px; padding: 4px 0;
+    font-size: 14px; color: var(--foreground);
+  }
+  .status-line svg {
+    width: 16px; height: 16px; color: var(--muted-foreground); flex-shrink: 0;
+  }
+  .status-line .title { font-weight: 600; }
+  .status-line .sep {
+    color: color-mix(in srgb, var(--foreground) 30%, transparent);
+    margin: 0 4px;
+  }
+  .status-line .app { color: var(--muted-foreground); }
+
+  /* media block */
+  .media-block {
+    margin-top: 18px;
+    display: grid; grid-template-columns: 72px 1fr; gap: 14px;
+    padding: 14px;
+    background: color-mix(in srgb, var(--muted) 40%, transparent);
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 6%, var(--border));
+  }
+  .media-cover {
+    width: 72px; height: 72px; border-radius: 10px;
+    background: linear-gradient(135deg, #4f3a8a 0%, #1a0d3e 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 28px;
+    box-shadow: 0 6px 20px rgba(79,58,138,0.35);
+    flex-shrink: 0;
+  }
+  .media-info { min-width: 0; }
+  .media-title {
+    font-size: 15px; font-weight: 600; color: var(--foreground);
+    margin: 0 0 2px;
+  }
+  .media-artist {
+    font-size: 12px; color: var(--muted-foreground); margin-bottom: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .media-state {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 6px;
+  }
+  .media-state .state {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--muted-foreground);
+  }
+  .media-state .state .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--online); box-shadow: 0 0 6px var(--online);
+  }
+  .media-state .time {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+  }
+  .media-track {
+    height: 3px; border-radius: 999px; overflow: hidden;
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  .media-track .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--hero-accent), color-mix(in srgb, var(--hero-accent) 60%, var(--primary)));
+    border-radius: 999px;
+  }
+  .media-source {
+    margin-top: 10px;
+    font-size: 11px; color: var(--muted-foreground);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .media-source .src-icon {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: linear-gradient(135deg, #fa5757, #b91c1c);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-size: 8px; font-weight: 700;
+  }
+
+  /* steam */
+  .steam-row {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    background: color-mix(in srgb, #1b2838 8%, transparent);
+    border: 1px solid color-mix(in srgb, #1b2838 12%, var(--border));
+  }
+  .steam-row .steam-thumb {
+    width: 48px; height: 18px; border-radius: 3px;
+    background: linear-gradient(135deg, #2a475e 0%, #1b2838 100%);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
+  }
+  .steam-row svg { width: 14px; height: 14px; color: var(--muted-foreground); flex-shrink: 0; }
+  .steam-row .name { font-size: 13px; color: var(--foreground); font-weight: 500; }
+
+  /* time row */
+  .time-row {
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .time-row > div { display: flex; flex-direction: column; gap: 4px; }
+  .time-row > div + div { text-align: right; align-items: flex-end; }
+  .time-row .lab {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    color: color-mix(in srgb, var(--foreground) 55%, transparent);
+    letter-spacing: 0.02em;
+  }
+  .time-row .lab svg { width: 12px; height: 12px; }
+  .time-row .val {
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    color: var(--foreground); font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  /* ── Schedule card ── */
+  .sched-eyebrow {
+    font-family: "JetBrains Mono", monospace; font-size: 10.5px;
+    color: var(--hero-accent); letter-spacing: 0.18em;
+    text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sched-eyebrow::before {
+    content: ''; display: inline-block;
+    width: 24px; height: 1px; background: var(--hero-accent);
+  }
+  .sched-time {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 32px; font-weight: 400; line-height: 1.05;
+    color: var(--foreground); font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .sched-time .dash { color: var(--muted-foreground); margin: 0 2px; }
+  .sched-name {
+    font-family: "Fraunces", "Source Han Serif SC", serif;
+    font-size: 22px; font-weight: 500; color: var(--foreground);
+    margin-top: 8px; line-height: 1.25;
+  }
+  .sched-meta {
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+    display: flex; flex-direction: column; gap: 8px;
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .sched-meta .row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .sched-meta .row svg { width: 14px; height: 14px; color: var(--hero-accent); flex-shrink: 0; }
+  .sched-meta .row b { color: var(--foreground); font-weight: 500; }
+  .sched-countdown {
+    margin-top: 16px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 999px;
+    background: var(--hero-accent-soft);
+    color: var(--hero-accent);
+    font-size: 12px; font-weight: 500;
+  }
+  .sched-countdown .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--hero-accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ── 03 灵感 list ── */
+  .notes-list {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .note-item {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 18px; align-items: stretch;
+    padding: 18px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--foreground) 6%, var(--border));
+    transition: border-color .15s, background-color .15s, transform .2s;
+    cursor: pointer;
+  }
+  .note-item:hover {
+    border-color: color-mix(in srgb, var(--hero-accent) 35%, var(--border));
+    background: color-mix(in srgb, var(--card) 95%, transparent);
+    transform: translateY(-1px);
+  }
+  .note-thumb {
+    width: 88px; height: 88px; border-radius: 10px;
+    background-size: cover; background-position: center;
+    background-color: color-mix(in srgb, var(--muted) 80%, transparent);
+    flex-shrink: 0; position: relative; overflow: hidden;
+  }
+  .note-thumb.placeholder {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--hero-accent) 22%, var(--muted)),
+      color-mix(in srgb, var(--primary) 18%, var(--muted)));
+    display: flex; align-items: center; justify-content: center;
+    color: color-mix(in srgb, var(--foreground) 30%, transparent);
+    font-family: "Fraunces", serif; font-size: 28px; font-style: italic;
+  }
+  .note-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .note-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+  }
+  .note-title {
+    font-size: 15px; font-weight: 600; color: var(--foreground);
+    margin: 0; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .note-date {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--muted-foreground); white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .note-status {
+    display: inline-flex; align-self: flex-start; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--muted-foreground);
+    padding: 3px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--muted) 60%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--foreground) 14%, var(--border));
+  }
+  .note-status .e { font-size: 12px; line-height: 1; }
+  .note-preview {
+    font-size: 13px; color: var(--muted-foreground); line-height: 1.6;
+    margin: 0;
+    overflow: hidden; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+
+  .notes-more {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 22px; padding-bottom: 2px;
+    color: var(--hero-accent); font-size: 13px; text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--hero-accent) 40%, transparent);
+    transition: border-color .15s, gap .15s;
+    white-space: nowrap;
+  }
+  .notes-more:hover {
+    border-bottom-color: var(--hero-accent);
+    gap: 12px;
+  }
+
+  /* ── Footer strip ── */
+  .foot {
+    margin-top: 64px; padding-top: 28px;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--muted-foreground); letter-spacing: 0.08em;
+    white-space: nowrap;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .foot .left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .foot .sep {
+    color: color-mix(in srgb, var(--foreground) 25%, transparent);
+  }
+  .foot b {
+    color: var(--foreground); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Reduce backdrop blur for prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue .line { animation: none; }
+  }

@@ -2,6 +2,8 @@ import { count, desc } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+import '@/styles/homepage.css'
+
 import { HomeScrollbarHider } from '@/components/home-scrollbar-hider'
 import { PersonalHomePage } from '@/components/homepage/personal-home-page'
 import { LayoutFooterPortal } from '@/components/layout-footer-portal'
@@ -179,6 +181,7 @@ export default async function Home() {
         fontOptions={publicFontOptions}
       >
         <PersonalHomePage
+          userName={userName}
           reusedSectionProps={{
             activityInitialFeed,
             activityUpdateMode,
