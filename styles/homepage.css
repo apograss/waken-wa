@@ -240,9 +240,101 @@
 
   /* ── Section header — numbered editorial style ── */
   .sec {
+    position: relative;
     margin-bottom: 96px;
   }
   .sec:last-of-type { margin-bottom: 0; }
+  .sec-with-ornament {
+    isolation: isolate;
+  }
+  .sec-with-ornament > :not(.section-ornament) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-ornament {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.34;
+    filter: saturate(0.92) contrast(0.98);
+    transform: translate3d(0, 0, 0);
+    transition: opacity .35s ease, transform .45s ease, filter .45s ease;
+  }
+  .section-ornament-media {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 18px;
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      black 0%,
+      black 56%,
+      rgba(0, 0, 0, 0.55) 76%,
+      transparent 100%
+    );
+    mask-image: radial-gradient(
+      ellipse at center,
+      black 0%,
+      black 56%,
+      rgba(0, 0, 0, 0.55) 76%,
+      transparent 100%
+    );
+  }
+  .section-ornament-img {
+    object-fit: cover;
+    mix-blend-mode: multiply;
+  }
+  .section-ornament-about {
+    width: min(590px, 52vw);
+    aspect-ratio: 1320 / 719;
+    top: 72px;
+    right: -150px;
+  }
+  .section-ornament-now {
+    width: min(680px, 60vw);
+    aspect-ratio: 1320 / 742;
+    top: 118px;
+    left: -180px;
+    opacity: 0.26;
+  }
+  .section-ornament-inspiration {
+    width: min(640px, 56vw);
+    aspect-ratio: 1320 / 743;
+    top: 32px;
+    right: -170px;
+    opacity: 0.31;
+  }
+  .sec-with-ornament:hover .section-ornament {
+    opacity: 0.45;
+    filter: saturate(1) contrast(1);
+    transform: translate3d(0, -6px, 0) scale(1.012);
+  }
+  .sec-with-ornament:hover .section-ornament-now {
+    opacity: 0.36;
+    transform: translate3d(8px, -4px, 0) scale(1.01);
+  }
+  .sec-with-ornament:hover .section-ornament-inspiration {
+    opacity: 0.42;
+    transform: translate3d(-6px, -5px, 0) scale(1.012);
+  }
+  @media (max-width: 980px) {
+    .section-ornament-about,
+    .section-ornament-inspiration {
+      right: -24vw;
+      opacity: 0.22;
+    }
+    .section-ornament-now {
+      left: -26vw;
+      opacity: 0.2;
+    }
+  }
+  @media (max-width: 720px) {
+    .section-ornament {
+      display: none;
+    }
+  }
 
   .sec-head {
     display: flex; align-items: baseline; gap: 22px;
@@ -711,6 +803,10 @@
   /* Reduce backdrop blur for prefers-reduced-motion */
   @media (prefers-reduced-motion: reduce) {
     .scroll-cue .line { animation: none; }
+    .section-ornament { transition: none; }
+    .sec-with-ornament:hover .section-ornament {
+      transform: none;
+    }
   }
 
 
