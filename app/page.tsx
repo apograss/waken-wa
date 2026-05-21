@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import '@/styles/homepage.css'
+import '@/styles/noto-serif-sc.css'
 
 import { HomeScrollbarHider } from '@/components/home-scrollbar-hider'
 import { PersonalHomePage } from '@/components/homepage/personal-home-page'

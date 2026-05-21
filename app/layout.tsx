@@ -156,15 +156,10 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <link rel="preconnect" href="https://fonts.loli.net" />
         <link rel="preconnect" href="https://gstatic.loli.net" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.font.im" />
-        <link rel="preconnect" href="https://fonts.gstatic.font.im" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500&family=Satisfy&family=Ubuntu:wght@300;400;500;700&display=swap"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.font.im/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap"
         />
         {publicPageFontRuntime.stylesheetHref ? (
           <link
