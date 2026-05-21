@@ -16,24 +16,6 @@ function getVisitorIp(request: NextRequest): string {
   return process.env.DEV_FALLBACK_IP || '27.45.145.145';
 }
 
-// Use OpenStreetMap Nominatim to get Chinese city name from coordinates
-async function getChineseCityName(lat: number, lon: number): Promise<string> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh&zoom=10`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'apograss-homepage/1.0' },
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!res.ok) return '';
-    const data = await res.json();
-    const addr = data.address || {};
-    // Try city > district > county > state
-    return addr.city || addr.district || addr.county || addr.state || '';
-  } catch {
-    return '';
-  }
-}
-
 export async function GET(request: NextRequest) {
   try {
     const ip = getVisitorIp(request);
@@ -55,9 +37,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'geolocation_failed' }, { status: 502 });
     }
 
-    // Get Chinese city name (fallback to ipinfo's English name)
-    const chineseCity = await getChineseCityName(lat, lon);
-    const city = chineseCity || location.city || location.region?.name || '未知';
+    const city = location.city || location.region?.name || 'Unknown';
 
     return NextResponse.json({ city, lat, lon });
   } catch {
