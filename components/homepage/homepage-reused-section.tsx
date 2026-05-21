@@ -3,8 +3,7 @@ import { CurrentStatus } from '@/components/current-status'
 import { InspirationHomeSection } from '@/components/inspiration-home-section'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 
-import { DemoAboutSection,DemoInspirationList, DemoNowSection } from './demo-content'
-import { HomepageSectionOrnament } from './homepage-section-ornament'
+import { DemoAboutSection, DemoInspirationStage, DemoNowSection } from './demo-content'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -59,9 +58,7 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
       mode={props.activityUpdateMode as never}
     >
       {/* SECTION 01 — 关于我 */}
-      <section className="sec sec-with-ornament sec-about">
-        <HomepageSectionOrnament tone="about" />
-
+      <section className="sec sec-about">
         <header className="sec-head">
           <span className="sec-num">01</span>
           <h2 className="sec-title">关于我</h2>
@@ -77,9 +74,7 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
       </section>
 
       {/* SECTION 02 — 此刻 */}
-      <section className="sec sec-with-ornament sec-now">
-        <HomepageSectionOrnament tone="now" />
-
+      <section className="sec sec-now">
         <header className="sec-head">
           <span className="sec-num">02</span>
           <h2 className="sec-title">此刻</h2>
@@ -87,6 +82,30 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           <span className="sec-meta"><span className="live-dot"></span>live</span>
           {showDemoActivity && <span className="demo-banner">demo</span>}
         </header>
+
+        {/* Editorial banner — illustration + LIVE chip + now-playing chip */}
+        {showDemoActivity && (
+          <figure className="now-banner" aria-hidden="true">
+            <img
+              src="/assets/homepage/section-now-companion.png"
+              alt=""
+              loading="lazy"
+              className="now-banner-img"
+            />
+            <span className="now-banner-live">
+              <span className="now-banner-pulse"></span>
+              live · 在线
+            </span>
+            <div className="now-banner-chip">
+              <div className="now-banner-cover">♪</div>
+              <div className="now-banner-info">
+                <div className="now-banner-title">大鱼</div>
+                <div className="now-banner-artist">周深 · 《大鱼海棠》印象曲</div>
+              </div>
+              <div className="now-banner-time">2:47 / 5:38</div>
+            </div>
+          </figure>
+        )}
 
         {showDemoActivity ? (
           <DemoNowSection />
@@ -116,9 +135,7 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
 
       {/* SECTION 03 — 灵感 */}
       {props.hideInspirationOnHome ? null : (
-        <section className="sec sec-with-ornament sec-inspiration">
-          <HomepageSectionOrnament tone="inspiration" />
-
+        <section className="sec sec-inspiration">
           <header className="sec-head">
             <span className="sec-num">03</span>
             <h2 className="sec-title">灵感</h2>
@@ -130,7 +147,7 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           </header>
 
           {showDemoInspiration ? (
-            <DemoInspirationList />
+            <DemoInspirationStage />
           ) : (
             <InspirationHomeSection
               entries={props.inspirationHomeEntries as never}

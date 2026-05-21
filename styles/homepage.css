@@ -244,98 +244,6 @@
     margin-bottom: 96px;
   }
   .sec:last-of-type { margin-bottom: 0; }
-  .sec-with-ornament {
-    isolation: isolate;
-  }
-  .sec-with-ornament > :not(.section-ornament) {
-    position: relative;
-    z-index: 1;
-  }
-
-  .section-ornament {
-    position: absolute;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.34;
-    filter: saturate(0.92) contrast(0.98);
-    transform: translate3d(0, 0, 0);
-    transition: opacity .35s ease, transform .45s ease, filter .45s ease;
-  }
-  .section-ornament-media {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 18px;
-    -webkit-mask-image: radial-gradient(
-      ellipse at center,
-      black 0%,
-      black 56%,
-      rgba(0, 0, 0, 0.55) 76%,
-      transparent 100%
-    );
-    mask-image: radial-gradient(
-      ellipse at center,
-      black 0%,
-      black 56%,
-      rgba(0, 0, 0, 0.55) 76%,
-      transparent 100%
-    );
-  }
-  .section-ornament-img {
-    object-fit: cover;
-    mix-blend-mode: multiply;
-  }
-  .section-ornament-about {
-    width: min(590px, 52vw);
-    aspect-ratio: 1320 / 719;
-    top: 72px;
-    right: -150px;
-  }
-  .section-ornament-now {
-    width: min(680px, 60vw);
-    aspect-ratio: 1320 / 742;
-    top: 118px;
-    left: -180px;
-    opacity: 0.26;
-  }
-  .section-ornament-inspiration {
-    width: min(640px, 56vw);
-    aspect-ratio: 1320 / 743;
-    top: 32px;
-    right: -170px;
-    opacity: 0.31;
-  }
-  .sec-with-ornament:hover .section-ornament {
-    opacity: 0.45;
-    filter: saturate(1) contrast(1);
-    transform: translate3d(0, -6px, 0) scale(1.012);
-  }
-  .sec-with-ornament:hover .section-ornament-now {
-    opacity: 0.36;
-    transform: translate3d(8px, -4px, 0) scale(1.01);
-  }
-  .sec-with-ornament:hover .section-ornament-inspiration {
-    opacity: 0.42;
-    transform: translate3d(-6px, -5px, 0) scale(1.012);
-  }
-  @media (max-width: 980px) {
-    .section-ornament-about,
-    .section-ornament-inspiration {
-      right: -24vw;
-      opacity: 0.22;
-    }
-    .section-ornament-now {
-      left: -26vw;
-      opacity: 0.2;
-    }
-  }
-  @media (max-width: 720px) {
-    .section-ornament {
-      display: none;
-    }
-  }
-
   .sec-head {
     display: flex; align-items: baseline; gap: 22px;
     padding-bottom: 28px; margin-bottom: 48px;
@@ -803,10 +711,6 @@
   /* Reduce backdrop blur for prefers-reduced-motion */
   @media (prefers-reduced-motion: reduce) {
     .scroll-cue .line { animation: none; }
-    .section-ornament { transition: none; }
-    .sec-with-ornament:hover .section-ornament {
-      transform: none;
-    }
   }
 
 
@@ -2205,3 +2109,400 @@
     height: 1px;
     background: var(--muted-foreground);
   }
+
+
+  /* ============================================================ */
+  /* === 01 关于我 — 杂志角标                                    === */
+  /* ============================================================ */
+
+  .about-figure-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 251, 243, 0.78);
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .about-figure-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--hero-accent);
+  }
+
+  /* ============================================================ */
+  /* === 02 此刻 — editorial banner (illustration + LIVE chip + */
+  /* ===           now-playing chip)                            === */
+  /* ============================================================ */
+
+  .now-banner {
+    position: relative;
+    margin: 0 0 32px;
+    aspect-ratio: 1320 / 460;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent),
+      0 24px 56px color-mix(in srgb, var(--foreground) 8%, transparent);
+    background: color-mix(in srgb, var(--muted) 60%, transparent);
+  }
+  .now-banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    filter: contrast(1.02);
+  }
+  /* Soft right-side wash so the now-playing chip stays readable */
+  .now-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      270deg,
+      color-mix(in srgb, var(--background) 35%, transparent) 0%,
+      transparent 35%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .now-banner-live {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: rgba(31, 26, 23, 0.86);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 999px;
+    color: rgba(255, 251, 243, 0.94);
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .now-banner-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--online);
+    box-shadow: 0 0 8px var(--online);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
+  .now-banner-chip {
+    position: absolute;
+    bottom: 22px;
+    right: 22px;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255, 251, 243, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(31, 26, 23, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(31, 26, 23, 0.12);
+    min-width: 280px;
+    max-width: 360px;
+  }
+  .now-banner-cover {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4f3a8a 0%, #1a0d3e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(79, 58, 138, 0.4);
+  }
+  .now-banner-info {
+    min-width: 0;
+  }
+  .now-banner-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hero-text);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .now-banner-artist {
+    font-size: 11.5px;
+    color: var(--hero-text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .now-banner-time {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    color: var(--hero-text-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 720px) {
+    .now-banner {
+      aspect-ratio: 4 / 3;
+    }
+    .now-banner-chip {
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      min-width: 0;
+    }
+  }
+
+  /* ============================================================ */
+  /* === 03 灵感 — illustration becomes stage, papers float on it */
+  /* ============================================================ */
+
+  .ins-stage {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    aspect-ratio: 1320 / 743;
+    background: color-mix(in srgb, var(--muted) 60%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent),
+      0 30px 80px color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+  .ins-stage img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: contrast(1.02);
+  }
+  .ins-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(120deg,
+        rgba(255, 251, 243, 0.55) 0%,
+        rgba(255, 251, 243, 0.18) 32%,
+        transparent 55%),
+      linear-gradient(260deg,
+        rgba(255, 251, 243, 0.32) 0%,
+        transparent 38%);
+    pointer-events: none;
+  }
+
+  .papers {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    padding: 5%;
+  }
+  .paper {
+    position: absolute;
+    background: rgba(255, 251, 243, 0.96);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border: 1px solid rgba(31, 26, 23, 0.08);
+    border-radius: 4px;
+    padding: 18px 20px;
+    box-shadow:
+      0 1px 0 rgba(31, 26, 23, 0.04),
+      0 14px 28px rgba(31, 26, 23, 0.10),
+      0 28px 56px rgba(31, 26, 23, 0.06);
+    text-decoration: none;
+    color: var(--foreground);
+    transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s;
+    cursor: pointer;
+  }
+  .paper:hover {
+    transform: translateY(-6px) rotate(0deg) !important;
+    box-shadow:
+      0 1px 0 rgba(31, 26, 23, 0.04),
+      0 22px 42px rgba(31, 26, 23, 0.14),
+      0 40px 80px rgba(31, 26, 23, 0.08);
+    z-index: 5;
+  }
+  .paper-pin {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--hero-accent);
+    box-shadow: 0 2px 4px rgba(31, 26, 23, 0.25);
+  }
+  .paper-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .paper-date {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    color: var(--hero-accent);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .paper-num {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.1em;
+  }
+  .paper-title {
+    font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--foreground);
+    margin: 0 0 8px;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+  }
+  .paper-preview {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: color-mix(in srgb, var(--foreground) 72%, transparent);
+    margin: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+  .paper-foot {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed color-mix(in srgb, var(--foreground) 14%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+  .paper-mood {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .paper-emoji {
+    font-size: 13px;
+    line-height: 1;
+  }
+  .paper-more {
+    color: var(--hero-accent);
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* per-paper positions — trace the arc */
+  .paper-1 {
+    top: 6%;
+    left: 4%;
+    width: 32%;
+    transform: rotate(-4deg);
+  }
+  .paper-2 {
+    top: 32%;
+    left: 33%;
+    width: 30%;
+    transform: rotate(2.5deg);
+  }
+  .paper-3 {
+    top: 58%;
+    left: 8%;
+    width: 32%;
+    transform: rotate(-2.5deg);
+  }
+
+  /* "see all" anchor below the stage */
+  .ins-more-row {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11.5px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .ins-more-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .ins-more-bar {
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: var(--hero-accent);
+  }
+  .ins-more-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--hero-accent);
+    text-decoration: none;
+    font-size: 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hero-accent) 40%, transparent);
+    transition: border-color .15s, gap .15s;
+    padding-bottom: 2px;
+    font-family: "Noto Sans SC", sans-serif;
+    letter-spacing: 0.02em;
+  }
+  .ins-more-link:hover {
+    border-bottom-color: var(--hero-accent);
+    gap: 14px;
+  }
+
+  @media (max-width: 860px) {
+    .paper-1 { top: 4%;  left: 4%;  width: 60%; }
+    .paper-2 { top: 30%; left: 32%; width: 60%; }
+    .paper-3 { top: 60%; left: 6%;  width: 60%; }
+  }
+  @media (max-width: 720px) {
+    .ins-stage { aspect-ratio: 3 / 4; }
+    .paper { padding: 14px 16px; }
+    .paper-title { font-size: 15px; }
+    .paper-preview { -webkit-line-clamp: 2; font-size: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .paper { transition: none; }
+    .now-banner-pulse { animation: none; }
+  }
+
+  /* Hide old demo notes list (replaced by ins-stage) */
+  .demo-notes-list { display: none; }

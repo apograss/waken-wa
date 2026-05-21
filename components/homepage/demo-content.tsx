@@ -275,64 +275,77 @@ function getTimeOffset(hoursAgo: number): string {
   return `${M}/${D} ${h}:${m}`
 }
 
-export function DemoInspirationList() {
+export function DemoInspirationStage() {
   const items = [
     {
-      letter: 'A',
-      bg: 'linear-gradient(135deg, color-mix(in srgb, var(--hero-accent) 22%, var(--muted)), color-mix(in srgb, var(--primary) 18%, var(--muted)))',
-      title: '写在论文之间的字',
+      n: '01',
       date: '05·19 · 23:14',
+      title: '写在论文之间的字',
       emoji: '🌧',
-      status: '在写论文',
+      mood: '在写论文',
       preview:
         '凌晨三点的图书馆，灯白得像一种警告。我又一次想到那个关于时间的悖论——一切都被时间稀释，所以才需要"现在"。',
     },
     {
-      letter: 'Z',
-      bg: 'linear-gradient(135deg, #3b4a6b, #1e2a44)',
-      title: '一个关于睡眠的 hypothesis',
+      n: '02',
       date: '05·18 · 21:02',
+      title: '一个关于睡眠的 hypothesis',
       emoji: '🌙',
-      status: '失眠了',
+      mood: '失眠了',
       preview:
         '也许我们一直在错的时间里醒着。也许 22:00 才是真正的深夜，0:00 已经太晚了；只是我们集体把闹钟拨到了一个不诚实的位置。',
     },
     {
-      letter: 'C',
-      bg: 'linear-gradient(135deg, #c08854, #7d4a26)',
-      title: '在地铁上读 Calvino',
+      n: '03',
       date: '05·17 · 15:48',
+      title: '在地铁上读 Calvino',
       emoji: '🚇',
-      status: '通勤',
+      mood: '通勤',
       preview:
         '"轻"不是逃避，是另一种诚实。卡尔维诺说这句话的时候是 1985 年——他坐在书桌前，窗外是热那亚的雨，而我在 41 年后的地铁里读到它。',
     },
   ]
 
   return (
-    <ul className="demo-notes-list">
-      {items.map((item) => (
-        <li key={item.letter} className="demo-note-item">
-          <div
-            className="demo-note-thumb"
-            style={{ background: item.bg, color: 'rgba(255,255,255,0.55)' }}
-          >
-            {item.letter}
-          </div>
-          <div className="demo-note-body">
-            <div className="demo-note-head">
-              <h4 className="demo-note-title">{item.title}</h4>
-              <time className="demo-note-date">{item.date}</time>
-            </div>
-            <span className="demo-note-status">
-              <span className="demo-note-emoji">{item.emoji}</span>
-              {item.status}
-            </span>
-            <p className="demo-note-preview">{item.preview}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <>
+      <div className="ins-stage">
+        <img
+          src="/assets/homepage/section-inspiration-companion.png"
+          alt=""
+          loading="lazy"
+        />
+        <div className="papers">
+          {items.map((item, i) => (
+            <a key={item.n} className={`paper paper-${i + 1}`} href="#">
+              <span className="paper-pin"></span>
+              <div className="paper-head">
+                <span className="paper-date">{item.date}</span>
+                <span className="paper-num">N°{item.n}</span>
+              </div>
+              <h4 className="paper-title">{item.title}</h4>
+              <p className="paper-preview">{item.preview}</p>
+              <div className="paper-foot">
+                <span className="paper-mood">
+                  <span className="paper-emoji">{item.emoji}</span>
+                  {item.mood}
+                </span>
+                <span className="paper-more">read →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="ins-more-row">
+        <div className="ins-more-left">
+          <span className="ins-more-bar"></span>
+          <span>3 / 15 — 最近三篇</span>
+        </div>
+        <a className="ins-more-link" href="/inspiration">
+          查看全部 15 篇 →
+        </a>
+      </div>
+    </>
   )
 }
 
@@ -376,6 +389,11 @@ export function DemoAboutSection({ userName, userBio, avatarSrc }: DemoAboutSect
 
       {/* RIGHT — bio + signature note */}
       <div className="about-right">
+        <span className="about-figure-label">
+          <span className="about-figure-dot"></span>
+          profile · 2026 spring
+        </span>
+
         <p className="about-bio">{bio}</p>
 
         <div className="about-meta">
