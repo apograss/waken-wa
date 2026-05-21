@@ -39,7 +39,7 @@
     height: 100vh;
     min-height: 720px;
     overflow: hidden;
-    background-image: url('assets/cover.png');
+    background-image: url('/assets/cover.png');
     background-size: cover;
     background-position: center right;
     background-repeat: no-repeat;
