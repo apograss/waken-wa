@@ -44,7 +44,10 @@ export interface HomepageReusedSectionProps {
 
 export function HomepageReusedSection(props: HomepageReusedSectionProps) {
   return (
-    <>
+    <ActivityFeedProvider
+      initialFeed={props.activityInitialFeed as never}
+      mode={props.activityUpdateMode as never}
+    >
       {/* SECTION 01 — 关于我 */}
       <section className="sec">
         <header className="sec-head">
@@ -90,31 +93,26 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           <span className="sec-meta"><span className="live-dot"></span>live</span>
         </header>
 
-        <ActivityFeedProvider
-          initialFeed={props.activityInitialFeed as never}
-          mode={props.activityUpdateMode as never}
-        >
-          <div className="now-grid">
-            <div className="gcard">
-              {props.showScheduleHomeColumn && (
-                <ScheduleHomeInClassBanner
-                  courses={props.scheduleCoursesForHome as never}
-                  showLocation={props.scheduleHomeShowLocation}
-                  showTeacher={props.scheduleHomeShowTeacher}
-                  periodTemplate={props.schedulePeriodTemplate as never}
-                  showNextUpcoming={props.scheduleHomeShowNextUpcoming}
-                  afterClassesLabel={props.scheduleHomeAfterClassesLabel}
-                />
-              )}
-              <CurrentStatus
-                hideActivityMedia={props.hideActivityMedia}
-                showMediaSource={props.mediaDisplayShowSource}
-                showMediaCover={props.mediaDisplayShowCover}
-                showMediaNcmLink={props.mediaDisplayShowNcmLink}
+        <div className="now-grid">
+          <div className="gcard">
+            {props.showScheduleHomeColumn && (
+              <ScheduleHomeInClassBanner
+                courses={props.scheduleCoursesForHome as never}
+                showLocation={props.scheduleHomeShowLocation}
+                showTeacher={props.scheduleHomeShowTeacher}
+                periodTemplate={props.schedulePeriodTemplate as never}
+                showNextUpcoming={props.scheduleHomeShowNextUpcoming}
+                afterClassesLabel={props.scheduleHomeAfterClassesLabel}
               />
-            </div>
+            )}
+            <CurrentStatus
+              hideActivityMedia={props.hideActivityMedia}
+              showMediaSource={props.mediaDisplayShowSource}
+              showMediaCover={props.mediaDisplayShowCover}
+              showMediaNcmLink={props.mediaDisplayShowNcmLink}
+            />
           </div>
-        </ActivityFeedProvider>
+        </div>
       </section>
 
       {/* SECTION 03 — 灵感 */}
@@ -133,6 +131,6 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           />
         </section>
       )}
-    </>
+    </ActivityFeedProvider>
   )
 }
