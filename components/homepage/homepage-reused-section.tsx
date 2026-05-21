@@ -4,7 +4,7 @@ import { InspirationHomeSection } from '@/components/inspiration-home-section'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 import { UserProfile, UserProfileNoteSection } from '@/components/user-profile'
 
-import { DemoCurrentStatus, DemoInspirationList } from './demo-content'
+import { DemoNowSection, DemoInspirationList } from './demo-content'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -107,32 +107,30 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           {showDemoActivity && <span className="demo-banner">demo</span>}
         </header>
 
-        <div className="now-grid">
-          <div className="gcard">
-            {showDemoActivity ? (
-              <DemoCurrentStatus />
-            ) : (
-              <>
-                {props.showScheduleHomeColumn && (
-                  <ScheduleHomeInClassBanner
-                    courses={props.scheduleCoursesForHome as never}
-                    showLocation={props.scheduleHomeShowLocation}
-                    showTeacher={props.scheduleHomeShowTeacher}
-                    periodTemplate={props.schedulePeriodTemplate as never}
-                    showNextUpcoming={props.scheduleHomeShowNextUpcoming}
-                    afterClassesLabel={props.scheduleHomeAfterClassesLabel}
-                  />
-                )}
-                <CurrentStatus
-                  hideActivityMedia={props.hideActivityMedia}
-                  showMediaSource={props.mediaDisplayShowSource}
-                  showMediaCover={props.mediaDisplayShowCover}
-                  showMediaNcmLink={props.mediaDisplayShowNcmLink}
+        {showDemoActivity ? (
+          <DemoNowSection />
+        ) : (
+          <div className="now-grid">
+            <div className="gcard">
+              {props.showScheduleHomeColumn && (
+                <ScheduleHomeInClassBanner
+                  courses={props.scheduleCoursesForHome as never}
+                  showLocation={props.scheduleHomeShowLocation}
+                  showTeacher={props.scheduleHomeShowTeacher}
+                  periodTemplate={props.schedulePeriodTemplate as never}
+                  showNextUpcoming={props.scheduleHomeShowNextUpcoming}
+                  afterClassesLabel={props.scheduleHomeAfterClassesLabel}
                 />
-              </>
-            )}
+              )}
+              <CurrentStatus
+                hideActivityMedia={props.hideActivityMedia}
+                showMediaSource={props.mediaDisplayShowSource}
+                showMediaCover={props.mediaDisplayShowCover}
+                showMediaNcmLink={props.mediaDisplayShowNcmLink}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* SECTION 03 — 灵感 */}

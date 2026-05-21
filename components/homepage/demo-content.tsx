@@ -2,130 +2,165 @@
  * Demo content for the lower sections — used when there's no real data
  * (no Reporter installed, no inspiration entries yet).
  * Shows what the page looks like in a "fully filled" state.
- *
- * To disable demo content (use real waken-wa data only), set:
- *   showDemoContent={false}
  */
 
-import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
-
-export function DemoCurrentStatus() {
+export function DemoNowSection() {
   return (
-    <div className="demo-now space-y-3">
-      {/* Demo schedule banner */}
-      <div className="demo-schedule">
-        <div className="demo-schedule-eyebrow">下一节课</div>
-        <div className="demo-schedule-time">14:00 <span className="demo-schedule-dash">–</span> 15:30</div>
-        <div className="demo-schedule-name">操作系统</div>
-        <div className="demo-schedule-meta">
-          <span className="demo-schedule-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-              <circle cx="12" cy="10" r="3" />
+    <div className="now-grid">
+      {/* LEFT COLUMN — activity feed (1.5fr) */}
+      <div className="now-col now-col-main">
+        {/* 设备 */}
+        <div className="now-block">
+          <div className="now-eyebrow">设备 · device</div>
+          <div className="now-device">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="now-device-icon">
+              <rect x="2" y="4" width="20" height="14" rx="2" />
+              <path d="M2 20h20" />
             </svg>
-            <b>教三 309</b>
-          </span>
-          <span className="demo-schedule-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>张老师</span>
-          </span>
-          <span className="demo-schedule-row" style={{ marginLeft: 'auto' }}>
-            <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11, color: 'var(--muted-foreground)' }}>90 min</span>
-          </span>
-        </div>
-        <div className="demo-schedule-countdown">
-          <span className="demo-schedule-dot"></span>
-          18 分钟后开始
-        </div>
-      </div>
-
-      {/* Device chip */}
-      <div className="demo-sub">
-        <div className="demo-device-label">设备</div>
-        <div className="demo-device-row">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-            <rect x="2" y="4" width="20" height="14" rx="2" />
-            <path d="M2 20h20" />
-          </svg>
-          <span className="demo-device-name">apo&apos;s MacBook Pro 14&Prime;</span>
-          <span className="demo-device-battery">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="18" height="10" rx="2" />
-              <path d="M22 11v2" />
-              <rect x="4" y="9" width="13" height="6" rx="1" fill="var(--hero-accent)" stroke="none" />
-            </svg>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--hero-accent)" stroke="none" style={{ marginLeft: -3 }}>
-              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" />
-            </svg>
-            84%
-          </span>
-        </div>
-      </div>
-
-      {/* Status line */}
-      <div className="demo-status-line">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted-foreground)' }}>
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 9h18" /><path d="M9 21V9" />
-        </svg>
-        <span className="demo-status-title">论文 — chapter 3.docx</span>
-        <span className="demo-status-sep">|</span>
-        <span className="demo-status-app">Microsoft Word</span>
-      </div>
-
-      {/* Media block */}
-      <div className="demo-media">
-        <div className="demo-media-cover">♪</div>
-        <div className="demo-media-info">
-          <div className="demo-media-title">大鱼</div>
-          <div className="demo-media-artist">周深 · 《大鱼海棠》印象曲</div>
-          <div className="demo-media-state">
-            <span className="demo-media-playing"><span className="demo-media-dot"></span>正在播放</span>
-            <span className="demo-media-time">2:47 / 5:38</span>
-          </div>
-          <div className="demo-media-track"><div className="demo-media-fill" style={{ width: '49%' }}></div></div>
-          <div className="demo-media-source">
-            <span className="demo-media-source-icon">M</span>
-            <span>来自 Apple Music · iPhone 16 Pro</span>
+            <div className="now-device-text">
+              <span className="now-device-name">apo&apos;s MacBook Pro 14&Prime;</span>
+              <span className="now-device-meta">macOS 15.2 · Apple M3 Pro</span>
+            </div>
+            <div className="now-device-battery">
+              <div className="now-battery-shell">
+                <div className="now-battery-fill" style={{ width: '84%' }}></div>
+              </div>
+              <span className="now-battery-text">⚡ 84%</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Steam */}
-      <div className="demo-steam">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted-foreground)' }}>
-          <rect x="2" y="6" width="20" height="12" rx="2" />
-          <circle cx="8" cy="12" r="1.5" /><circle cx="16" cy="12" r="1.5" />
-          <path d="M6 9h2M16 9h2" />
-        </svg>
-        <div className="demo-steam-thumb">STEAM</div>
-        <span className="demo-steam-name">Hades II</span>
-        <span className="demo-steam-meta">挂机中</span>
-      </div>
+        <div className="now-divider"></div>
 
-      {/* Time row */}
-      <div className="demo-time-row">
-        <div>
-          <span className="demo-time-lab">started at</span>
-          <span className="demo-time-val">{getTodayTimeString(-2.5)}</span>
+        {/* 正在做 */}
+        <div className="now-block">
+          <div className="now-eyebrow">正在做 · doing</div>
+          <div className="now-doing">
+            <div className="now-doing-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M9 21V9" />
+              </svg>
+            </div>
+            <div className="now-doing-text">
+              <div className="now-doing-title">论文 — chapter 3.docx</div>
+              <div className="now-doing-app">Microsoft Word · 已打开 2 小时 27 分</div>
+            </div>
+          </div>
         </div>
-        <div>
-          <span className="demo-time-lab">last report</span>
-          <span className="demo-time-val">{getTodayTimeString(-0.005)}</span>
+
+        <div className="now-divider"></div>
+
+        {/* 正在听 */}
+        <div className="now-block">
+          <div className="now-eyebrow">正在听 · listening</div>
+          <div className="now-listen">
+            <div className="now-cover">
+              <span>♪</span>
+            </div>
+            <div className="now-listen-info">
+              <div className="now-listen-title">大鱼</div>
+              <div className="now-listen-artist">周深 · 《大鱼海棠》印象曲</div>
+              <div className="now-listen-track">
+                <div className="now-listen-fill" style={{ width: '49%' }}></div>
+              </div>
+              <div className="now-listen-state">
+                <span className="now-listen-playing"><span className="now-listen-dot"></span>正在播放</span>
+                <span className="now-listen-time">2:47 / 5:38</span>
+              </div>
+              <div className="now-listen-source">
+                <span className="now-listen-source-icon">M</span>
+                来自 Apple Music · iPhone 16 Pro
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="now-divider"></div>
+
+        {/* 在玩 */}
+        <div className="now-block">
+          <div className="now-eyebrow">在玩 · gaming</div>
+          <div className="now-game">
+            <div className="now-game-cover"></div>
+            <div className="now-game-info">
+              <div className="now-game-title">Hades II</div>
+              <div className="now-game-meta">Supergiant Games · Steam</div>
+            </div>
+            <div className="now-game-state">
+              <span className="now-game-status">挂机中</span>
+              <span className="now-game-duration">2h 14m</span>
+            </div>
+          </div>
+        </div>
+
+        {/* footer timestamps */}
+        <div className="now-foot">
+          <div>
+            <span className="now-foot-lab">started at</span>
+            <span className="now-foot-val">{getTimeOffset(-2.5)}</span>
+          </div>
+          <div className="now-foot-live">
+            <span className="now-foot-dot"></span>
+            <span className="now-foot-lab">last report</span>
+            <span className="now-foot-val">{getTimeOffset(-0.005)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN — schedule (1fr, sticky-ish) */}
+      <div className="now-col now-col-side">
+        <div className="now-schedule">
+          <div className="now-schedule-eyebrow">下一节课 · next class</div>
+          <div className="now-schedule-time">
+            14:00<span className="now-schedule-dash"> – </span>15:30
+          </div>
+          <div className="now-schedule-name">操作系统</div>
+
+          <div className="now-schedule-meta">
+            <div className="now-schedule-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              <b>教三 309</b>
+            </div>
+            <div className="now-schedule-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>张老师</span>
+              <span className="now-schedule-duration">90 min</span>
+            </div>
+          </div>
+
+          <div className="now-schedule-countdown">
+            <span className="now-schedule-pulse"></span>
+            <span>18 分钟后开始</span>
+          </div>
+
+          {/* upcoming peek */}
+          <div className="now-schedule-upcoming">
+            <div className="now-schedule-upcoming-eyebrow">之后</div>
+            <div className="now-schedule-upcoming-row">
+              <span className="now-schedule-upcoming-time">15:50</span>
+              <span className="now-schedule-upcoming-name">软件工程</span>
+              <span className="now-schedule-upcoming-loc">教二 405</span>
+            </div>
+            <div className="now-schedule-upcoming-row">
+              <span className="now-schedule-upcoming-time">19:00</span>
+              <span className="now-schedule-upcoming-name">实验室例会</span>
+              <span className="now-schedule-upcoming-loc">研发楼 B302</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
-
-  // Suppress unused warning — ScheduleHomeInClassBanner is imported just to keep
-  // the dependency graph honest if the user later swaps demo for real data.
-  void ScheduleHomeInClassBanner
 }
 
-function getTodayTimeString(hoursAgo: number): string {
+function getTimeOffset(hoursAgo: number): string {
   const d = new Date()
   d.setHours(d.getHours() + hoursAgo)
   d.setMinutes(d.getMinutes() + Math.floor((hoursAgo % 1) * 60))
@@ -133,8 +168,7 @@ function getTodayTimeString(hoursAgo: number): string {
   const D = String(d.getDate()).padStart(2, '0')
   const h = String(d.getHours()).padStart(2, '0')
   const m = String(d.getMinutes()).padStart(2, '0')
-  const s = String(d.getSeconds()).padStart(2, '0')
-  return `${M}/${D} ${h}:${m}:${s}`
+  return `${M}/${D} ${h}:${m}`
 }
 
 export function DemoInspirationList() {
