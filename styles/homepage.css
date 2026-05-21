@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap');
+  /* Fonts loaded via <link> in app/layout.tsx — see Fraunces, JetBrains Mono, Noto Serif SC */
 
   /* === waken-wa design tokens, plus image-derived accent === */
   :root {
