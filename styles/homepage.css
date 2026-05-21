@@ -245,7 +245,6 @@
   }
   .sec:last-of-type { margin-bottom: 0; }
   .sec-with-ornament {
-    position: relative;
     isolation: isolate;
   }
   .sec-with-ornament > :not(.section-ornament) {
@@ -253,127 +252,84 @@
     z-index: 1;
   }
 
-  /* === Section ornament: large editorial illustration on the side === */
   .section-ornament {
     position: absolute;
-    pointer-events: none;
     z-index: 0;
-    transition: transform .8s cubic-bezier(0.16, 1, 0.3, 1), filter .6s ease;
+    pointer-events: none;
+    opacity: 0.34;
+    filter: saturate(0.92) contrast(0.98);
+    transform: translate3d(0, 0, 0);
+    transition: opacity .35s ease, transform .45s ease, filter .45s ease;
   }
   .section-ornament-media {
     position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    border-radius: 24px;
-    box-shadow:
-      0 30px 80px -20px color-mix(in srgb, var(--hero-accent) 22%, transparent),
-      0 12px 32px -8px color-mix(in srgb, var(--foreground) 12%, transparent);
-  }
-  /* Soft fade only on the inner edge so it bleeds into the page bg */
-  .section-ornament-media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--background) 65%, transparent) 0%,
-      transparent 22%,
-      transparent 78%,
-      color-mix(in srgb, var(--background) 65%, transparent) 100%
+    border-radius: 18px;
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      black 0%,
+      black 56%,
+      rgba(0, 0, 0, 0.55) 76%,
+      transparent 100%
     );
-  }
-  .section-ornament-about .section-ornament-media::after {
-    background: linear-gradient(
-      270deg,
-      transparent 0%,
-      transparent 70%,
-      color-mix(in srgb, var(--background) 75%, transparent) 100%
-    );
-  }
-  .section-ornament-now .section-ornament-media::after {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      transparent 70%,
-      color-mix(in srgb, var(--background) 75%, transparent) 100%
-    );
-  }
-  .section-ornament-inspiration .section-ornament-media::after {
-    background: linear-gradient(
-      270deg,
-      transparent 0%,
-      transparent 70%,
-      color-mix(in srgb, var(--background) 75%, transparent) 100%
+    mask-image: radial-gradient(
+      ellipse at center,
+      black 0%,
+      black 56%,
+      rgba(0, 0, 0, 0.55) 76%,
+      transparent 100%
     );
   }
   .section-ornament-img {
     object-fit: cover;
-    object-position: center;
+    mix-blend-mode: multiply;
   }
-
-  /* About: illustration on the right */
   .section-ornament-about {
-    width: 42%;
-    max-width: 560px;
+    width: min(590px, 52vw);
     aspect-ratio: 1320 / 719;
-    top: 60px;
-    right: -24%;
+    top: 72px;
+    right: -150px;
   }
-
-  /* Now: illustration on the left */
   .section-ornament-now {
-    width: 38%;
-    max-width: 480px;
+    width: min(680px, 60vw);
     aspect-ratio: 1320 / 742;
-    top: 80px;
-    left: -22%;
-    opacity: 0.92;
+    top: 118px;
+    left: -180px;
+    opacity: 0.26;
   }
-
-  /* Inspiration: illustration on the right */
   .section-ornament-inspiration {
-    width: 40%;
-    max-width: 520px;
+    width: min(640px, 56vw);
     aspect-ratio: 1320 / 743;
-    top: 40px;
-    right: -22%;
+    top: 32px;
+    right: -170px;
+    opacity: 0.31;
   }
-
-  /* Hover: subtle lift, no opacity change */
   .sec-with-ornament:hover .section-ornament {
-    transform: translate3d(0, -8px, 0);
+    opacity: 0.45;
+    filter: saturate(1) contrast(1);
+    transform: translate3d(0, -6px, 0) scale(1.012);
   }
-
-  /* On smaller desktops shrink and pull further off-screen */
-  @media (max-width: 1240px) {
-    .section-ornament-about,
-    .section-ornament-inspiration {
-      right: -8%;
-      width: 44%;
-    }
-    .section-ornament-now {
-      left: -8%;
-      width: 42%;
-    }
+  .sec-with-ornament:hover .section-ornament-now {
+    opacity: 0.36;
+    transform: translate3d(8px, -4px, 0) scale(1.01);
   }
-
+  .sec-with-ornament:hover .section-ornament-inspiration {
+    opacity: 0.42;
+    transform: translate3d(-6px, -5px, 0) scale(1.012);
+  }
   @media (max-width: 980px) {
-    .section-ornament {
-      opacity: 0.55;
-    }
     .section-ornament-about,
     .section-ornament-inspiration {
-      right: -16%;
-      width: 50%;
+      right: -24vw;
+      opacity: 0.22;
     }
     .section-ornament-now {
-      left: -16%;
-      width: 48%;
+      left: -26vw;
+      opacity: 0.2;
     }
   }
-
   @media (max-width: 720px) {
     .section-ornament {
       display: none;
@@ -2248,32 +2204,4 @@
     width: 18px;
     height: 1px;
     background: var(--muted-foreground);
-  }
-
-
-  /* === Reserve space for section ornaments so content doesn't overlap === */
-  /* On wide viewports the ornaments sit in the page margin (outside .scroll-inner) — no padding needed */
-  /* On narrower viewports content gets indented to make room */
-  @media (min-width: 1280px) {
-    /* Wide enough — ornaments live in viewport margins, no content shift */
-  }
-
-  @media (min-width: 980px) and (max-width: 1279px) {
-    .sec-about > :not(.section-ornament),
-    .sec-inspiration > :not(.section-ornament) {
-      padding-right: 30%;
-    }
-    .sec-now > :not(.section-ornament) {
-      padding-left: 28%;
-    }
-  }
-
-  @media (min-width: 720px) and (max-width: 979px) {
-    .sec-about > :not(.section-ornament),
-    .sec-inspiration > :not(.section-ornament) {
-      padding-right: 24%;
-    }
-    .sec-now > :not(.section-ornament) {
-      padding-left: 24%;
-    }
   }
