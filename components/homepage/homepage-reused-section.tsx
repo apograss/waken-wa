@@ -111,6 +111,10 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
               showMediaCover={props.mediaDisplayShowCover}
               showMediaNcmLink={props.mediaDisplayShowNcmLink}
             />
+            <div className="ph-hint" style={{ marginTop: 14, textAlign: 'center', opacity: 0.6 }}>
+              想在这里看到设备 / 音乐 / Steam ?
+              安装 <code>Waken-Wa-Reporter</code> 上报状态
+            </div>
           </div>
         </div>
       </section>
@@ -125,10 +129,21 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
             <span className="sec-meta">notes · 共 {props.inspirationTotal} 篇</span>
           </header>
 
-          <InspirationHomeSection
-            entries={props.inspirationHomeEntries as never}
-            showArchiveLink={props.inspirationTotal > 3}
-          />
+          {props.inspirationTotal === 0 ? (
+            <div className="placeholder-card">
+              <div className="ph-icon">📝</div>
+              <div className="ph-title">还没有灵感记录</div>
+              <p>在管理后台「灵感」中添加你的第一条随笔。</p>
+              <div className="ph-hint">
+                <code>/admin</code> · 灵感
+              </div>
+            </div>
+          ) : (
+            <InspirationHomeSection
+              entries={props.inspirationHomeEntries as never}
+              showArchiveLink={props.inspirationTotal > 3}
+            />
+          )}
         </section>
       )}
     </ActivityFeedProvider>

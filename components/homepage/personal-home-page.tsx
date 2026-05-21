@@ -1,6 +1,7 @@
 import { HeroClock } from './hero-clock'
 import { HeroGreeting } from './hero-greeting'
 import { HeroSearch } from './hero-search'
+import { HeroSubtitle } from './hero-subtitle'
 import { HeroWeather } from './hero-weather'
 import { HomepageReusedSection, type HomepageReusedSectionProps } from './homepage-reused-section'
 
@@ -28,9 +29,7 @@ export function PersonalHomePage({ reusedSectionProps, userName }: PersonalHomeP
         {/* Hero body — left half */}
         <div className="hero-body">
           <HeroGreeting />
-          <p className="hero-subtitle">
-            欢迎来到我的个人空间。
-          </p>
+          <HeroSubtitle />
           <HeroSearch />
         </div>
 

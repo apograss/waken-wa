@@ -29,8 +29,8 @@ export function HeroClock() {
 
   return (
     <>
-      <span className="clock" id="clock">{time || '\u00A0'}</span>
-      <span>{date}</span>
+      <span className="clock" id="clock" translate="no">{time || '\u00A0'}</span>
+      <span translate="no">{date}</span>
     </>
   );
 }
