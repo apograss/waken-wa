@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface WeatherData {
   temp: number;
@@ -10,9 +10,17 @@ interface WeatherData {
   humidity?: number;
   windSpeed?: string;
   iconName: string;
+  lat: number;
+  lon: number;
 }
 
-// Map HeFeng/GFS icon code or description to ColorfulClouds icon name
+interface HourlyEntry {
+  utcIso: string;
+  temp: number;
+  description: string;
+  precipitation: number;
+}
+
 function resolveIconName(description: string, hour: number): string {
   const desc = (description || '').toLowerCase();
   const isNight = hour < 6 || hour >= 19;
@@ -20,13 +28,19 @@ function resolveIconName(description: string, hour: number): string {
   if (desc.includes('storm') || desc.includes('雷')) return 'STORM_RAIN';
   if (desc.includes('暴雨') || desc.includes('heavy rain')) return 'HEAVY_RAIN';
   if (desc.includes('中雨') || desc.includes('moderate rain')) return 'MODERATE_RAIN';
-  if (desc.includes('小雨') || desc.includes('light rain') || desc.includes('rain') || desc.includes('雨')) return 'LIGHT_RAIN';
+  if (
+    desc.includes('小雨') ||
+    desc.includes('毛毛雨') ||
+    desc.includes('light rain') ||
+    desc.includes('rain') ||
+    desc.includes('雨')
+  ) return 'LIGHT_RAIN';
 
   if (desc.includes('暴雪') || desc.includes('heavy snow')) return 'HEAVY_SNOW';
   if (desc.includes('中雪')) return 'MODERATE_SNOW';
   if (desc.includes('snow') || desc.includes('雪')) return 'LIGHT_SNOW';
 
-  if (desc.includes('雾') || desc.includes('fog')) return 'FOG';
+  if (desc.includes('轻雾') || desc.includes('雾') || desc.includes('fog')) return 'FOG';
   if (desc.includes('沙尘') || desc.includes('dust') || desc.includes('沙')) return 'DUST';
   if (desc.includes('风') || desc.includes('wind')) return 'WIND';
 
@@ -45,7 +59,10 @@ function resolveIconName(description: string, hour: number): string {
 
 export function HeroWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [hourly, setHourly] = useState<HourlyEntry[] | null>(null);
+  const [hourlyLoading, setHourlyLoading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -69,11 +86,38 @@ export function HeroWeather() {
           humidity: data.humidity,
           windSpeed: data.windSpeed,
           iconName: resolveIconName(data.description, hour),
+          lat: geo.lat,
+          lon: geo.lon,
         });
       } catch { /* silent */ }
     }
     load();
   }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Fetch hourly when first opened
+  useEffect(() => {
+    if (!open || !weather || hourly || hourlyLoading) return;
+    setHourlyLoading(true);
+    fetch(`/api/homepage/weather/hourly?lat=${weather.lat}&lon=${weather.lon}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.hourly) setHourly(data.hourly);
+      })
+      .catch(() => { /* silent */ })
+      .finally(() => setHourlyLoading(false));
+  }, [open, weather, hourly, hourlyLoading]);
 
   if (!weather) {
     return (
@@ -84,35 +128,77 @@ export function HeroWeather() {
   }
 
   return (
-    <div
-      className={`weather-card ${expanded ? 'weather-card-expanded' : ''}`}
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-    >
-      <img
-        src={`/weather-icons/${weather.iconName}.svg`}
-        alt={weather.description}
-        className="weather-icon"
-      />
-      <span className="weather-temp">{weather.temp}°</span>
+    <div ref={cardRef} className="weather-card-wrap">
+      <button
+        type="button"
+        className={`weather-card ${open ? 'weather-card-open' : ''}`}
+        onClick={() => setOpen(!open)}
+        aria-label="天气详情"
+      >
+        <img
+          src={`/weather-icons/${weather.iconName}.svg`}
+          alt={weather.description}
+          className="weather-icon"
+        />
+        <span className="weather-temp">{weather.temp}°</span>
+        <span className="weather-city-inline">{weather.city}</span>
+      </button>
 
-      {expanded && (
-        <div className="weather-detail">
-          <div className="weather-detail-row">
-            <span className="weather-detail-city">{weather.city}</span>
-            <span className="weather-detail-desc">{weather.description}</span>
+      {open && (
+        <div className="weather-popover">
+          <div className="weather-popover-head">
+            <div>
+              <div className="weather-popover-city">{weather.city}</div>
+              <div className="weather-popover-desc">
+                {weather.description}
+                {weather.feelsLike !== undefined && (
+                  <span className="weather-popover-feels"> · 体感 {weather.feelsLike}°</span>
+                )}
+              </div>
+            </div>
+            <div className="weather-popover-temp">
+              <img
+                src={`/weather-icons/${weather.iconName}.svg`}
+                alt=""
+                className="weather-popover-icon"
+              />
+              <span>{weather.temp}°</span>
+            </div>
           </div>
-          {(weather.feelsLike !== undefined || weather.humidity !== undefined) && (
-            <div className="weather-detail-row weather-detail-meta">
-              {weather.feelsLike !== undefined && (
-                <span>体感 {weather.feelsLike}°</span>
-              )}
-              {weather.humidity !== undefined && (
-                <span>湿度 {weather.humidity}%</span>
-              )}
-              {weather.windSpeed && (
-                <span>{weather.windSpeed}</span>
-              )}
+
+          {(weather.humidity !== undefined || weather.windSpeed) && (
+            <div className="weather-popover-meta">
+              {weather.humidity !== undefined && <span>湿度 {weather.humidity}%</span>}
+              {weather.windSpeed && <span>{weather.windSpeed}</span>}
+            </div>
+          )}
+
+          <div className="weather-hourly-title">未来 12 小时</div>
+          {hourlyLoading && !hourly && (
+            <div className="weather-hourly-loading">加载中…</div>
+          )}
+          {hourly && (
+            <div className="weather-hourly">
+              {hourly.map((h) => {
+                const date = new Date(h.utcIso);
+                const hr = date.getHours();
+                const iconName = resolveIconName(h.description, hr);
+                const timeLabel = `${String(hr).padStart(2, '0')}:00`;
+                return (
+                  <div key={h.utcIso} className="weather-hourly-item">
+                    <div className="weather-hourly-time">{timeLabel}</div>
+                    <img
+                      src={`/weather-icons/${iconName}.svg`}
+                      alt={h.description}
+                      className="weather-hourly-icon"
+                    />
+                    <div className="weather-hourly-temp">{h.temp}°</div>
+                    {h.precipitation > 0 && (
+                      <div className="weather-hourly-precip">{h.precipitation.toFixed(1)}mm</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

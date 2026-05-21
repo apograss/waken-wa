@@ -4,6 +4,8 @@ import { InspirationHomeSection } from '@/components/inspiration-home-section'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 import { UserProfile, UserProfileNoteSection } from '@/components/user-profile'
 
+import { DemoCurrentStatus, DemoInspirationList } from './demo-content'
+
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
   activityUpdateMode: string
@@ -42,7 +44,18 @@ export interface HomepageReusedSectionProps {
   inspirationTotal: number
 }
 
+// When there's no real data yet (no Reporter, no inspiration entries),
+// fall back to demo content so the page looks "filled in" for design preview.
+const SHOW_DEMO_WHEN_EMPTY = true
+
 export function HomepageReusedSection(props: HomepageReusedSectionProps) {
+  const hasRealActivity =
+    !!(props.activityInitialFeed as { activeStatuses?: unknown[] })?.activeStatuses?.length
+  const hasRealInspiration = props.inspirationTotal > 0
+
+  const showDemoActivity = SHOW_DEMO_WHEN_EMPTY && !hasRealActivity
+  const showDemoInspiration = SHOW_DEMO_WHEN_EMPTY && !hasRealInspiration
+
   return (
     <ActivityFeedProvider
       initialFeed={props.activityInitialFeed as never}
@@ -91,30 +104,33 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           <h2 className="sec-title">此刻</h2>
           <div className="sec-rule"></div>
           <span className="sec-meta"><span className="live-dot"></span>live</span>
+          {showDemoActivity && <span className="demo-banner">demo</span>}
         </header>
 
         <div className="now-grid">
           <div className="gcard">
-            {props.showScheduleHomeColumn && (
-              <ScheduleHomeInClassBanner
-                courses={props.scheduleCoursesForHome as never}
-                showLocation={props.scheduleHomeShowLocation}
-                showTeacher={props.scheduleHomeShowTeacher}
-                periodTemplate={props.schedulePeriodTemplate as never}
-                showNextUpcoming={props.scheduleHomeShowNextUpcoming}
-                afterClassesLabel={props.scheduleHomeAfterClassesLabel}
-              />
+            {showDemoActivity ? (
+              <DemoCurrentStatus />
+            ) : (
+              <>
+                {props.showScheduleHomeColumn && (
+                  <ScheduleHomeInClassBanner
+                    courses={props.scheduleCoursesForHome as never}
+                    showLocation={props.scheduleHomeShowLocation}
+                    showTeacher={props.scheduleHomeShowTeacher}
+                    periodTemplate={props.schedulePeriodTemplate as never}
+                    showNextUpcoming={props.scheduleHomeShowNextUpcoming}
+                    afterClassesLabel={props.scheduleHomeAfterClassesLabel}
+                  />
+                )}
+                <CurrentStatus
+                  hideActivityMedia={props.hideActivityMedia}
+                  showMediaSource={props.mediaDisplayShowSource}
+                  showMediaCover={props.mediaDisplayShowCover}
+                  showMediaNcmLink={props.mediaDisplayShowNcmLink}
+                />
+              </>
             )}
-            <CurrentStatus
-              hideActivityMedia={props.hideActivityMedia}
-              showMediaSource={props.mediaDisplayShowSource}
-              showMediaCover={props.mediaDisplayShowCover}
-              showMediaNcmLink={props.mediaDisplayShowNcmLink}
-            />
-            <div className="ph-hint" style={{ marginTop: 14, textAlign: 'center', opacity: 0.6 }}>
-              想在这里看到设备 / 音乐 / Steam ?
-              安装 <code>Waken-Wa-Reporter</code> 上报状态
-            </div>
           </div>
         </div>
       </section>
@@ -126,18 +142,14 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
             <span className="sec-num">03</span>
             <h2 className="sec-title">灵感</h2>
             <div className="sec-rule"></div>
-            <span className="sec-meta">notes · 共 {props.inspirationTotal} 篇</span>
+            <span className="sec-meta">
+              notes · 共 {showDemoInspiration ? 3 : props.inspirationTotal} 篇
+            </span>
+            {showDemoInspiration && <span className="demo-banner">demo</span>}
           </header>
 
-          {props.inspirationTotal === 0 ? (
-            <div className="placeholder-card">
-              <div className="ph-icon">📝</div>
-              <div className="ph-title">还没有灵感记录</div>
-              <p>在管理后台「灵感」中添加你的第一条随笔。</p>
-              <div className="ph-hint">
-                <code>/admin</code> · 灵感
-              </div>
-            </div>
+          {showDemoInspiration ? (
+            <DemoInspirationList />
           ) : (
             <InspirationHomeSection
               entries={props.inspirationHomeEntries as never}
