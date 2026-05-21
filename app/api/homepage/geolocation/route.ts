@@ -13,8 +13,25 @@ function getVisitorIp(request: NextRequest): string {
   if (realIp && realIp !== '127.0.0.1' && realIp !== '::1') {
     return realIp.trim();
   }
-  // Development fallback — use a real IP for testing
   return process.env.DEV_FALLBACK_IP || '27.45.145.145';
+}
+
+// Use OpenStreetMap Nominatim to get Chinese city name from coordinates
+async function getChineseCityName(lat: number, lon: number): Promise<string> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh&zoom=10`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'apograss-homepage/1.0' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return '';
+    const data = await res.json();
+    const addr = data.address || {};
+    // Try city > district > county > state
+    return addr.city || addr.district || addr.county || addr.state || '';
+  } catch {
+    return '';
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -30,15 +47,17 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Extract location data from nested structure
     const location = data.location || {};
-    const city = location.city || location.region?.name || 'Unknown';
     const lat = parseFloat(location.latitude || '0');
     const lon = parseFloat(location.longitude || '0');
 
     if (!lat && !lon) {
       return NextResponse.json({ error: 'geolocation_failed' }, { status: 502 });
     }
+
+    // Get Chinese city name (fallback to ipinfo's English name)
+    const chineseCity = await getChineseCityName(lat, lon);
+    const city = chineseCity || location.city || location.region?.name || '未知';
 
     return NextResponse.json({ city, lat, lon });
   } catch {
