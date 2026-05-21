@@ -2,9 +2,8 @@ import { ActivityFeedProvider } from '@/components/activity-feed-provider'
 import { CurrentStatus } from '@/components/current-status'
 import { InspirationHomeSection } from '@/components/inspiration-home-section'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
-import { UserProfile, UserProfileNoteSection } from '@/components/user-profile'
 
-import { DemoNowSection, DemoInspirationList } from './demo-content'
+import { DemoNowSection, DemoInspirationList, DemoAboutSection } from './demo-content'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -70,31 +69,11 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           <span className="sec-meta">about · profile</span>
         </header>
 
-        <div className="gcard">
-          <UserProfile
-            name={props.userName}
-            bio={props.userBio ?? undefined}
-            avatarUrl={props.avatarSrc ?? undefined}
-            profileOnlineAccentColor={props.profileOnlineAccentColor ?? undefined}
-            profileOnlinePulseEnabled={props.profileOnlinePulseEnabled ?? undefined}
-            todayStatusEmoji={props.todayStatusEmoji}
-            todayStatusText={props.todayStatusText}
-            todayStatusExpiresAt={props.todayStatusExpiresAt ?? undefined}
-            todayStatusBusy={props.todayStatusBusy}
-          />
-
-          <UserProfileNoteSection
-            note={props.userNote ?? undefined}
-            avatarUrl={props.avatarSrc ?? undefined}
-            noteHitokotoEnabled={props.noteHitokotoEnabled}
-            noteTypewriterEnabled={props.noteTypewriterEnabled}
-            noteSignatureFontEnabled={props.noteSignatureFontEnabled}
-            noteSignatureFontFamily={props.noteSignatureFontFamily}
-            noteHitokotoCategories={props.noteHitokotoCategories}
-            noteHitokotoEncode={props.noteHitokotoEncode as never}
-            noteHitokotoFallbackToNote={props.noteHitokotoFallbackToNote}
-          />
-        </div>
+        <DemoAboutSection
+          userName={props.userName}
+          userBio={props.userBio}
+          avatarSrc={props.avatarSrc}
+        />
       </section>
 
       {/* SECTION 02 — 此刻 */}
