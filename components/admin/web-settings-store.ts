@@ -7,6 +7,7 @@ import {
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
 } from '@/constants/activity-api'
+import { HOMEPAGE_SETTINGS_DEFAULTS } from '@/constants/homepage-settings'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
@@ -43,6 +44,13 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   todayStatusExpiresAt: '',
   todayStatusBusy: false,
   userNote: '',
+  homepageVisibleEngines: [...HOMEPAGE_SETTINGS_DEFAULTS.visibleEngines],
+  homepageDefaultEngine: HOMEPAGE_SETTINGS_DEFAULTS.defaultEngine,
+  homepageGreetingSource: HOMEPAGE_SETTINGS_DEFAULTS.greetingSource,
+  homepageGreetingCustomText: HOMEPAGE_SETTINGS_DEFAULTS.greetingCustomText,
+  homepageWeatherEnabled: HOMEPAGE_SETTINGS_DEFAULTS.weatherEnabled,
+  homepageDemoEnabled: HOMEPAGE_SETTINGS_DEFAULTS.demoEnabled,
+  homepageCoverImage: HOMEPAGE_SETTINGS_DEFAULTS.coverImage,
   userNoteHitokotoEnabled: false,
   userNoteTypewriterEnabled: false,
   userNoteSignatureFontEnabled: false,

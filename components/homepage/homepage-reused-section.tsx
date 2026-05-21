@@ -3,7 +3,7 @@ import { CurrentStatus } from '@/components/current-status'
 import { InspirationHomeSection } from '@/components/inspiration-home-section'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 
-import { DemoNowSection, DemoInspirationList, DemoAboutSection } from './demo-content'
+import { DemoAboutSection,DemoInspirationList, DemoNowSection } from './demo-content'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -41,19 +41,16 @@ export interface HomepageReusedSectionProps {
   earlierText: string
   inspirationHomeEntries: unknown[]
   inspirationTotal: number
+  demoEnabled: boolean
 }
-
-// When there's no real data yet (no Reporter, no inspiration entries),
-// fall back to demo content so the page looks "filled in" for design preview.
-const SHOW_DEMO_WHEN_EMPTY = true
 
 export function HomepageReusedSection(props: HomepageReusedSectionProps) {
   const hasRealActivity =
     !!(props.activityInitialFeed as { activeStatuses?: unknown[] })?.activeStatuses?.length
   const hasRealInspiration = props.inspirationTotal > 0
 
-  const showDemoActivity = SHOW_DEMO_WHEN_EMPTY && !hasRealActivity
-  const showDemoInspiration = SHOW_DEMO_WHEN_EMPTY && !hasRealInspiration
+  const showDemoActivity = props.demoEnabled && !hasRealActivity
+  const showDemoInspiration = props.demoEnabled && !hasRealInspiration
 
   return (
     <ActivityFeedProvider

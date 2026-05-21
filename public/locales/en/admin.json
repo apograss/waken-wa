@@ -902,6 +902,38 @@
       "partialSavedHint": "Saved changes were synced, and unsaved edits were kept. Please review and retry."
     }
   },
+  "webSettingsHomepage": {
+    "title": "Homepage Settings",
+    "description": "Configure the personal homepage hero search, greeting, weather, demo content, and cover image.",
+    "searchTitle": "Search engines",
+    "searchDescription": "Choose which search engines visitors can see and the default engine used without a local preference.",
+    "searchEngines": {
+      "baidu": "Baidu",
+      "bing": "Bing",
+      "google": "Google",
+      "yandex": "Yandex",
+      "sogou": "Sogou",
+      "360": "360"
+    },
+    "defaultEngineLabel": "Default search engine",
+    "greetingSourceLabel": "Greeting source",
+    "greetingSources": {
+      "hitokoto": "Hitokoto API",
+      "custom": "Custom text"
+    },
+    "customGreetingLabel": "Custom greeting",
+    "customGreetingPlaceholder": "Write the line shown below the hero heading",
+    "weatherTitle": "Show weather module",
+    "weatherDescription": "When disabled, the homepage no longer requests or shows visitor-location weather.",
+    "demoTitle": "Show demo filler content",
+    "demoDescription": "When disabled, empty activity or inspiration sections show their empty state instead of sample content.",
+    "coverImageLabel": "Hero cover image",
+    "coverImageDescription": "Paste a public image path or URL, or upload a local image and use its stored URL.",
+    "coverUploadButton": "Upload cover",
+    "coverUploading": "Uploading…",
+    "coverUploadSuccess": "Homepage cover uploaded",
+    "coverPreviewAlt": "Homepage cover preview"
+  },
   "webSettingsBasic": {
     "pageTitleLabel": "Page title",
     "siteIconUrlLabel": "Site icon URL",

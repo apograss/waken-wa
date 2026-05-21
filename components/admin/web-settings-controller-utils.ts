@@ -1,8 +1,12 @@
 import { uploadImageSource } from '@/components/admin/admin-query-mutations'
-import { publicPageFontOptionsFromApi,themeCustomSurfaceFromApi } from '@/components/admin/web-settings-utils'
+import {
+  publicPageFontOptionsFromApi,
+  themeCustomSurfaceFromApi,
+} from '@/components/admin/web-settings-utils'
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
 } from '@/constants/activity-api'
+import { HOMEPAGE_SETTINGS_DEFAULTS } from '@/constants/homepage-settings'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
@@ -21,6 +25,13 @@ import {
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
 import { normalizeHitokotoCategories, normalizeHitokotoEncode } from '@/lib/hitokoto'
+import {
+  NormalizeHomepageCoverImage,
+  NormalizeHomepageDefaultEngine,
+  NormalizeHomepageGreetingCustomText,
+  NormalizeHomepageGreetingSource,
+  NormalizeHomepageVisibleEngines,
+} from '@/lib/homepage-settings'
 import { normalizeProfileOnlineAccentColor } from '@/lib/profile-online-accent-color'
 import {
   isAllowedSlotMinutes,
@@ -114,6 +125,12 @@ export async function uploadImportedImageSources(
   if (isInlineImageDataUrl(next.siteIconUrl)) {
     next.siteIconUrl = await uploadImageSource(next.siteIconUrl, 'site.icon')
   }
+  if (isInlineImageDataUrl(next.homepageCoverImage)) {
+    next.homepageCoverImage = await uploadImageSource(
+      next.homepageCoverImage,
+      'homepage.cover',
+    )
+  }
   if (next.themeCustomSurface) {
     const surface = { ...next.themeCustomSurface }
     if (isInlineImageDataUrl(surface.backgroundImageUrl)) {
@@ -158,6 +175,7 @@ export function buildWebSettingsForm(
   defaults: WebSettingsFormDefaults,
 ): SiteConfig {
   const statusCard = normalizeStatusCardSettings(data)
+  const homepageVisibleEngines = NormalizeHomepageVisibleEngines(data.homepageVisibleEngines)
   return {
     adminThemeColor:
       typeof data.adminThemeColor === 'string'
@@ -185,6 +203,24 @@ export function buildWebSettingsForm(
     todayStatusExpiresAt: normalizeTodayStatusExpiresAt(data.todayStatusExpiresAt),
     todayStatusBusy: normalizeTodayStatusBusy(data.todayStatusBusy),
     userNote: data.userNote ?? '',
+    homepageVisibleEngines,
+    homepageDefaultEngine: NormalizeHomepageDefaultEngine(
+      data.homepageDefaultEngine,
+      homepageVisibleEngines,
+    ),
+    homepageGreetingSource: NormalizeHomepageGreetingSource(data.homepageGreetingSource),
+    homepageGreetingCustomText: NormalizeHomepageGreetingCustomText(
+      data.homepageGreetingCustomText,
+    ),
+    homepageWeatherEnabled:
+      data.homepageWeatherEnabled === undefined
+        ? HOMEPAGE_SETTINGS_DEFAULTS.weatherEnabled
+        : data.homepageWeatherEnabled === true,
+    homepageDemoEnabled:
+      data.homepageDemoEnabled === undefined
+        ? HOMEPAGE_SETTINGS_DEFAULTS.demoEnabled
+        : data.homepageDemoEnabled === true,
+    homepageCoverImage: NormalizeHomepageCoverImage(data.homepageCoverImage),
     userNoteHitokotoEnabled: Boolean(data.userNoteHitokotoEnabled),
     userNoteTypewriterEnabled: Boolean(data.userNoteTypewriterEnabled),
     userNoteSignatureFontEnabled: Boolean(data.userNoteSignatureFontEnabled),

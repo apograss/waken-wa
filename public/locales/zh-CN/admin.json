@@ -902,6 +902,38 @@
       "partialSavedHint": "已同步已保存内容，未提交的改动仍保留，请检查后重试"
     }
   },
+  "webSettingsHomepage": {
+    "title": "首页设置",
+    "description": "配置个人首页首屏的搜索、问候语、天气、demo 内容与背景图。",
+    "searchTitle": "搜索引擎管理",
+    "searchDescription": "选择访客可见的搜索引擎，并指定没有本地偏好时的默认引擎。",
+    "searchEngines": {
+      "baidu": "百度",
+      "bing": "必应",
+      "google": "Google",
+      "yandex": "Yandex",
+      "sogou": "搜狗",
+      "360": "360"
+    },
+    "defaultEngineLabel": "默认搜索引擎",
+    "greetingSourceLabel": "问候语来源",
+    "greetingSources": {
+      "hitokoto": "一言 API",
+      "custom": "自定义文字"
+    },
+    "customGreetingLabel": "自定义问候语",
+    "customGreetingPlaceholder": "写一句显示在 Hero 标题下方的话",
+    "weatherTitle": "显示天气模块",
+    "weatherDescription": "关闭后，首页右上角不再请求或展示访客所在地天气。",
+    "demoTitle": "显示 demo 填充内容",
+    "demoDescription": "关闭后，没有真实活动或灵感内容时会显示空状态，而不是示例内容。",
+    "coverImageLabel": "Hero 背景图",
+    "coverImageDescription": "可填写公开可访问的图片路径或 URL，也可以上传本地图片后自动写入地址。",
+    "coverUploadButton": "上传背景图",
+    "coverUploading": "上传中…",
+    "coverUploadSuccess": "首页背景图已上传",
+    "coverPreviewAlt": "首页背景图预览"
+  },
   "webSettingsBasic": {
     "pageTitleLabel": "网页标题",
     "siteIconUrlLabel": "网页图标地址",

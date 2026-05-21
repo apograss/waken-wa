@@ -1,3 +1,7 @@
+import type { CSSProperties } from 'react'
+
+import type { HomepageSettings } from '@/types/homepage-settings'
+
 import { HeroClock } from './hero-clock'
 import { HeroGreeting } from './hero-greeting'
 import { HeroSearch } from './hero-search'
@@ -6,15 +10,24 @@ import { HeroWeather } from './hero-weather'
 import { HomepageReusedSection, type HomepageReusedSectionProps } from './homepage-reused-section'
 
 interface PersonalHomePageProps {
+  homepageSettings: HomepageSettings
   reusedSectionProps: HomepageReusedSectionProps
   userName: string
 }
 
-export function PersonalHomePage({ reusedSectionProps, userName }: PersonalHomePageProps) {
+export function PersonalHomePage({
+  homepageSettings,
+  reusedSectionProps,
+  userName,
+}: PersonalHomePageProps) {
+  const heroStyle: CSSProperties = {
+    backgroundImage: `url("${homepageSettings.coverImage.replace(/"/g, '\\"')}")`,
+  }
+
   return (
     <>
       {/* ====== HERO (above the fold) ====== */}
-      <section className="hero">
+      <section className="hero" style={heroStyle}>
         {/* Top meta strip */}
         <div className="top-meta">
           <div className="top-meta-left">
@@ -22,15 +35,21 @@ export function PersonalHomePage({ reusedSectionProps, userName }: PersonalHomeP
             <HeroClock />
           </div>
           <div className="top-meta-right">
-            <HeroWeather />
+            {homepageSettings.weatherEnabled ? <HeroWeather /> : null}
           </div>
         </div>
 
         {/* Hero body — left half */}
         <div className="hero-body">
           <HeroGreeting />
-          <HeroSubtitle />
-          <HeroSearch />
+          <HeroSubtitle
+            customText={homepageSettings.greetingCustomText}
+            source={homepageSettings.greetingSource}
+          />
+          <HeroSearch
+            defaultEngineId={homepageSettings.defaultEngine}
+            visibleEngineIds={homepageSettings.visibleEngines}
+          />
         </div>
 
         {/* Glance status — single line */}

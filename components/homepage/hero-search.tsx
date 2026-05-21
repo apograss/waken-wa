@@ -1,86 +1,137 @@
-'use client';
+'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { buildSearchUrl, DEFAULT_SEARCH_ENGINES, LOCALSTORAGE_KEYS, type SearchEngine } from './constants';
+import Image from 'next/image'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export function HeroSearch() {
-  const [query, setQuery] = useState('');
-  const [currentEngine, setCurrentEngine] = useState<SearchEngine>(DEFAULT_SEARCH_ENGINES[1]); // bing
-  const inputRef = useRef<HTMLInputElement>(null);
+import type { HomepageSearchEngineId } from '@/types/homepage-settings'
+
+import {
+  buildSearchUrl,
+  DEFAULT_SEARCH_ENGINES,
+  LOCALSTORAGE_KEYS,
+  type SearchEngine,
+} from './constants'
+
+type HeroSearchProps = {
+  defaultEngineId: HomepageSearchEngineId
+  visibleEngineIds: HomepageSearchEngineId[]
+}
+
+const ENGINE_LABELS: Record<HomepageSearchEngineId, string> = {
+  baidu: '百度',
+  bing: '必应',
+  google: '谷歌',
+  yandex: 'Yandex',
+  sogou: '搜狗',
+  '360': '360',
+}
+
+function ResolveEngines(visibleEngineIds: readonly HomepageSearchEngineId[]): SearchEngine[] {
+  const visible = new Set(visibleEngineIds)
+  const engines = DEFAULT_SEARCH_ENGINES.filter((engine) => visible.has(engine.id))
+  return engines.length > 0 ? [...engines] : [...DEFAULT_SEARCH_ENGINES]
+}
+
+export function HeroSearch({
+  defaultEngineId,
+  visibleEngineIds,
+}: HeroSearchProps) {
+  const [query, setQuery] = useState('')
+  const [selectedEngineId, setSelectedEngineId] =
+    useState<HomepageSearchEngineId>(defaultEngineId)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const engines = useMemo(() => ResolveEngines(visibleEngineIds), [visibleEngineIds])
+  const fallbackEngine =
+    engines.find((engine) => engine.id === defaultEngineId) ?? engines[0] ?? DEFAULT_SEARCH_ENGINES[1]
+  const currentEngine =
+    engines.find((engine) => engine.id === selectedEngineId) ?? fallbackEngine
+
+  const handleEngineSelect = useCallback((engine: SearchEngine) => {
+    setSelectedEngineId(engine.id)
+    try {
+      localStorage.setItem(LOCALSTORAGE_KEYS.preferredEngine, engine.id)
+    } catch {
+      // localStorage may be unavailable in hardened browser modes.
+    }
+  }, [])
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LOCALSTORAGE_KEYS.preferredEngine);
-      if (saved) {
-        const engine = DEFAULT_SEARCH_ENGINES.find((e) => e.id === saved);
-        if (engine) setCurrentEngine(engine);
+      const saved = localStorage.getItem(LOCALSTORAGE_KEYS.preferredEngine)
+      if (!saved) return
+      const engine = engines.find((item) => item.id === saved)
+      if (engine) {
+        setSelectedEngineId(engine.id)
       }
-    } catch { /* */ }
-  }, []);
+    } catch {
+      // localStorage may be unavailable in hardened browser modes.
+    }
+  }, [engines])
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey && e.key >= '1' && e.key <= '6') {
-        e.preventDefault();
-        const index = parseInt(e.key, 10) - 1;
-        if (index < DEFAULT_SEARCH_ENGINES.length) {
-          handleEngineSelect(DEFAULT_SEARCH_ENGINES[index]);
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.key < '1' || event.key > '9') return
+      const index = parseInt(event.key, 10) - 1
+      const engine = engines[index]
+      if (!engine) return
+      event.preventDefault()
+      handleEngineSelect(engine)
+    }
 
-  const handleEngineSelect = useCallback((engine: SearchEngine) => {
-    setCurrentEngine(engine);
-    try { localStorage.setItem(LOCALSTORAGE_KEYS.preferredEngine, engine.id); } catch { /* */ }
-  }, []);
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [engines, handleEngineSelect])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    window.location.href = buildSearchUrl(currentEngine, trimmed);
-  };
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    const trimmed = query.trim()
+    if (!trimmed) return
+    window.location.href = buildSearchUrl(currentEngine, trimmed)
+  }
+
+  const shortcutHint = engines.length > 1 ? `1-${engines.length}` : '1'
 
   return (
     <>
       <form className="search" onSubmit={handleSubmit}>
         <button type="button" className="search-engine-btn" aria-label="切换搜索引擎">
-          <img src={currentEngine.icon} alt={currentEngine.id} width={22} height={22} style={{ filter: 'brightness(0.3)' }} />
+          <Image
+            src={currentEngine.icon}
+            alt={currentEngine.id}
+            width={22}
+            height={22}
+            unoptimized
+            style={{ filter: 'brightness(0.3)' }}
+          />
         </button>
         <input
           ref={inputRef}
           className="search-input"
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(event) => setQuery(event.target.value)}
           placeholder="今天搜什么？"
           autoComplete="off"
         />
         <span className="search-hint">
-          <kbd>⌥</kbd><kbd>1–6</kbd> 切引擎
+          <kbd>⌥</kbd>
+          <kbd>{shortcutHint}</kbd> 切引擎
         </span>
       </form>
 
       <div className="engine-row">
-        {DEFAULT_SEARCH_ENGINES.map((engine, index) => (
-          <span
+        {engines.map((engine, index) => (
+          <button
             key={engine.id}
+            type="button"
             className={`e ${engine.id === currentEngine.id ? 'active' : ''}`}
             onClick={() => handleEngineSelect(engine)}
           >
             <span className="k">⌥{index + 1}</span>
-            {engine.id === 'baidu' && '百度'}
-            {engine.id === 'bing' && '必应'}
-            {engine.id === 'google' && '谷歌'}
-            {engine.id === 'yandex' && 'Yandex'}
-            {engine.id === 'sogou' && '搜狗'}
-            {engine.id === '360' && '360'}
-          </span>
+            {ENGINE_LABELS[engine.id]}
+          </button>
         ))}
       </div>
     </>
-  );
+  )
 }

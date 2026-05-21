@@ -1,9 +1,9 @@
+import '@/styles/homepage.css'
+import '@/styles/noto-serif-sc.css'
+
 import { count, desc } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-
-import '@/styles/homepage.css'
-import '@/styles/noto-serif-sc.css'
 
 import { HomeScrollbarHider } from '@/components/home-scrollbar-hider'
 import { PersonalHomePage } from '@/components/homepage/personal-home-page'
@@ -27,6 +27,7 @@ import {
   normalizeHitokotoCategories,
   normalizeHitokotoEncode,
 } from '@/lib/hitokoto'
+import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { inspirationEntryImageUrl } from '@/lib/inspiration-inline-images'
 import { resolvePublicPageControlFontOptions } from '@/lib/public-page-font'
 import {
@@ -148,6 +149,7 @@ export default async function Home() {
   const noteHitokotoEncode = normalizeHitokotoEncode(cfg.userNoteHitokotoEncode)
   const noteHitokotoFallbackToNote = Boolean(cfg.userNoteHitokotoFallbackToNote)
   const activityUpdateMode = normalizeActivityUpdateMode(cfg.activityUpdateMode)
+  const homepageSettings = NormalizeHomepageSettings(cfg)
   const publicFontOptions = resolvePublicPageControlFontOptions(
     cfg.publicFontOptionsEnabled,
     cfg.publicFontOptions,
@@ -181,6 +183,7 @@ export default async function Home() {
         fontOptions={publicFontOptions}
       >
         <PersonalHomePage
+          homepageSettings={homepageSettings}
           userName={userName}
           reusedSectionProps={{
             activityInitialFeed,
@@ -218,6 +221,7 @@ export default async function Home() {
             earlierText,
             inspirationHomeEntries,
             inspirationTotal,
+            demoEnabled: homepageSettings.demoEnabled,
           }}
         />
         <LayoutFooterPortal adminText={adminText} userName={userName} />

@@ -21,6 +21,13 @@ import {
 } from '@/lib/cache-runtime-toggle'
 import { DEFAULT_PAGE_TITLE, PAGE_TITLE_MAX_LEN } from '@/lib/default-page-title'
 import { normalizeHitokotoCategories, normalizeHitokotoEncode } from '@/lib/hitokoto'
+import {
+  NormalizeHomepageCoverImage,
+  NormalizeHomepageDefaultEngine,
+  NormalizeHomepageGreetingCustomText,
+  NormalizeHomepageGreetingSource,
+  NormalizeHomepageVisibleEngines,
+} from '@/lib/homepage-settings'
 import { normalizeInspirationAllowedHashes } from '@/lib/inspiration-device-allowlist'
 import {
   assertAllowedLlmFields,
@@ -122,6 +129,44 @@ export async function prepareSiteConfigValuesFromPayload(
       isRemoteAvatarUrl(avatarUrl) && Boolean(normalizedBody.avatarFetchByServerEnabled)
   }
   const userNote = trimStr('userNote')
+  const homepageVisibleEngines = NormalizeHomepageVisibleEngines(
+    has('homepageVisibleEngines')
+      ? normalizedBody.homepageVisibleEngines
+      : existing?.homepageVisibleEngines,
+  )
+  const homepageDefaultEngine = NormalizeHomepageDefaultEngine(
+    has('homepageDefaultEngine')
+      ? normalizedBody.homepageDefaultEngine
+      : existing?.homepageDefaultEngine,
+    homepageVisibleEngines,
+  )
+  const homepageGreetingSource = NormalizeHomepageGreetingSource(
+    has('homepageGreetingSource')
+      ? normalizedBody.homepageGreetingSource
+      : existing?.homepageGreetingSource,
+  )
+  const homepageGreetingCustomText = NormalizeHomepageGreetingCustomText(
+    has('homepageGreetingCustomText')
+      ? normalizedBody.homepageGreetingCustomText
+      : existing?.homepageGreetingCustomText,
+  )
+  let homepageWeatherEnabled = existing?.homepageWeatherEnabled !== false
+  if (
+    normalizedBody.homepageWeatherEnabled !== undefined &&
+    normalizedBody.homepageWeatherEnabled !== null
+  ) {
+    homepageWeatherEnabled = Boolean(normalizedBody.homepageWeatherEnabled)
+  }
+  let homepageDemoEnabled = existing?.homepageDemoEnabled !== false
+  if (
+    normalizedBody.homepageDemoEnabled !== undefined &&
+    normalizedBody.homepageDemoEnabled !== null
+  ) {
+    homepageDemoEnabled = Boolean(normalizedBody.homepageDemoEnabled)
+  }
+  const homepageCoverImage = NormalizeHomepageCoverImage(
+    has('homepageCoverImage') ? normalizedBody.homepageCoverImage : existing?.homepageCoverImage,
+  )
   const themePreset = strField('themePreset', 'basic')
   const themeCustomSurface = parseThemeCustomSurface(
     has('themeCustomSurface') ? normalizedBody.themeCustomSurface : existing?.themeCustomSurface,
@@ -625,6 +670,13 @@ export async function prepareSiteConfigValuesFromPayload(
     todayStatusExpiresAt,
     todayStatusBusy,
     userNote,
+    homepageVisibleEngines,
+    homepageDefaultEngine,
+    homepageGreetingSource,
+    homepageGreetingCustomText,
+    homepageWeatherEnabled,
+    homepageDemoEnabled,
+    homepageCoverImage,
     userNoteHitokotoEnabled,
     userNoteTypewriterEnabled,
     userNoteSignatureFontEnabled,
@@ -731,4 +783,3 @@ export async function updateSiteConfigFromPayload(
   const siteConfigValues = await prepareSiteConfigValuesFromPayload(body, options)
   return persistCompatibilitySiteConfigValues(siteConfigValues, body)
 }
-

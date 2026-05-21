@@ -52,6 +52,9 @@ export async function storeSiteConfigInlineImageSources(
   if ('siteIconUrl' in next) {
     next.siteIconUrl = await storeImageValue(next.siteIconUrl, 'site.icon')
   }
+  if ('homepageCoverImage' in next) {
+    next.homepageCoverImage = await storeImageValue(next.homepageCoverImage, 'homepage.cover')
+  }
   if ('themeCustomSurface' in next) {
     next.themeCustomSurface = await storeThemeCustomSurfaceImages(next.themeCustomSurface)
   }

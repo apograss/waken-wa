@@ -14,6 +14,7 @@ import {
   normalizeHitokotoCategories,
   normalizeHitokotoEncode,
 } from '@/lib/hitokoto'
+import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
 import {
   backfillCoursePeriodIdsFromTemplate,
@@ -62,6 +63,7 @@ export async function GET(request: Request) {
     }
 
     const baseUrl = getBaseUrl(request)
+    const homepageSettings = NormalizeHomepageSettings(cfg)
     const schedulePeriodTemplate = resolveSchedulePeriodTemplate(cfg.schedulePeriodTemplate)
     const scheduleCoursesRaw = Array.isArray(cfg.scheduleCourses)
       ? cfg.scheduleCourses
@@ -86,6 +88,13 @@ export async function GET(request: Request) {
         profileOnlineAccentColor: cfg.profileOnlineAccentColor ?? null,
         profileOnlinePulseEnabled: cfg.profileOnlinePulseEnabled !== false,
         userNote: cfg.userNote,
+        homepageVisibleEngines: homepageSettings.visibleEngines,
+        homepageDefaultEngine: homepageSettings.defaultEngine,
+        homepageGreetingSource: homepageSettings.greetingSource,
+        homepageGreetingCustomText: homepageSettings.greetingCustomText,
+        homepageWeatherEnabled: homepageSettings.weatherEnabled,
+        homepageDemoEnabled: homepageSettings.demoEnabled,
+        homepageCoverImage: homepageSettings.coverImage,
         userNoteHitokotoEnabled: Boolean(cfg.userNoteHitokotoEnabled),
         userNoteTypewriterEnabled: Boolean(cfg.userNoteTypewriterEnabled),
         userNoteSignatureFontEnabled: Boolean(cfg.userNoteSignatureFontEnabled),

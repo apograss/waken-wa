@@ -13,6 +13,7 @@ import {
 } from '@/components/admin/admin-motion'
 import { uploadImageSource } from '@/components/admin/admin-query-mutations'
 import { AdminThemeColorControl } from '@/components/admin/admin-theme-color-control'
+import { HomepageSettingsPanel } from '@/components/admin/homepage-settings-panel'
 import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import { SiteSettingsMigrationCard } from '@/components/admin/site-settings-migration-card'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
@@ -197,6 +198,8 @@ function WebSettingsContent() {
                 <WebSettingsSecurityPanel />
               </div>
             </WebSettingsSection>
+
+            <HomepageSettingsPanel />
 
             <WebSettingsSection
               title={t('webSettings.sections.frontend.title')}

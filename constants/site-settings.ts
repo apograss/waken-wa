@@ -74,7 +74,18 @@ export const SITE_SETTINGS_CORE_HEAVY_KEYS = [
   'inspirationAllowedDeviceHashes',
 ] as const
 
+export const SITE_SETTINGS_HOMEPAGE_CORE_KEYS = [
+  'homepageVisibleEngines',
+  'homepageDefaultEngine',
+  'homepageGreetingSource',
+  'homepageGreetingCustomText',
+  'homepageWeatherEnabled',
+  'homepageDemoEnabled',
+  'homepageCoverImage',
+] as const
+
 export const SITE_SETTINGS_MIGRATED_CORE_KEYS = [
+  ...SITE_SETTINGS_HOMEPAGE_CORE_KEYS,
   'todayStatusEmoji',
   'todayStatusText',
   'todayStatusExpiresAt',

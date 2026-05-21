@@ -1,5 +1,6 @@
 import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
+import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { parseJsonString } from '@/lib/json-parse'
 import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { normalizePublicPageFontOptions } from '@/lib/public-page-font'
@@ -25,9 +26,17 @@ function normalizeStringArrayField(raw: unknown): string[] {
 export function normalizeSiteConfigShape(config: Record<string, any>): Record<string, any> {
   const mediaCoverMaxCount = Number(config.mediaCoverMaxCount)
   const statusCard = normalizeStatusCardSettings(config)
+  const homepageSettings = NormalizeHomepageSettings(config)
 
   return {
     ...config,
+    homepageVisibleEngines: homepageSettings.visibleEngines,
+    homepageDefaultEngine: homepageSettings.defaultEngine,
+    homepageGreetingSource: homepageSettings.greetingSource,
+    homepageGreetingCustomText: homepageSettings.greetingCustomText,
+    homepageWeatherEnabled: homepageSettings.weatherEnabled,
+    homepageDemoEnabled: homepageSettings.demoEnabled,
+    homepageCoverImage: homepageSettings.coverImage,
     adminThemeColor: normalizeAdminThemeColor(config.adminThemeColor ?? '') ?? null,
     adminBackgroundColor: normalizeAdminThemeColor(config.adminBackgroundColor ?? '') ?? null,
     siteIconUrl: normalizeSiteIconUrl(config.siteIconUrl ?? '') ?? null,

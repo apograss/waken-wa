@@ -109,14 +109,22 @@ export function HeroWeather() {
   // Fetch hourly when first opened
   useEffect(() => {
     if (!open || !weather || hourly || hourlyLoading) return;
-    setHourlyLoading(true);
-    fetch(`/api/homepage/weather/hourly?lat=${weather.lat}&lon=${weather.lon}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
+    const { lat, lon } = weather;
+
+    async function loadHourly() {
+      setHourlyLoading(true);
+      try {
+        const response = await fetch(`/api/homepage/weather/hourly?lat=${lat}&lon=${lon}`);
+        const data = response.ok ? await response.json() : null;
         if (data?.hourly) setHourly(data.hourly);
-      })
-      .catch(() => { /* silent */ })
-      .finally(() => setHourlyLoading(false));
+      } catch {
+        /* silent */
+      } finally {
+        setHourlyLoading(false);
+      }
+    }
+
+    void loadHourly();
   }, [open, weather, hourly, hourlyLoading]);
 
   if (!weather) {

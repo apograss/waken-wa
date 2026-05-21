@@ -1,6 +1,7 @@
 import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_MAX_SECONDS,
 } from '@/constants/activity-api'
+import { HOMEPAGE_SETTINGS_DEFAULTS } from '@/constants/homepage-settings'
 import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
@@ -18,6 +19,13 @@ import {
   normalizeHitokotoCategories,
   normalizeHitokotoEncode,
 } from '@/lib/hitokoto'
+import {
+  NormalizeHomepageCoverImage,
+  NormalizeHomepageDefaultEngine,
+  NormalizeHomepageGreetingCustomText,
+  NormalizeHomepageGreetingSource,
+  NormalizeHomepageVisibleEngines,
+} from '@/lib/homepage-settings'
 import {
   mediaPlaySourceBlocklistFromRules,
   normalizeMediaPlaySourceRules,
@@ -389,6 +397,32 @@ export function webPayloadToFormPatch(web: Record<string, unknown>): Partial<Sit
     patch.todayStatusBusy = normalizeTodayStatusBusy(web.todayStatusBusy)
   }
   if ('userNote' in web && typeof web.userNote === 'string') patch.userNote = web.userNote.trim()
+  if ('homepageVisibleEngines' in web) {
+    patch.homepageVisibleEngines = NormalizeHomepageVisibleEngines(web.homepageVisibleEngines)
+  }
+  if ('homepageDefaultEngine' in web) {
+    patch.homepageDefaultEngine = NormalizeHomepageDefaultEngine(
+      web.homepageDefaultEngine,
+      patch.homepageVisibleEngines ?? HOMEPAGE_SETTINGS_DEFAULTS.visibleEngines,
+    )
+  }
+  if ('homepageGreetingSource' in web) {
+    patch.homepageGreetingSource = NormalizeHomepageGreetingSource(web.homepageGreetingSource)
+  }
+  if ('homepageGreetingCustomText' in web) {
+    patch.homepageGreetingCustomText = NormalizeHomepageGreetingCustomText(
+      web.homepageGreetingCustomText,
+    )
+  }
+  if ('homepageWeatherEnabled' in web && typeof web.homepageWeatherEnabled === 'boolean') {
+    patch.homepageWeatherEnabled = web.homepageWeatherEnabled
+  }
+  if ('homepageDemoEnabled' in web && typeof web.homepageDemoEnabled === 'boolean') {
+    patch.homepageDemoEnabled = web.homepageDemoEnabled
+  }
+  if ('homepageCoverImage' in web) {
+    patch.homepageCoverImage = NormalizeHomepageCoverImage(web.homepageCoverImage)
+  }
   if ('userNoteHitokotoEnabled' in web && typeof web.userNoteHitokotoEnabled === 'boolean') {
     patch.userNoteHitokotoEnabled = web.userNoteHitokotoEnabled
   }

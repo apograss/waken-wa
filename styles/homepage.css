@@ -39,7 +39,6 @@
     height: 100vh;
     min-height: 720px;
     overflow: hidden;
-    background-image: url('/assets/cover.png');
     background-size: cover;
     background-position: center right;
     background-repeat: no-repeat;
@@ -167,7 +166,11 @@
   .engine-row .e {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 0;
+    border: 0;
     border-bottom: 1px solid transparent;
+    background: transparent;
+    color: inherit;
+    font: inherit;
     cursor: pointer; transition: color .15s, border-color .15s;
   }
   .engine-row .e:hover { color: var(--hero-text); }

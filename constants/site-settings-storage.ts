@@ -29,6 +29,19 @@ export const SITE_SETTINGS_RULES_STRING_LIST_KEYS = [
   'mediaPlaySourceRules',
 ] as const
 
+export const SITE_SETTINGS_HOMEPAGE_CORE_JSON_KEYS = [
+  'homepageVisibleEngines',
+] as const
+
+export const SITE_SETTINGS_HOMEPAGE_CORE_SCALAR_KEYS = [
+  'homepageDefaultEngine',
+  'homepageGreetingSource',
+  'homepageGreetingCustomText',
+  'homepageWeatherEnabled',
+  'homepageDemoEnabled',
+  'homepageCoverImage',
+] as const
+
 export const SITE_SETTINGS_THEME_CUSTOM_SURFACE_STRING_KEYS = [
   'background',
   'bodyBackground',

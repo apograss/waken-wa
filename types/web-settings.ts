@@ -3,6 +3,10 @@ import type { UserNoteHitokotoEncode } from '@/lib/hitokoto'
 import type { PublicPageFontOptionMode } from '@/lib/public-page-font'
 import type { ScheduleCourse, SchedulePeriodTemplateItem } from '@/lib/schedule-courses'
 import type { ScheduleDayGrid } from '@/lib/schedule-grid-by-weekday'
+import type {
+  HomepageGreetingSource,
+  HomepageSearchEngineId,
+} from '@/types/homepage-settings'
 import type { SiteSettingsMigrationState } from '@/types/site-settings'
 import type {
   ThemeBackgroundImageMode,
@@ -85,6 +89,16 @@ export interface SiteConfig {
   todayStatusExpiresAt: string
   todayStatusBusy: boolean
   userNote: string
+  /** Search engines shown in the personal homepage hero search. */
+  homepageVisibleEngines: HomepageSearchEngineId[]
+  /** Default search engine for visitors without a saved local preference. */
+  homepageDefaultEngine: HomepageSearchEngineId
+  /** Hero subtitle source for the personal homepage. */
+  homepageGreetingSource: HomepageGreetingSource
+  homepageGreetingCustomText: string
+  homepageWeatherEnabled: boolean
+  homepageDemoEnabled: boolean
+  homepageCoverImage: string
   userNoteHitokotoEnabled: boolean
   userNoteTypewriterEnabled: boolean
   userNoteSignatureFontEnabled: boolean
