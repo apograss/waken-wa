@@ -96,6 +96,13 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
               <span className="now-banner-pulse"></span>
               live · 在线
             </span>
+            <div className="now-banner-quote">
+              <span className="now-banner-quote-eyebrow">现在</span>
+              <p className="now-banner-quote-text">
+                听见雨声<br />写到第三章
+              </p>
+              <span className="now-banner-quote-time">15:42 · 周三</span>
+            </div>
             <div className="now-banner-chip">
               <div className="now-banner-cover">♪</div>
               <div className="now-banner-info">

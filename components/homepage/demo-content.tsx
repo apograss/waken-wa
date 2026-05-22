@@ -362,62 +362,81 @@ export function DemoAboutSection({ userName, userBio, avatarSrc }: DemoAboutSect
   const initial = name.charAt(0).toLowerCase()
 
   return (
-    <div className="about-grid">
-      {/* LEFT — avatar + identity */}
-      <div className="about-left">
-        <div className="about-avatar-wrap">
-          {avatarSrc ? (
-            <img src={avatarSrc} alt={name} className="about-avatar-img" />
-          ) : (
-            <div className="about-avatar-fallback">{initial}</div>
-          )}
-          <span className="about-online-dot" title="在线"></span>
-        </div>
+    <>
+      <div className="about-grid">
+        {/* LEFT — identity card (avatar + name + status + facts) */}
+        <div className="about-left">
+          <div className="about-avatar-wrap">
+            {avatarSrc ? (
+              <img src={avatarSrc} alt={name} className="about-avatar-img" />
+            ) : (
+              <div className="about-avatar-fallback">{initial}</div>
+            )}
+            <span className="about-online-dot" title="在线"></span>
+          </div>
 
-        <div className="about-identity">
-          <h3 className="about-name">{name}</h3>
-          <span className="about-domain">apograss.cn</span>
-        </div>
+          <div className="about-identity">
+            <h3 className="about-name">{name}</h3>
+            <span className="about-domain">apograss.cn</span>
+          </div>
 
-        <div className="about-status">
-          <span className="about-status-emoji">🌧</span>
-          <span className="about-status-text">在写论文</span>
-          <span className="about-status-busy">busy</span>
-          <span className="about-status-expire">至 13:42</span>
-        </div>
-      </div>
+          <p className="about-bio">{bio}</p>
 
-      {/* RIGHT — bio + signature note */}
-      <div className="about-right">
-        <span className="about-figure-label">
-          <span className="about-figure-dot"></span>
-          profile · 2026 spring
-        </span>
+          <div className="about-status">
+            <span className="about-status-emoji">🌧</span>
+            <span className="about-status-text">在写论文</span>
+            <span className="about-status-busy">busy</span>
+            <span className="about-status-expire">至 13:42</span>
+          </div>
 
-        <p className="about-bio">{bio}</p>
-
-        <div className="about-meta">
-          <span className="about-meta-row">
-            <span className="about-meta-lab">CITY</span>
-            <span className="about-meta-val">深圳 · 福田</span>
-          </span>
-          <span className="about-meta-row">
-            <span className="about-meta-lab">EMAIL</span>
-            <span className="about-meta-val">apograss@example.com</span>
-          </span>
-          <span className="about-meta-row">
-            <span className="about-meta-lab">GITHUB</span>
-            <span className="about-meta-val">github.com/apograss</span>
-          </span>
-        </div>
-
-        <div className="about-signature">
-          <p className="about-signature-text">所谓自由，是能在下雨的星期天，一个人写完一段不被催促的字。</p>
-          <div className="about-signature-src">
-            <span>— hitokoto · 子集</span>
+          <div className="about-meta">
+            <span className="about-meta-row">
+              <span className="about-meta-lab">CITY</span>
+              <span className="about-meta-val">深圳 · 福田</span>
+            </span>
+            <span className="about-meta-row">
+              <span className="about-meta-lab">EMAIL</span>
+              <span className="about-meta-val">apograss@example.com</span>
+            </span>
+            <span className="about-meta-row">
+              <span className="about-meta-lab">GITHUB</span>
+              <span className="about-meta-val">github.com/apograss</span>
+            </span>
+            <span className="about-meta-row">
+              <span className="about-meta-lab">UPTIME</span>
+              <span className="about-meta-val">823 days online</span>
+            </span>
           </div>
         </div>
+
+        {/* RIGHT — large editorial figure */}
+        <figure className="about-figure" aria-hidden="true">
+          <span className="about-figure-label">
+            <span className="about-figure-dot"></span>
+            profile · 2026 spring
+          </span>
+          <img
+            src="/assets/homepage/section-about-companion.png"
+            alt=""
+            loading="lazy"
+            className="about-figure-img"
+          />
+          <figcaption className="about-figure-caption">
+            <span className="about-figure-caption-name">{name}</span>
+            <span className="about-figure-caption-meta">2026 · 春</span>
+          </figcaption>
+        </figure>
       </div>
-    </div>
+
+      {/* Pull-quote signature spans full width below the grid */}
+      <div className="about-signature">
+        <p className="about-signature-text">
+          所谓自由，是能在下雨的星期天，一个人写完一段不被催促的字。
+        </p>
+        <div className="about-signature-src">
+          <span>— hitokoto · 子集</span>
+        </div>
+      </div>
+    </>
   )
 }
