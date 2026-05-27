@@ -1,9 +1,9 @@
 import { ActivityFeedProvider } from '@/components/activity-feed-provider'
-import { CurrentStatus } from '@/components/current-status'
-import { InspirationHomeSection } from '@/components/inspiration-home-section'
-import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 
 import { DemoAboutSection, DemoInspirationStage, DemoNowSection } from './demo-content'
+import { LiveInspirationStage } from './live-inspiration-stage'
+import { LiveNowBanner } from './live-now-banner'
+import { LiveNowSection } from './live-now-section'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -83,60 +83,32 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           {showDemoActivity && <span className="demo-banner">demo</span>}
         </header>
 
-        {/* Editorial banner — illustration + LIVE chip + now-playing chip */}
-        {showDemoActivity && (
-          <figure className="now-banner" aria-hidden="true">
-            <img
-              src="/assets/homepage/section-now-companion.png"
-              alt=""
-              loading="lazy"
-              className="now-banner-img"
-            />
-            <span className="now-banner-live">
-              <span className="now-banner-pulse"></span>
-              live · 在线
-            </span>
-            <div className="now-banner-quote">
-              <span className="now-banner-quote-eyebrow">现在</span>
-              <p className="now-banner-quote-text">
-                听见雨声<br />写到第三章
-              </p>
-              <span className="now-banner-quote-time">15:42 · 周三</span>
-            </div>
-            <div className="now-banner-chip">
-              <div className="now-banner-cover">♪</div>
-              <div className="now-banner-info">
-                <div className="now-banner-title">大鱼</div>
-                <div className="now-banner-artist">周深 · 《大鱼海棠》印象曲</div>
-              </div>
-              <div className="now-banner-time">2:47 / 5:38</div>
-            </div>
-          </figure>
+        {/* Editorial banner — 立绘 + LIVE 角标 + (demo 时写死 / 真实时读现在播放) */}
+        {showDemoActivity ? (
+          <DemoNowBanner />
+        ) : (
+          <LiveNowBanner hideMedia={props.hideActivityMedia} />
         )}
 
         {showDemoActivity ? (
           <DemoNowSection />
         ) : (
-          <div className="now-grid">
-            <div className="gcard">
-              {props.showScheduleHomeColumn && (
-                <ScheduleHomeInClassBanner
-                  courses={props.scheduleCoursesForHome as never}
-                  showLocation={props.scheduleHomeShowLocation}
-                  showTeacher={props.scheduleHomeShowTeacher}
-                  periodTemplate={props.schedulePeriodTemplate as never}
-                  showNextUpcoming={props.scheduleHomeShowNextUpcoming}
-                  afterClassesLabel={props.scheduleHomeAfterClassesLabel}
-                />
-              )}
-              <CurrentStatus
-                hideActivityMedia={props.hideActivityMedia}
-                showMediaSource={props.mediaDisplayShowSource}
-                showMediaCover={props.mediaDisplayShowCover}
-                showMediaNcmLink={props.mediaDisplayShowNcmLink}
-              />
-            </div>
-          </div>
+          <LiveNowSection
+            hideMedia={props.hideActivityMedia}
+            schedule={
+              props.showScheduleHomeColumn
+                ? {
+                    show: true,
+                    courses: props.scheduleCoursesForHome,
+                    showLocation: props.scheduleHomeShowLocation,
+                    showTeacher: props.scheduleHomeShowTeacher,
+                    periodTemplate: props.schedulePeriodTemplate,
+                    showNextUpcoming: props.scheduleHomeShowNextUpcoming,
+                    afterClassesLabel: props.scheduleHomeAfterClassesLabel,
+                  }
+                : undefined
+            }
+          />
         )}
       </section>
 
@@ -156,13 +128,47 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           {showDemoInspiration ? (
             <DemoInspirationStage />
           ) : (
-            <InspirationHomeSection
+            <LiveInspirationStage
               entries={props.inspirationHomeEntries as never}
-              showArchiveLink={props.inspirationTotal > 3}
+              total={props.inspirationTotal}
             />
           )}
         </section>
       )}
     </ActivityFeedProvider>
+  )
+}
+
+/** 02 此刻顶部的 demo banner —— 立绘 + 写死的 LIVE / quote / now-playing chip */
+function DemoNowBanner() {
+  return (
+    <figure className="now-banner" aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/assets/homepage/section-now-companion.png"
+        alt=""
+        loading="lazy"
+        className="now-banner-img"
+      />
+      <span className="now-banner-live">
+        <span className="now-banner-pulse"></span>
+        live · 在线
+      </span>
+      <div className="now-banner-quote">
+        <span className="now-banner-quote-eyebrow">现在</span>
+        <p className="now-banner-quote-text">
+          听见雨声<br />写到第三章
+        </p>
+        <span className="now-banner-quote-time">15:42 · 周三</span>
+      </div>
+      <div className="now-banner-chip">
+        <div className="now-banner-cover">♪</div>
+        <div className="now-banner-info">
+          <div className="now-banner-title">大鱼</div>
+          <div className="now-banner-artist">周深 · 《大鱼海棠》印象曲</div>
+        </div>
+        <div className="now-banner-time">2:47 / 5:38</div>
+      </div>
+    </figure>
   )
 }

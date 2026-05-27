@@ -2610,3 +2610,30 @@
   @media (max-width: 860px) {
     .about-figure { min-height: 380px; aspect-ratio: 4 / 5; }
   }
+
+  /* ============================================================ */
+  /* === Live data fallback / 单列模式（当无右栏内容时）         === */
+  /* ============================================================ */
+
+  .now-grid.now-grid-single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 真实模式空数据提示 */
+  .now-empty {
+    padding: 16px 18px;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    line-height: 1.6;
+    border: 1px dashed color-mix(in srgb, var(--foreground) 12%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--muted) 28%, transparent);
+  }
+
+  /* live mode 下课程卡的容器 */
+  .now-schedule-slot {
+    margin-top: 12px;
+  }
+  .now-schedule-slot:first-child {
+    margin-top: 0;
+  }
