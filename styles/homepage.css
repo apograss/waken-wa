@@ -1976,16 +1976,23 @@
     line-height: 1.25;
     margin: 0 0 12px;
     letter-spacing: -0.01em;
+    overflow-wrap: break-word;
+    word-break: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .now-banner-quote-time {
     font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
     font-size: 11px;
-    color: var(--hero-text-soft);
+    color: var(--hero-text);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    text-shadow: 0 1px 10px var(--background), 0 0 3px var(--background);
   }
   .now-banner-quote-time::before {
     content: '';

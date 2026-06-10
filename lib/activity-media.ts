@@ -11,6 +11,19 @@ function clampField(value: string): string {
   return `${value.slice(0, MEDIA_FIELD_MAX_LEN)}…`
 }
 
+/** Trailing site/player suffixes appended by browsers and players (e.g. `_哔哩哔哩_bilibili`, `- YouTube`). */
+const MEDIA_TITLE_SUFFIX_RES: RegExp[] = [
+  /_哔哩哔哩_bilibili\s*$/i,
+  /\s*[-_|]\s*(哔哩哔哩|bilibili|youtube|网易云音乐|qq音乐|腾讯视频|优酷|爱奇艺)\s*$/i,
+]
+
+/** Strip trailing site/player suffixes from a now-playing title, keeping the core name. */
+function cleanMediaTitle(title: string): string {
+  let t = title.trim()
+  for (const re of MEDIA_TITLE_SUFFIX_RES) t = t.replace(re, '').trim()
+  return t || title.trim()
+}
+
 function getOptionalText(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const s = clampField(value.trim())
@@ -138,7 +151,7 @@ export function getMediaDisplay(metadata: unknown): MediaDisplay | null {
   const m = media as Record<string, unknown>
   const titleRaw = m.title
   if (typeof titleRaw !== 'string') return null
-  const title = clampField(titleRaw.trim())
+  const title = clampField(cleanMediaTitle(titleRaw.trim()))
   if (!title) return null
   const singer = getOptionalText(m.singer) ?? getOptionalText(m.artist)
   const album = getOptionalText(m.album)

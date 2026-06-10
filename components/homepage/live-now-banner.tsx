@@ -6,6 +6,7 @@
  */
 
 import { useSharedActivityFeed } from '@/components/activity-feed-provider'
+import { cleanActivityTitle, prettifyAppName } from '@/lib/activity-display'
 import { getMediaDisplay } from '@/lib/activity-media'
 import type { ActivityFeedItem } from '@/types/activity'
 
@@ -21,15 +22,12 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
   // 没有任何数据上来时，依然渲染立绘 + LIVE 角标，不显示 quote 和 chip
   const hasAnyDevice = statuses.length > 0
 
-  // quote 文本：取主设备的 processTitle 或 processName
+  // quote 文本：当前活动标题（清洗装饰符）；无标题时回退到美化后的应用名
   const quoteText = (() => {
     if (!primary) return null
-    const t = primary.processTitle?.trim()
-    const p = primary.processName?.trim()
-    if (t && p) return splitForBanner(`${t} · ${p}`)
-    if (t) return splitForBanner(t)
-    if (p) return splitForBanner(p)
-    return null
+    const title = cleanActivityTitle(primary.processTitle)
+    if (title) return title
+    return prettifyAppName(primary.processName) || null
   })()
 
   // 时间戳
@@ -67,15 +65,7 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
       {quoteText && (
         <div className="now-banner-quote">
           <span className="now-banner-quote-eyebrow">现在</span>
-          <p className="now-banner-quote-text">
-            {quoteText.line1}
-            {quoteText.line2 && (
-              <>
-                <br />
-                {quoteText.line2}
-              </>
-            )}
-          </p>
+          <p className="now-banner-quote-text">{quoteText}</p>
           {timeLabel && <span className="now-banner-quote-time">{timeLabel}</span>}
         </div>
       )}
@@ -134,23 +124,6 @@ function findMedia(statuses: ActivityFeedItem[]): MediaSummary | null {
     }
   }
   return null
-}
-
-function splitForBanner(text: string): { line1: string; line2: string | null } | null {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-  if (trimmed.length <= 14) return { line1: trimmed, line2: null }
-  // 优先按已有标点拆
-  const punct = trimmed.search(/[ ·—:：]/)
-  if (punct > 4 && punct < trimmed.length - 4) {
-    return {
-      line1: trimmed.slice(0, punct).trim(),
-      line2: trimmed.slice(punct + 1).trim(),
-    }
-  }
-  // 按一半拆
-  const mid = Math.ceil(trimmed.length / 2)
-  return { line1: trimmed.slice(0, mid).trim(), line2: trimmed.slice(mid).trim() }
 }
 
 function formatPlaybackTime(ms: number): string {

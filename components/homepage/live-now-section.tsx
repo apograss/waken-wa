@@ -17,6 +17,7 @@ import type { ReactNode } from 'react'
 import { useSharedActivityFeed } from '@/components/activity-feed-provider'
 import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 import { isDeviceBatteryCharging } from '@/lib/activity-battery-metadata'
+import { cleanActivityTitle, prettifyAppName } from '@/lib/activity-display'
 import { getMediaDisplay } from '@/lib/activity-media'
 import type { ActivityFeedItem } from '@/types/activity'
 
@@ -56,7 +57,10 @@ export function LiveNowSection({ hideMedia, schedule }: LiveNowSectionProps) {
   const primary = statuses[0] ?? null
   const doing = primary
     ? {
-        title: primary.processTitle?.trim() || primary.processName || '工作中',
+        title:
+          cleanActivityTitle(primary.processTitle) ||
+          prettifyAppName(primary.processName) ||
+          '工作中',
         app: buildDoingApp(primary),
       }
     : null
@@ -125,9 +129,10 @@ function buildDeviceItem(s: ActivityFeedItem): NowDeviceItem {
   const platformLabel = readPlatformLabel(meta)
   const idleSuffix = !isOnline && lastUpdate ? ` · 最近上报 ${formatTime(lastUpdate)}` : ''
 
-  const metaParts = [platformLabel, isOnline ? s.processName || '在线' : '离线' + idleSuffix].filter(
-    Boolean,
-  )
+  const metaParts = [
+    platformLabel,
+    isOnline ? prettifyAppName(s.processName) || '在线' : '离线' + idleSuffix,
+  ].filter(Boolean)
 
   return {
     key: s.deviceId != null ? `dev-${s.deviceId}` : `dev-${deviceLabel}`,
@@ -142,10 +147,13 @@ function buildDeviceItem(s: ActivityFeedItem): NowDeviceItem {
 
 function buildDoingApp(s: ActivityFeedItem): string {
   const parts: string[] = []
-  if (s.processName) parts.push(s.processName)
+  const app = prettifyAppName(s.processName)
+  if (app) parts.push(app)
   if (s.startedAt) {
     const minutes = Math.max(0, Math.floor((Date.now() - new Date(s.startedAt).getTime()) / 60_000))
-    if (minutes < 60) {
+    if (minutes < 1) {
+      parts.push('不到 1 分钟')
+    } else if (minutes < 60) {
       parts.push(`已打开 ${minutes} 分钟`)
     } else {
       const hours = Math.floor(minutes / 60)
@@ -171,8 +179,8 @@ function buildHistoryItems(
     seen.add(key)
     items.push({
       time: formatTime(r.startedAt, { onlyTime: true }),
-      app: r.processName || '未知',
-      title: r.processTitle?.trim() || '—',
+      app: prettifyAppName(r.processName) || '未知',
+      title: cleanActivityTitle(r.processTitle) || '—',
     })
     if (items.length >= 5) break
   }
