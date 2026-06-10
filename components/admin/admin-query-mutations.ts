@@ -257,6 +257,24 @@ export async function uploadImageSource(
   return String(data.data.url)
 }
 
+export async function previewThemeRandomImage(apiUrl: string): Promise<string> {
+  const res = await fetch('/api/admin/settings/theme/random-preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiUrl }),
+  })
+  const data = await readJson<SuccessResponse<{ imageUrl?: string }>>(res)
+  const imageUrl = String(data?.data?.imageUrl ?? '').trim()
+  if (!res.ok || !data?.success || !imageUrl) {
+    throw new Error(
+      typeof data?.error === 'string'
+        ? data.error
+        : tAdminClient('mutation.themeRandomPreviewFailed'),
+    )
+  }
+  return imageUrl
+}
+
 export async function createInspirationEntry(body: Record<string, unknown>): Promise<void> {
   const res = await fetch('/api/inspiration/entries', {
     method: 'POST',

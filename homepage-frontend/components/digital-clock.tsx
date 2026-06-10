@@ -10,12 +10,9 @@ function formatTime(date: Date): string {
 }
 
 export function DigitalClock() {
-  const [time, setTime] = useState<string>('');
+  const [time, setTime] = useState<string>(() => formatTime(new Date()));
 
   useEffect(() => {
-    // Set initial time immediately
-    setTime(formatTime(new Date()));
-
     const interval = setInterval(() => {
       setTime(formatTime(new Date()));
     }, 1000);

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { getTimePeriod } from './constants';
 
 const GREETINGS: Record<string, string> = {
@@ -14,13 +13,9 @@ const GREETINGS: Record<string, string> = {
  * Does NOT fetch hitokoto — waken-wa's UserProfileNoteSection already handles that.
  */
 export function GreetingModule() {
-  const [greeting, setGreeting] = useState('');
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    const period = getTimePeriod(hour);
-    setGreeting(GREETINGS[period]);
-  }, []);
+  const hour = new Date().getHours();
+  const period = getTimePeriod(hour);
+  const greeting = GREETINGS[period];
 
   if (!greeting) return null;
 

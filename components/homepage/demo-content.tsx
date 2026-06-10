@@ -5,8 +5,8 @@
  */
 
 import {
-  InspirationStageView,
   type InspirationPaperItem,
+  InspirationStageView,
 } from './inspiration-stage-view'
 import { NowSectionView } from './now-section-view'
 

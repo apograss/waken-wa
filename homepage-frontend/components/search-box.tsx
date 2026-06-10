@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import {
   buildSearchUrl,
   DEFAULT_SEARCH_ENGINES,
@@ -15,17 +16,36 @@ export function SearchBox() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleEngineSelect = useCallback((engine: SearchEngine) => {
+    setCurrentEngine(engine);
+    setDropdownOpen(false);
+    try {
+      localStorage.setItem(LOCALSTORAGE_KEYS.preferredEngine, engine.id);
+    } catch {
+      // localStorage unavailable
+    }
+    inputRef.current?.focus();
+  }, []);
+
   // Load preference from localStorage
   useEffect(() => {
+    let timeoutId: number | undefined
     try {
       const saved = localStorage.getItem(LOCALSTORAGE_KEYS.preferredEngine);
       if (saved) {
         const engine = DEFAULT_SEARCH_ENGINES.find((e) => e.id === saved);
-        if (engine) setCurrentEngine(engine);
+        if (engine) {
+          timeoutId = window.setTimeout(() => setCurrentEngine(engine), 0);
+        }
       }
     } catch {
       // localStorage unavailable, use default
     }
+    return () => {
+      if (typeof timeoutId === 'number') {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   // Keyboard shortcuts: Option+1 through Option+6
@@ -42,18 +62,7 @@ export function SearchBox() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleEngineSelect = useCallback((engine: SearchEngine) => {
-    setCurrentEngine(engine);
-    setDropdownOpen(false);
-    try {
-      localStorage.setItem(LOCALSTORAGE_KEYS.preferredEngine, engine.id);
-    } catch {
-      // localStorage unavailable
-    }
-    inputRef.current?.focus();
-  }, []);
+  }, [handleEngineSelect]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
