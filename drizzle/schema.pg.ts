@@ -669,6 +669,94 @@ export const activityPlaySourceHistory = pgTable('activity_play_source_history',
     .defaultNow(),
 })
 
+/** Per-day, per-app active-time rollup. Incremented on each report (capped delta). */
+export const activityDailyAppUsage = pgTable(
+  'activity_daily_app_usage',
+  {
+    id: serial('id').primaryKey(),
+    statDate: varchar('stat_date', { length: 10 }).notNull(),
+    processName: varchar('process_name', { length: 200 }).notNull(),
+    activeSeconds: integer('active_seconds').notNull().default(0),
+    reportCount: integer('report_count').notNull().default(0),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('activity_daily_app_usage_date_process_key').on(t.statDate, t.processName),
+    index('activity_daily_app_usage_date_idx').on(t.statDate),
+  ],
+)
+
+/** Per-day, per-half-hour-slot (0..47), per-app active time. Feeds the today timeline. */
+export const activityDailySlot = pgTable(
+  'activity_daily_slot',
+  {
+    id: serial('id').primaryKey(),
+    statDate: varchar('stat_date', { length: 10 }).notNull(),
+    slot: integer('slot').notNull(),
+    processName: varchar('process_name', { length: 200 }).notNull(),
+    activeSeconds: integer('active_seconds').notNull().default(0),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('activity_daily_slot_date_slot_process_key').on(
+      t.statDate,
+      t.slot,
+      t.processName,
+    ),
+    index('activity_daily_slot_date_idx').on(t.statDate),
+  ],
+)
+
+/** Per-day scalar summary (totals). One row per local day. */
+export const activityDailySummary = pgTable('activity_daily_summary', {
+  id: serial('id').primaryKey(),
+  statDate: varchar('stat_date', { length: 10 }).notNull().unique(),
+  activeSeconds: integer('active_seconds').notNull().default(0),
+  listenSeconds: integer('listen_seconds').notNull().default(0),
+  watchSeconds: integer('watch_seconds').notNull().default(0),
+  createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
+/** Cached Steam game records (recently played). Refreshed on request when stale. */
+export const steamGameRecords = pgTable(
+  'steam_game_records',
+  {
+    id: serial('id').primaryKey(),
+    appId: varchar('app_id', { length: 32 }).notNull().unique(),
+    name: varchar('name', { length: 200 }).notNull(),
+    headerImageUrl: text('header_image_url'),
+    iconUrl: text('icon_url'),
+    playtime2weeksMin: integer('playtime_2weeks_min').notNull().default(0),
+    playtimeForeverMin: integer('playtime_forever_min').notNull().default(0),
+    position: integer('position').notNull().default(0),
+    lastFetchedAt: timestamp('last_fetched_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index('steam_game_records_position_idx').on(t.position)],
+)
+
 export const imageSources = pgTable(
   'image_sources',
   {
@@ -797,6 +885,10 @@ export const pgSchema = {
   siteSettingsV2RuleTitleRules,
   activityAppHistory,
   activityPlaySourceHistory,
+  activityDailyAppUsage,
+  activityDailySlot,
+  activityDailySummary,
+  steamGameRecords,
   imageSources,
   systemSecrets,
   skillsOauthTokens,

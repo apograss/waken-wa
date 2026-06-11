@@ -16,6 +16,7 @@ import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
 } from '@/constants/site-config'
+import { getTodaySummary } from '@/lib/activity-daily'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { verifySiteLockSession } from '@/lib/auth'
@@ -37,6 +38,7 @@ import {
   type ScheduleCourse,
 } from '@/lib/schedule-courses'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
+import { getSteamGameRecords } from '@/lib/steam-games'
 import { getThemePresetCss } from '@/lib/theme-css'
 import { coerceDbTimestampToIsoUtc, normalizeTimezone } from '@/lib/timezone'
 import {
@@ -85,7 +87,8 @@ export default async function Home() {
   const customCss = String(config.customCss ?? '')
   const themeCss = `${themePresetCss}\n${customCss}`.trim()
 
-  const [activityInitialFeed, inspirationRows, [countRow]] = await Promise.all([
+  const nowMs = Date.now()
+  const [activityInitialFeed, inspirationRows, [countRow], todaySummary, steamGames] = await Promise.all([
     getActivityFeedData(undefined, { forPublicFeed: true }),
     db
       .select({
@@ -101,6 +104,13 @@ export default async function Home() {
       .orderBy(desc(inspirationEntries.createdAt))
       .limit(3),
     db.select({ c: count() }).from(inspirationEntries),
+    getTodaySummary(normalizeTimezone(cfg.displayTimezone), nowMs),
+    getSteamGameRecords({
+      steamEnabled: Boolean(config.steamEnabled),
+      apiKey: String(config.steamApiKey || process.env.STEAM_API_KEY || ''),
+      steamId: String(config.steamId || ''),
+      nowMs,
+    }),
   ])
   const inspirationTotal = Number(countRow?.c ?? 0)
   
@@ -226,6 +236,8 @@ export default async function Home() {
             blogPosts,
             blogHomeUrl: haloBlogHomeUrl(),
             demoEnabled: homepageSettings.demoEnabled,
+            todaySummary,
+            steamGames,
           }}
         />
         <LayoutFooterPortal adminText={adminText} userName={userName} />

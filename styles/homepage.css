@@ -2077,6 +2077,214 @@
   }
 
   /* ============================================================ */
+  /* === 02 此刻 · 今日 (today rollup)                          === */
+  /* ============================================================ */
+
+  .today {
+    margin-top: 36px;
+    padding-top: 32px;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  .today-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .today-head .now-eyebrow {
+    margin-bottom: 0;
+  }
+  .today-date {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── 今日小结数字卡 ── */
+  .today-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .today-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--card);
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--foreground) 4%, transparent);
+  }
+  .today-stat-value {
+    font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--foreground);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .today-stat-unit {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    margin-left: 3px;
+  }
+  .today-stat-label {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* ── 最常用应用占比 ── */
+  .today-apps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .today-app {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto;
+    align-items: center;
+    gap: 14px;
+  }
+  .today-app-name {
+    font-size: 14px;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .today-app-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    overflow: hidden;
+  }
+  .today-app-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--hero-accent),
+      color-mix(in srgb, var(--hero-accent) 70%, var(--primary))
+    );
+  }
+  .today-app-time {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ── 今日时间线 (48 个半小时格) ── */
+  .today-timeline {
+    margin-bottom: 28px;
+  }
+  .today-tl-track {
+    display: grid;
+    grid-template-columns: repeat(48, 1fr);
+    gap: 2px;
+    height: 36px;
+  }
+  .today-tl-slot {
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
+  .today-tl-slot.is-active {
+    background: var(--hero-accent);
+  }
+  .today-tl-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Steam 游戏记录 ── */
+  .today-games {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .today-game {
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--foreground) 5%, transparent);
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .today-game:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  .today-game-cover {
+    aspect-ratio: 460 / 215;
+    background-size: cover;
+    background-position: center;
+    background-color: color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  .today-game-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .today-game-name {
+    font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--foreground);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .today-game-times {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .today-game-2w {
+    color: var(--hero-accent);
+    font-weight: 600;
+  }
+  .today-game-total {
+    color: var(--muted-foreground);
+  }
+
+  @media (max-width: 720px) {
+    .today-app {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+      gap: 10px;
+    }
+    .today-tl-track {
+      height: 28px;
+    }
+  }
+
+  /* ============================================================ */
   /* === 03 灵感 — illustration becomes stage, papers float on it */
   /* ============================================================ */
 

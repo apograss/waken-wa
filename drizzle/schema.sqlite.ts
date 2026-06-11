@@ -647,6 +647,76 @@ export const activityPlaySourceHistory = sqliteTable(
   },
 )
 
+/** Per-day, per-app active-time rollup. Incremented on each report (capped delta). */
+export const activityDailyAppUsage = sqliteTable(
+  'activity_daily_app_usage',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    statDate: text('stat_date').notNull(),
+    processName: text('process_name').notNull(),
+    activeSeconds: integer('active_seconds').notNull().default(0),
+    reportCount: integer('report_count').notNull().default(0),
+    createdAt: ts('created_at'),
+    updatedAt: ts('updated_at'),
+  },
+  (t) => [
+    uniqueIndex('activity_daily_app_usage_date_process_key').on(t.statDate, t.processName),
+    index('activity_daily_app_usage_date_idx').on(t.statDate),
+  ],
+)
+
+/** Per-day, per-half-hour-slot (0..47), per-app active time. Feeds the today timeline. */
+export const activityDailySlot = sqliteTable(
+  'activity_daily_slot',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    statDate: text('stat_date').notNull(),
+    slot: integer('slot').notNull(),
+    processName: text('process_name').notNull(),
+    activeSeconds: integer('active_seconds').notNull().default(0),
+    createdAt: ts('created_at'),
+    updatedAt: ts('updated_at'),
+  },
+  (t) => [
+    uniqueIndex('activity_daily_slot_date_slot_process_key').on(
+      t.statDate,
+      t.slot,
+      t.processName,
+    ),
+    index('activity_daily_slot_date_idx').on(t.statDate),
+  ],
+)
+
+/** Per-day scalar summary (totals). One row per local day. */
+export const activityDailySummary = sqliteTable('activity_daily_summary', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  statDate: text('stat_date').notNull().unique(),
+  activeSeconds: integer('active_seconds').notNull().default(0),
+  listenSeconds: integer('listen_seconds').notNull().default(0),
+  watchSeconds: integer('watch_seconds').notNull().default(0),
+  createdAt: ts('created_at'),
+  updatedAt: ts('updated_at'),
+})
+
+/** Cached Steam game records (recently played). Refreshed on request when stale. */
+export const steamGameRecords = sqliteTable(
+  'steam_game_records',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    appId: text('app_id').notNull().unique(),
+    name: text('name').notNull(),
+    headerImageUrl: text('header_image_url'),
+    iconUrl: text('icon_url'),
+    playtime2weeksMin: integer('playtime_2weeks_min').notNull().default(0),
+    playtimeForeverMin: integer('playtime_forever_min').notNull().default(0),
+    position: integer('position').notNull().default(0),
+    lastFetchedAt: ts('last_fetched_at'),
+    createdAt: ts('created_at'),
+    updatedAt: ts('updated_at'),
+  },
+  (t) => [index('steam_game_records_position_idx').on(t.position)],
+)
+
 export const imageSources = sqliteTable(
   'image_sources',
   {
@@ -761,6 +831,10 @@ export const sqliteSchema = {
   siteSettingsV2RuleTitleRules,
   activityAppHistory,
   activityPlaySourceHistory,
+  activityDailyAppUsage,
+  activityDailySlot,
+  activityDailySummary,
+  steamGameRecords,
   imageSources,
   systemSecrets,
   skillsOauthTokens,

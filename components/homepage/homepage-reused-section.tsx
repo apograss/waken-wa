@@ -1,11 +1,14 @@
 import { ActivityFeedProvider } from '@/components/activity-feed-provider'
+import type { TodaySummary } from '@/lib/activity-daily'
 import type { HaloBlogPost } from '@/lib/halo-blog'
+import type { SteamGamesResult } from '@/lib/steam-games'
 
 import { BlogStrip } from './blog-strip'
 import { DemoAboutSection, DemoInspirationStage, DemoNowSection } from './demo-content'
 import { LiveInspirationStage } from './live-inspiration-stage'
 import { LiveNowBanner } from './live-now-banner'
 import { LiveNowSection } from './live-now-section'
+import { TodaySection } from './today-section'
 
 export interface HomepageReusedSectionProps {
   activityInitialFeed: unknown
@@ -46,6 +49,8 @@ export interface HomepageReusedSectionProps {
   blogPosts: HaloBlogPost[]
   blogHomeUrl: string
   demoEnabled: boolean
+  todaySummary: TodaySummary
+  steamGames: SteamGamesResult
 }
 
 export function HomepageReusedSection(props: HomepageReusedSectionProps) {
@@ -113,6 +118,10 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
                 : undefined
             }
           />
+        )}
+
+        {!showDemoActivity && (
+          <TodaySection today={props.todaySummary} steam={props.steamGames} />
         )}
       </section>
 

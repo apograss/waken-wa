@@ -5,6 +5,7 @@ import {
   ACTIVITY_FEED_DEFAULT_LIMIT,
 } from '@/constants/activity-api'
 import { DEVICE_LAST_SEEN_WRITE_THROTTLE_MS } from '@/constants/activity-report'
+import { recordDailyActivity } from '@/lib/activity-daily'
 import { clearActivityFeedDataCache, getActivityFeedData } from '@/lib/activity-feed'
 import { recordReportedActivityHistory } from '@/lib/activity-history-pending'
 import {
@@ -475,6 +476,18 @@ export async function POST(request: NextRequest) {
       })
     } catch {
       // history capture should never block reporting
+    }
+
+    try {
+      await recordDailyActivity({
+        deviceId: deviceRecord.id,
+        processName: process_name,
+        nowMs: reportAtMs,
+        metadata: finalMetadata,
+        config: siteCfg as unknown as Record<string, unknown> | null,
+      })
+    } catch {
+      // daily rollup is best-effort; never block reporting
     }
 
     const seenAt = sqlDate(new Date(reportAtMs))
