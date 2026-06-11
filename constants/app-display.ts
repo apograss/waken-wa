@@ -31,5 +31,5 @@ export const APP_DISPLAY_ALIASES: Record<string, string> = {
   explorer: '文件资源管理器',
 }
 
-/** Leading decorative glyphs to strip from reported window titles (e.g. Claude Code's `✳`). */
-export const LEADING_TITLE_DECOR_RE = /^[\s✳✶✷✸✦✧❋⁕∗＊◆◇●○•‣▪▫◦★☆⭐]+/
+/** Leading decorative glyphs to strip from reported window titles (e.g. Claude Code's `✳`，盲文转轮 `⠂⠴⠦`). */
+export const LEADING_TITLE_DECOR_RE = /^[\s✳✶✷✸✦✧❋⁕∗＊◆◇●○•‣▪▫◦★☆⭐⠀-⣿]+/

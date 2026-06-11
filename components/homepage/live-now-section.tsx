@@ -187,6 +187,8 @@ function buildHistoryItems(
   return items
 }
 
+const BROWSER_SOURCE_RE = /edge|chrome|firefox|safari|浏览器|bilibili|哔哩|youtube/i
+
 function buildListenItem(statuses: ActivityFeedItem[]) {
   for (const s of statuses) {
     const media = getMediaDisplay(s.metadata)
@@ -202,6 +204,8 @@ function buildListenItem(statuses: ActivityFeedItem[]) {
       const sourceParts: string[] = []
       if (media.source) sourceParts.push(`来自 ${media.source}`)
       if (s.device) sourceParts.push(s.device)
+      // 浏览器里放的多半是视频而不是音乐，眉标改成「正在看」更贴切
+      const isVideo = BROWSER_SOURCE_RE.test(media.source || '')
       return {
         title: media.title,
         artist: media.singer,
@@ -210,6 +214,7 @@ function buildListenItem(statuses: ActivityFeedItem[]) {
         state: media.state,
         sourceLine: sourceParts.length > 0 ? sourceParts.join(' · ') : null,
         coverUrl: media.coverUrl,
+        eyebrow: isVideo ? '正在看 · watching' : '正在听 · listening',
       }
     }
   }

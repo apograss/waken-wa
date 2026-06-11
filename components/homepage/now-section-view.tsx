@@ -51,6 +51,8 @@ export interface NowListenItem {
   /** 来源行：「来自 Apple Music · iPhone 16 Pro」 */
   sourceLine: string | null
   coverUrl: string | null
+  /** 区块眉标；浏览器里放视频时是「正在看 · watching」，默认「正在听 · listening」 */
+  eyebrow?: string
 }
 
 export interface NowGameItem {
@@ -193,7 +195,7 @@ export function NowSectionView(props: NowSectionViewProps) {
           <>
             <div className="now-divider"></div>
             <div className="now-block">
-              <div className="now-eyebrow">正在听 · listening</div>
+              <div className="now-eyebrow">{props.listen.eyebrow ?? '正在听 · listening'}</div>
               <div className="now-listen">
                 <div className="now-cover">
                   {props.listen.coverUrl ? (

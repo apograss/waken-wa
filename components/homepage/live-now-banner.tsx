@@ -22,12 +22,15 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
   // 没有任何数据上来时，依然渲染立绘 + LIVE 角标，不显示 quote 和 chip
   const hasAnyDevice = statuses.length > 0
 
-  // quote 文本：当前活动标题（清洗装饰符）；无标题时回退到美化后的应用名
+  // quote 文本：当前活动标题（清洗装饰符）；标题缺失或就是应用名本身时，
+  // 改写成「正在用 ××」让横幅读起来更像一句话而不是裸进程名。
   const quoteText = (() => {
     if (!primary) return null
     const title = cleanActivityTitle(primary.processTitle)
-    if (title) return title
-    return prettifyAppName(primary.processName) || null
+    const app = prettifyAppName(primary.processName)
+    if (title && title.toLowerCase() !== app.toLowerCase()) return title
+    if (app) return `正在用 ${app}`
+    return title || null
   })()
 
   // 时间戳
