@@ -1,5 +1,7 @@
 import { ActivityFeedProvider } from '@/components/activity-feed-provider'
+import type { HaloBlogPost } from '@/lib/halo-blog'
 
+import { BlogStrip } from './blog-strip'
 import { DemoAboutSection, DemoInspirationStage, DemoNowSection } from './demo-content'
 import { LiveInspirationStage } from './live-inspiration-stage'
 import { LiveNowBanner } from './live-now-banner'
@@ -41,6 +43,8 @@ export interface HomepageReusedSectionProps {
   earlierText: string
   inspirationHomeEntries: unknown[]
   inspirationTotal: number
+  blogPosts: HaloBlogPost[]
+  blogHomeUrl: string
   demoEnabled: boolean
 }
 
@@ -133,6 +137,8 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
               total={props.inspirationTotal}
             />
           )}
+
+          <BlogStrip posts={props.blogPosts} blogHomeUrl={props.blogHomeUrl} />
         </section>
       )}
     </ActivityFeedProvider>

@@ -22,6 +22,7 @@ import { verifySiteLockSession } from '@/lib/auth'
 import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
 import { db } from '@/lib/db'
 import { inspirationEntries } from '@/lib/drizzle-schema'
+import { fetchRecentHaloBlogPosts, haloBlogHomeUrl } from '@/lib/halo-blog'
 import { getHCaptchaPublicConfig } from '@/lib/hcaptcha'
 import {
   normalizeHitokotoCategories,
@@ -150,6 +151,7 @@ export default async function Home() {
   const noteHitokotoFallbackToNote = Boolean(cfg.userNoteHitokotoFallbackToNote)
   const activityUpdateMode = normalizeActivityUpdateMode(cfg.activityUpdateMode)
   const homepageSettings = NormalizeHomepageSettings(cfg)
+  const blogPosts = await fetchRecentHaloBlogPosts(3)
   const publicFontOptions = resolvePublicPageControlFontOptions(
     cfg.publicFontOptionsEnabled,
     cfg.publicFontOptions,
@@ -221,6 +223,8 @@ export default async function Home() {
             earlierText,
             inspirationHomeEntries,
             inspirationTotal,
+            blogPosts,
+            blogHomeUrl: haloBlogHomeUrl(),
             demoEnabled: homepageSettings.demoEnabled,
           }}
         />

@@ -971,6 +971,9 @@
     gap: 32px;
     align-items: start;
   }
+  /* 没有右栏（无游戏卡/课表卡）时收住行宽，避免单栏被拉得过宽 */
+  .now-grid-single { grid-template-columns: minmax(0, 1fr); }
+  .now-grid-single .now-col-main { max-width: 780px; }
   @media (max-width: 820px) {
     .now-grid { grid-template-columns: 1fr; gap: 28px; }
   }
@@ -2281,6 +2284,123 @@
   .ins-more-link:hover {
     border-bottom-color: var(--hero-accent);
     gap: 14px;
+  }
+
+  /* ── 灵感区底部：来自 Halo 博客的长文列表 ── */
+  .blog-strip {
+    margin-top: 36px;
+    padding-top: 26px;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+  .blog-strip-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .blog-strip-eyebrow {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10.5px;
+    color: var(--hero-accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .blog-strip-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--hero-accent);
+  }
+  .blog-strip-home {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11.5px;
+    color: var(--hero-accent);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    border-bottom: 1px dashed transparent;
+    transition: border-color .15s;
+    white-space: nowrap;
+  }
+  .blog-strip-home:hover { border-bottom-color: var(--hero-accent); }
+  .blog-strip-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .blog-strip-item {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    padding: 14px 2px;
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+    transition: background .15s;
+  }
+  .blog-strip-item:last-child { border-bottom: none; }
+  .blog-strip-item:hover {
+    background: color-mix(in srgb, var(--hero-accent) 4%, transparent);
+  }
+  .blog-strip-date {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    width: 84px;
+  }
+  .blog-strip-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .blog-strip-title {
+    font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--foreground);
+    line-height: 1.35;
+    transition: color .15s;
+  }
+  .blog-strip-item:hover .blog-strip-title { color: var(--hero-accent); }
+  .blog-strip-excerpt {
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+    line-height: 1.6;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .blog-strip-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .blog-strip-visits {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10.5px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .blog-strip-arrow {
+    color: var(--hero-accent);
+    font-size: 13px;
+    transition: transform .15s;
+  }
+  .blog-strip-item:hover .blog-strip-arrow { transform: translate(2px, -2px); }
+  @media (max-width: 720px) {
+    .blog-strip-date { width: auto; }
+    .blog-strip-item { flex-wrap: wrap; gap: 8px 14px; }
+    .blog-strip-excerpt { -webkit-line-clamp: 2; }
   }
 
   @media (max-width: 860px) {
