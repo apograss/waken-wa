@@ -39,6 +39,7 @@ export function HeroSearch({
   const [query, setQuery] = useState('')
   const [selectedEngineId, setSelectedEngineId] =
     useState<HomepageSearchEngineId>(defaultEngineId)
+  const [altKeyLabel, setAltKeyLabel] = useState('Alt')
   const inputRef = useRef<HTMLInputElement>(null)
   const engines = useMemo(() => ResolveEngines(visibleEngineIds), [visibleEngineIds])
   const fallbackEngine =
@@ -69,10 +70,19 @@ export function HeroSearch({
   }, [engines])
 
   useEffect(() => {
+    if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
+      setAltKeyLabel('⌥')
+    }
+  }, [])
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!event.altKey || event.key < '1' || event.key > '9') return
-      const index = parseInt(event.key, 10) - 1
-      const engine = engines[index]
+      // event.code 不受键盘布局/输入法影响：Mac 上 Option+数字会让
+      // event.key 变成特殊字符（¡™£…），用物理键位才能跨平台生效。
+      if (!event.altKey || event.ctrlKey || event.metaKey) return
+      const match = /^(?:Digit|Numpad)([1-9])$/.exec(event.code)
+      if (!match) return
+      const engine = engines[parseInt(match[1], 10) - 1]
       if (!engine) return
       event.preventDefault()
       handleEngineSelect(engine)
@@ -101,7 +111,6 @@ export function HeroSearch({
             width={22}
             height={22}
             unoptimized
-            style={{ filter: 'brightness(0.3)' }}
           />
         </button>
         <input
@@ -114,7 +123,7 @@ export function HeroSearch({
           autoComplete="off"
         />
         <span className="search-hint">
-          <kbd>⌥</kbd>
+          <kbd>{altKeyLabel}</kbd>
           <kbd>{shortcutHint}</kbd> 切引擎
         </span>
       </form>
@@ -127,7 +136,7 @@ export function HeroSearch({
             className={`e ${engine.id === currentEngine.id ? 'active' : ''}`}
             onClick={() => handleEngineSelect(engine)}
           >
-            <span className="k">⌥{index + 1}</span>
+            <span className="k">{altKeyLabel}{index + 1}</span>
             {ENGINE_LABELS[engine.id]}
           </button>
         ))}
