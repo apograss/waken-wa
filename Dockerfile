@@ -1,6 +1,8 @@
 
 FROM node:22-bookworm-slim AS base
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+# pnpm-workspace.yaml 用的是 pnpm 10 的纯配置写法（无 packages 字段），pnpm 9 会报
+# "packages field missing or empty"，版本需与本地开发一致保持 10.x。
+RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
 WORKDIR /app
 
 FROM base AS deps
