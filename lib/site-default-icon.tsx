@@ -7,9 +7,14 @@ export const SITE_DEFAULT_ICON_SIZE = {
 
 export const SITE_DEFAULT_ICON_CONTENT_TYPE = 'image/png'
 
-// MdAutoFixHigh (Material Icons) path, used for the site's favicon/app icon.
-const AUTO_FIX_HIGH_PATH =
-  'M7.5 5.6 10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05a.996.996 0 0 0 0-1.41l-2.33-2.35zm-1.03 5.49-2.12-2.12 2.44-2.44 2.12 2.12-2.44 2.44z'
+// 小写 "a"（apograss 首字母）的书法字形 path，已烘焙到 `0 0 128 128` 视图坐标并居中。
+// 取自站点同款 Satisfy 手写体（Google Fonts Satisfy-Regular, Apache-2.0），
+// 用 opentype.js 提取轮廓，故运行时无需加载字体。详见 docs/plans/2026-06-12-favicon-design.md
+const SATISFY_A_PATH =
+  'M100.7 64.6Q98.7 67.5 95.6 71.7Q92.4 75.9 89.1 80.1Q85.7 84.4 82.5 87.9Q79.2 91.4 77.1 92.8Q75.7 93.7 73.8 94.3Q71.9 94.8 70 95Q68.1 95.1 66.3 94.8Q64.6 94.4 63.3 93.5Q62 92.5 61.2 90.7Q60.5 89.1 59.8 86.5Q59.2 83.9 59.3 80.1Q55.9 85.8 51.7 88.9Q47.6 92 43.8 93.4Q39.5 95 35.2 95.3Q33.2 95.3 30.9 93.9Q28.6 92.5 27.1 89.6Q25.5 86.7 25 82Q24.6 77.3 26.2 70.9Q28.2 62.2 32.6 55Q36.9 47.8 42.1 42.7Q47.3 37.6 52.3 35.1Q57.3 32.5 60.6 32.8Q64.5 33.5 66.9 35.1Q68.9 36.5 69.6 39.3Q70.2 42.1 67.2 46.7Q69.2 46.2 70.6 46.1Q71.9 46 72.6 46Q73.5 46 73.8 46.1Q73.9 46.4 73.9 47.3Q73.9 48.2 73.5 50.7Q73.1 53.1 72.2 57.3Q71.3 61.4 69.9 68Q69.6 69.3 69.4 70.4Q69.2 71.5 69 72.5Q68.8 73.6 68.5 75.1Q68.2 76.5 67.8 78.6Q67.6 79.9 67.7 81.4Q67.8 82.9 68.2 84.2Q68.6 85.5 69.6 86.3Q70.5 87.1 72.2 87.1Q73.6 87.1 75.9 85.3Q78.2 83.5 80.8 80.7Q83.4 77.9 86.2 74.6Q89 71.2 91.4 68Q93.9 64.9 95.8 62.4Q97.7 60 98.6 58.9Q99.7 57.6 100.9 57.3Q102 57.1 102.6 58Q103.2 58.9 102.8 60.6Q102.5 62.3 100.7 64.6M58.7 70.9Q59.5 68 60.5 64.2Q61.5 60.3 62.2 56.7Q62.9 53.1 63.3 50.8Q63.6 48.4 63 48.5Q62.3 48.7 61.5 49Q60.7 49.2 59.6 49.4Q58.4 49.5 57.3 49.8Q58.4 47.5 58.7 46Q58.9 44.5 58.7 43.7Q58.6 42.7 58.2 42.1Q56.6 40.8 52.6 44.2Q48.7 47.5 43.5 56.6Q41.4 60.3 40.1 64.5Q38.8 68.7 38.3 72.5Q37.8 76.2 38.1 79Q38.4 81.8 39.2 82.7Q40.8 84.2 42.8 84.2Q44.8 84.1 46.9 83Q49 81.9 51.1 80.2Q53.1 78.5 54.8 76.6Q56.4 74.8 57.5 73.2Q58.6 71.6 58.7 70.9'
+
+const ICON_BG = '#B05C38' // 鲜赤陶，呼应站点 --primary 暖色
+const ICON_FG = '#FAF6EE' // 象牙白，呼应站点 --background
 
 export function createDefaultSiteIconResponse() {
   return new ImageResponse(
@@ -21,32 +26,19 @@ export function createDefaultSiteIconResponse() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'radial-gradient(120% 120% at 30% 20%, #7c3aed 0%, #111827 55%, #000000 100%)',
+          background: ICON_BG,
+          borderRadius: 28,
         }}
       >
-        <div
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.14)',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
-          }}
+        <svg
+          width="128"
+          height="128"
+          viewBox="0 0 128 128"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d={AUTO_FIX_HIGH_PATH} fill="#ffffff" />
-          </svg>
-        </div>
+          <path d={SATISFY_A_PATH} fill={ICON_FG} />
+        </svg>
       </div>
     ),
     SITE_DEFAULT_ICON_SIZE,
