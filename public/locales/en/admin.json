@@ -1166,6 +1166,55 @@
     "inspirationDeviceRestrictionDescriptionSuffix": "may submit inspiration content.",
     "inspirationDevicesEmpty": "No devices are available yet."
   },
+  "webSettingsActivityManagement": {
+    "title": "Activity management",
+    "description": "Add manual activity, review recent reports, and search captured apps and media play sources.",
+    "actions": {
+      "exportUsedApps": "Export used apps JSON"
+    },
+    "quickAdd": {
+      "title": "Quick add activity",
+      "description": "Manually write a persistent activity to update the homepage status when no reporter is online."
+    },
+    "recent": {
+      "title": "Recent activity records",
+      "description": "Review activity inside the current history window; persistent records can be ended here.",
+      "loading": "Loading recent activity…",
+      "error": "Failed to load recent activity. Try again later.",
+      "empty": "No recent activity yet.",
+      "endNow": "End now",
+      "confirmEndTitle": "End this activity?",
+      "confirmEndDescription": "This will end “{{summary}}” immediately, and the public site will stop showing this persistent status after refresh.",
+      "ending": "Ending…",
+      "confirmEnd": "End activity",
+      "modes": {
+        "active": "Persistent",
+        "realtime": "Real-time"
+      }
+    },
+    "historyApps": {
+      "title": "Historical apps",
+      "description": "Process names captured from activity reports, useful for app rules and reporter troubleshooting.",
+      "searchPlaceholder": "Search process names…",
+      "loading": "Loading app history…",
+      "empty": "No historical app records yet.",
+      "emptySearch": "No app records match this search.",
+      "error": "Failed to load app history."
+    },
+    "historyPlaySources": {
+      "title": "Historical media sources",
+      "description": "Source keys from metadata.play_source, useful for media source rename or block rules.",
+      "searchPlaceholder": "Search media sources…",
+      "loading": "Loading media source history…",
+      "empty": "No historical media sources yet.",
+      "emptySearch": "No media sources match this search.",
+      "error": "Failed to load media source history."
+    },
+    "toasts": {
+      "ended": "Activity ended",
+      "exported": "App records exported"
+    }
+  },
   "webSettingsCustomSurface": {
     "introLine1Prefix": "You can use plain CSS image values here. Besides wrapping with",
     "introLine1Middle": ", direct URLs are also supported:",

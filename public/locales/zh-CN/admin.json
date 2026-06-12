@@ -1166,6 +1166,55 @@
     "inspirationDeviceRestrictionDescriptionSuffix": "的请求才可以提交灵感内容。",
     "inspirationDevicesEmpty": "暂无可用设备。"
   },
+  "webSettingsActivityManagement": {
+    "title": "活动管理",
+    "description": "补录当前活动、查看近期上报，并检索系统已经收集到的应用与媒体来源。",
+    "actions": {
+      "exportUsedApps": "导出已用应用 JSON"
+    },
+    "quickAdd": {
+      "title": "快速补录活动",
+      "description": "手动写入一条常驻活动，用于没有 Reporter 在线时临时更新首页状态。"
+    },
+    "recent": {
+      "title": "近期活动记录",
+      "description": "查看当前历史窗口内的活动；常驻活动可以从这里立即结束。",
+      "loading": "正在加载近期活动…",
+      "error": "近期活动读取失败，请稍后重试。",
+      "empty": "暂无近期活动。",
+      "endNow": "立即结束",
+      "confirmEndTitle": "确认结束活动？",
+      "confirmEndDescription": "将立即结束「{{summary}}」，前台会在刷新后不再显示这条常驻状态。",
+      "ending": "结束中…",
+      "confirmEnd": "确认结束",
+      "modes": {
+        "active": "常驻",
+        "realtime": "实时"
+      }
+    },
+    "historyApps": {
+      "title": "历史应用",
+      "description": "来自活动上报的进程名，可用于快速配置应用规则或排查 Reporter 上报内容。",
+      "searchPlaceholder": "搜索应用进程名…",
+      "loading": "正在加载历史应用…",
+      "empty": "暂无历史应用记录。",
+      "emptySearch": "没有匹配的应用记录。",
+      "error": "历史应用读取失败。"
+    },
+    "historyPlaySources": {
+      "title": "历史媒体来源",
+      "description": "来自 metadata.play_source 的来源标识，可用于媒体来源重命名或屏蔽规则。",
+      "searchPlaceholder": "搜索媒体来源…",
+      "loading": "正在加载历史媒体来源…",
+      "empty": "暂无历史媒体来源。",
+      "emptySearch": "没有匹配的媒体来源。",
+      "error": "历史媒体来源读取失败。"
+    },
+    "toasts": {
+      "ended": "活动已结束",
+      "exported": "已导出应用记录"
+    }
+  },
   "webSettingsCustomSurface": {
     "introLine1Prefix": "这里可以直接写 CSS 图片值。除了用",
     "introLine1Middle": "包裹外，也支持直接填写：",

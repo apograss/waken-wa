@@ -18,6 +18,7 @@ import { ImageCropDialog } from '@/components/admin/image-crop-dialog'
 import { SiteSettingsMigrationCard } from '@/components/admin/site-settings-migration-card'
 import { UnsavedChangesBar } from '@/components/admin/unsaved-changes-bar'
 import { useWebSettingsController } from '@/components/admin/use-web-settings-controller'
+import { WebSettingsActivityManagementPanel } from '@/components/admin/web-settings-activity-management-panel'
 import { WebSettingsActivityPanel } from '@/components/admin/web-settings-activity-panel'
 import { WebSettingsBasicPanel } from '@/components/admin/web-settings-basic-panel'
 import { WebSettingsCustomSurface } from '@/components/admin/web-settings-custom-surface'
@@ -246,6 +247,7 @@ function WebSettingsContent() {
               description={t('webSettings.sections.runtime.description')}
             >
               <WebSettingsActivityPanel />
+              <WebSettingsActivityManagementPanel />
               <WebSettingsRuleTools />
             </WebSettingsSection>
 

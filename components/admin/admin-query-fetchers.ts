@@ -1,6 +1,10 @@
 'use client'
 
 import {
+  NormalizeActivityHistoryAppRows,
+  NormalizeActivityHistoryPlaySourceRows,
+} from '@/components/admin/activity-management-utils'
+import {
   type AdminSkillsData,
   type DevicesResponse,
   type PaginationResponse,
@@ -10,6 +14,8 @@ import {
 import { tAdminClient } from '@/lib/i18n/admin-client'
 import type { ActivityFeedData } from '@/types/activity'
 import type {
+  AdminActivityHistoryAppRow,
+  AdminActivityHistoryPlaySourceRow,
   AdminDeviceItem,
   AdminDeviceSummary,
   AdminTokenOption,
@@ -222,11 +228,11 @@ export async function fetchAdminSettingsMigration(): Promise<SiteSettingsMigrati
   return data.data
 }
 
-export async function fetchActivityHistoryApps(input?: {
+export async function fetchActivityHistoryAppRows(input?: {
   limit?: number
   q?: string
   offset?: number
-}): Promise<string[]> {
+}): Promise<AdminActivityHistoryAppRow[]> {
   const params = new URLSearchParams()
   if (typeof input?.limit === 'number') params.set('limit', String(input.limit))
   if (typeof input?.offset === 'number') params.set('offset', String(input.offset))
@@ -241,18 +247,22 @@ export async function fetchActivityHistoryApps(input?: {
       data?.error || tAdminClient('query.loadHistoryAppsFailed', { status: res.status }),
     )
   }
-  return Array.isArray(data.data)
-    ? data.data
-        .map((item) => String(item?.processName ?? '').trim())
-        .filter((item) => item.length > 0)
-    : []
+  return NormalizeActivityHistoryAppRows(data.data)
 }
 
-export async function fetchActivityHistoryPlaySources(input?: {
+export async function fetchActivityHistoryApps(input?: {
   limit?: number
   q?: string
   offset?: number
 }): Promise<string[]> {
+  return (await fetchActivityHistoryAppRows(input)).map((item) => item.processName)
+}
+
+export async function fetchActivityHistoryPlaySourceRows(input?: {
+  limit?: number
+  q?: string
+  offset?: number
+}): Promise<AdminActivityHistoryPlaySourceRow[]> {
   const params = new URLSearchParams()
   if (typeof input?.limit === 'number') params.set('limit', String(input.limit))
   if (typeof input?.offset === 'number') params.set('offset', String(input.offset))
@@ -269,11 +279,15 @@ export async function fetchActivityHistoryPlaySources(input?: {
       data?.error || tAdminClient('query.loadHistoryPlaySourcesFailed', { status: res.status }),
     )
   }
-  return Array.isArray(data.data)
-    ? data.data
-        .map((item) => String(item?.playSource ?? '').trim().toLowerCase())
-        .filter((item) => item.length > 0)
-    : []
+  return NormalizeActivityHistoryPlaySourceRows(data.data)
+}
+
+export async function fetchActivityHistoryPlaySources(input?: {
+  limit?: number
+  q?: string
+  offset?: number
+}): Promise<string[]> {
+  return (await fetchActivityHistoryPlaySourceRows(input)).map((item) => item.playSource)
 }
 
 export async function exportAdminActivityApps(): Promise<unknown> {

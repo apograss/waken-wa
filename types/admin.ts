@@ -67,3 +67,13 @@ export interface AdminDeviceSummary {
   generatedHashKey: string
   status: string
 }
+
+export interface AdminActivityHistoryAppRow {
+  processName: string
+  lastSeenAt: string
+}
+
+export interface AdminActivityHistoryPlaySourceRow {
+  playSource: string
+  lastSeenAt: string
+}

@@ -32,8 +32,12 @@ export const adminQueryKeys = {
     exportApps: () => ['admin', 'activity-history', 'apps-export'] as const,
     historyApps: (input?: { q?: string; limit?: number; offset?: number }) =>
       ['admin', 'activity-history', 'apps', input ?? {}] as const,
+    historyAppRows: (input?: { q?: string; limit?: number; offset?: number }) =>
+      ['admin', 'activity-history', 'app-rows', input ?? {}] as const,
     historyPlaySources: (input?: { q?: string; limit?: number; offset?: number }) =>
       ['admin', 'activity-history', 'play-sources', input ?? {}] as const,
+    historyPlaySourceRows: (input?: { q?: string; limit?: number; offset?: number }) =>
+      ['admin', 'activity-history', 'play-source-rows', input ?? {}] as const,
   },
   ruleTools: {
     summary: () => ['admin', 'rule-tools', 'summary'] as const,
