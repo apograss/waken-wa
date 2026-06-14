@@ -31,3 +31,6 @@ pnpm-debug.log*
 Dockerfile*
 docker-compose*.yml
 .dockerignore
+
+# pnpm workspace config (no packages field; causes pnpm workspace error in builder stage)
+pnpm-workspace.yaml
