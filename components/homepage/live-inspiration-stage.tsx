@@ -9,6 +9,7 @@ import {
   inspirationPlainPreview,
   inspirationPlainPreviewAny,
 } from '@/lib/inspiration-preview'
+import { DEFAULT_TIMEZONE, getDateParts, normalizeTimezone } from '@/lib/timezone'
 import type { InspirationHomeItem } from '@/types/components'
 
 import {
@@ -38,7 +39,7 @@ export function LiveInspirationStage({ entries, total }: LiveInspirationStagePro
     return {
       key: `entry-${entry.id}`,
       num: String(idx + 1).padStart(2, '0'),
-      date: formatPaperDate(entry.createdAt),
+      date: formatPaperDate(entry.createdAt, entry.displayTimezone),
       title: entry.title?.trim() || '(未命名)',
       preview: previewText || '点击查看完整内容 →',
       emoji,
@@ -50,16 +51,10 @@ export function LiveInspirationStage({ entries, total }: LiveInspirationStagePro
   return <InspirationStageView items={items} total={total} />
 }
 
-function formatPaperDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    const M = String(d.getMonth() + 1).padStart(2, '0')
-    const D = String(d.getDate()).padStart(2, '0')
-    const h = String(d.getHours()).padStart(2, '0')
-    const m = String(d.getMinutes()).padStart(2, '0')
-    return `${M}·${D} · ${h}:${m}`
-  } catch {
-    return iso
-  }
+export function formatPaperDate(iso: string, timezone?: string | null): string {
+  const tz = normalizeTimezone(timezone ?? DEFAULT_TIMEZONE)
+  const parts = getDateParts(iso, tz)
+  if (!parts.year) return iso
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${pad(parts.month)}·${pad(parts.day)} · ${pad(parts.hour)}:${pad(parts.minute)}`
 }
