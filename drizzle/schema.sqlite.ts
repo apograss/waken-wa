@@ -786,9 +786,13 @@ export const inspirationEntries = sqliteTable('inspiration_entries', {
   contentLexical: text('content_lexical'),
   imageDataUrl: text('image_data_url'),
   statusSnapshot: text('status_snapshot'),
+  externalSource: text('external_source'),
+  externalId: text('external_id'),
   createdAt: ts('created_at'),
   updatedAt: ts('updated_at'),
-})
+}, (t) => [
+  uniqueIndex('inspiration_entries_external_source_id_idx').on(t.externalSource, t.externalId),
+])
 
 export const inspirationAssets = sqliteTable(
   'inspiration_assets',

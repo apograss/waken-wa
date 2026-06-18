@@ -837,13 +837,17 @@ export const inspirationEntries = pgTable('inspiration_entries', {
   contentLexical: text('content_lexical'),
   imageDataUrl: text('image_data_url'),
   statusSnapshot: text('status_snapshot'),
+  externalSource: varchar('external_source', { length: 40 }),
+  externalId: varchar('external_id', { length: 200 }),
   createdAt: timestamp('created_at', { mode: 'date', withTimezone: true })
     .notNull()
     .defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
     .notNull()
     .defaultNow(),
-})
+}, (t) => [
+  uniqueIndex('inspiration_entries_external_source_id_idx').on(t.externalSource, t.externalId),
+])
 
 export const inspirationAssets = pgTable(
   'inspiration_assets',
