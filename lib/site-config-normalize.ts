@@ -1,5 +1,5 @@
-import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { parseAboutProfile } from '@/lib/about-profile'
+import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { parseJsonString } from '@/lib/json-parse'

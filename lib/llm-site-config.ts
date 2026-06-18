@@ -13,8 +13,8 @@ import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
 } from '@/constants/site-config'
-import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { parseAboutProfile } from '@/lib/about-profile'
+import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import {
   isRedisCacheForcedOnServerless,

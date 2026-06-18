@@ -18,8 +18,8 @@ import {
   SITE_SETTINGS_SCHEDULE_CATEGORY_KEYS,
   SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/constants/site-settings'
-import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import { parseAboutProfile } from '@/lib/about-profile'
+import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
 import {
   normalizeAdminThemeColor,
 } from '@/lib/admin-theme-color'

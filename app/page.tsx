@@ -16,10 +16,10 @@ import {
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_MAX_LEN,
 } from '@/constants/site-config'
+import { parseAboutProfile } from '@/lib/about-profile'
 import { getTodaySummary } from '@/lib/activity-daily'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
-import { parseAboutProfile } from '@/lib/about-profile'
 import { verifySiteLockSession } from '@/lib/auth'
 import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
 import { db } from '@/lib/db'

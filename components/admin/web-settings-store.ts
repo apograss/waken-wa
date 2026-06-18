@@ -8,13 +8,13 @@ import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
 } from '@/constants/activity-api'
 import { HOMEPAGE_SETTINGS_DEFAULTS } from '@/constants/homepage-settings'
-import { ABOUT_PROFILE_DEFAULTS } from '@/lib/about-profile'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
   SITE_CONFIG_SCHEDULE_HOME_AFTER_CLASSES_LABEL_DEFAULT,
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
 } from '@/constants/site-config'
+import { ABOUT_PROFILE_DEFAULTS } from '@/lib/about-profile'
 import {
   DEFAULT_ACTIVITY_UPDATE_MODE,
 } from '@/lib/activity-update-mode'
