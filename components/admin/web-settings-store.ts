@@ -8,6 +8,7 @@ import {
   REDIS_ACTIVITY_FEED_CACHE_TTL_DEFAULT_SECONDS,
 } from '@/constants/activity-api'
 import { HOMEPAGE_SETTINGS_DEFAULTS } from '@/constants/homepage-settings'
+import { ABOUT_PROFILE_DEFAULTS } from '@/lib/about-profile'
 import {
   SITE_CONFIG_HISTORY_WINDOW_DEFAULT_MINUTES,
   SITE_CONFIG_PROCESS_STALE_DEFAULT_SECONDS,
@@ -62,6 +63,7 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   userNoteHitokotoFallbackToNote: false,
   themePreset: 'basic',
   themeCustomSurface: emptyThemeCustomSurfaceForm(),
+  aboutProfile: { ...ABOUT_PROFILE_DEFAULTS },
   publicFontOptionsEnabled: false,
   publicFontOptions: emptyPublicPageFontOptionsForm(),
   customCss: '',

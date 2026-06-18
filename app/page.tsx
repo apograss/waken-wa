@@ -19,6 +19,7 @@ import {
 import { getTodaySummary } from '@/lib/activity-daily'
 import { getActivityFeedData } from '@/lib/activity-feed'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
+import { parseAboutProfile } from '@/lib/about-profile'
 import { verifySiteLockSession } from '@/lib/auth'
 import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
 import { db } from '@/lib/db'
@@ -161,6 +162,7 @@ export default async function Home() {
   const noteHitokotoFallbackToNote = Boolean(cfg.userNoteHitokotoFallbackToNote)
   const activityUpdateMode = normalizeActivityUpdateMode(cfg.activityUpdateMode)
   const homepageSettings = NormalizeHomepageSettings(cfg)
+  const aboutProfile = parseAboutProfile(cfg.aboutProfile)
   const blogPosts = await fetchRecentHaloBlogPosts(3)
   const publicFontOptions = resolvePublicPageControlFontOptions(
     cfg.publicFontOptionsEnabled,
@@ -209,6 +211,8 @@ export default async function Home() {
             todayStatusText,
             todayStatusExpiresAt,
             todayStatusBusy,
+            aboutProfile,
+            aboutDisplayTimezone: displayTimezoneForEntries,
             userNote,
             noteHitokotoEnabled,
             noteTypewriterEnabled,

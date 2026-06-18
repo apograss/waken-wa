@@ -1,4 +1,5 @@
 import { ActivityFeedProvider } from '@/components/activity-feed-provider'
+import type { AboutProfileFields } from '@/lib/about-profile'
 import type { TodaySummary } from '@/lib/activity-daily'
 import type { HaloBlogPost } from '@/lib/halo-blog'
 import type { SteamGamesResult } from '@/lib/steam-games'
@@ -22,6 +23,8 @@ export interface HomepageReusedSectionProps {
   todayStatusText: string
   todayStatusExpiresAt: string | null | undefined
   todayStatusBusy: boolean
+  aboutProfile: AboutProfileFields
+  aboutDisplayTimezone: string
   userNote: string | null | undefined
   noteHitokotoEnabled: boolean
   noteTypewriterEnabled: boolean
@@ -79,6 +82,12 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
           userName={props.userName}
           userBio={props.userBio}
           avatarSrc={props.avatarSrc}
+          aboutProfile={props.aboutProfile}
+          displayTimezone={props.aboutDisplayTimezone}
+          todayStatusEmoji={props.todayStatusEmoji}
+          todayStatusText={props.todayStatusText}
+          todayStatusExpiresAt={props.todayStatusExpiresAt}
+          todayStatusBusy={props.todayStatusBusy}
         />
       </section>
 

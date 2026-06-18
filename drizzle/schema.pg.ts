@@ -160,6 +160,8 @@ export const siteConfig = pgTable('site_config', {
   userNoteHitokotoFallbackToNote: boolean('user_note_hitokoto_fallback_to_note').default(false),
   themePreset: varchar('theme_preset', { length: 50 }).notNull().default('basic'),
   themeCustomSurface: jsonb('theme_custom_surface'),
+  // "关于我" (section 01) editable content; null = all defaults.
+  aboutProfile: jsonb('about_profile'),
   publicFontOptionsEnabled: boolean('public_font_options_enabled').default(false),
   publicFontOptions: jsonb('public_font_options'),
   customCss: text('custom_css'),

@@ -1,3 +1,4 @@
+import type { AboutProfileFields } from '@/lib/about-profile'
 import type { ActivityUpdateMode } from '@/lib/activity-update-mode'
 import type { UserNoteHitokotoEncode } from '@/lib/hitokoto'
 import type { PublicPageFontOptionMode } from '@/lib/public-page-font'
@@ -110,6 +111,8 @@ export interface SiteConfig {
   userNoteHitokotoFallbackToNote: boolean
   themePreset: string
   themeCustomSurface: ThemeCustomSurfaceForm
+  /** "关于我" (section 01) editable content. */
+  aboutProfile: AboutProfileFields
   publicFontOptionsEnabled: boolean
   publicFontOptions: PublicPageFontOptionForm[]
   customCss: string

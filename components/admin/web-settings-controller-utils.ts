@@ -19,6 +19,7 @@ import {
   SITE_SETTINGS_THEME_CATEGORY_KEYS,
 } from '@/constants/site-settings'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
+import { parseAboutProfile } from '@/lib/about-profile'
 import {
   normalizeAdminThemeColor,
 } from '@/lib/admin-theme-color'
@@ -235,6 +236,7 @@ export function buildWebSettingsForm(
     userNoteHitokotoFallbackToNote: Boolean(data.userNoteHitokotoFallbackToNote),
     themePreset: data.themePreset ?? 'basic',
     themeCustomSurface: themeCustomSurfaceFromApi(data.themeCustomSurface),
+    aboutProfile: parseAboutProfile(data.aboutProfile),
     publicFontOptionsEnabled: data.publicFontOptionsEnabled === true,
     publicFontOptions: publicPageFontOptionsFromApi(data.publicFontOptions),
     customCss: data.customCss ?? '',

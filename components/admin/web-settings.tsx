@@ -7,6 +7,7 @@ import { useT } from 'next-i18next/client'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
 
+import { AboutSettingsPanel } from '@/components/admin/about-settings-panel'
 import {
   getAdminPanelTransition,
   getAdminSectionVariants,
@@ -201,6 +202,8 @@ function WebSettingsContent() {
             </WebSettingsSection>
 
             <HomepageSettingsPanel />
+
+            <AboutSettingsPanel />
 
             <WebSettingsSection
               title={t('webSettings.sections.frontend.title')}

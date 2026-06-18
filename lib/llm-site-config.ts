@@ -14,6 +14,7 @@ import {
   SITE_CONFIG_SCHEDULE_SLOT_DEFAULT_MINUTES,
 } from '@/constants/site-config'
 import { normalizeActivityUpdateMode } from '@/lib/activity-update-mode'
+import { parseAboutProfile } from '@/lib/about-profile'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import {
   isRedisCacheForcedOnServerless,
@@ -170,6 +171,9 @@ export async function prepareSiteConfigValuesFromPayload(
   const themePreset = strField('themePreset', 'basic')
   const themeCustomSurface = parseThemeCustomSurface(
     has('themeCustomSurface') ? normalizedBody.themeCustomSurface : existing?.themeCustomSurface,
+  )
+  const aboutProfile = parseAboutProfile(
+    has('aboutProfile') ? normalizedBody.aboutProfile : existing?.aboutProfile,
   )
   const publicFontOptionsEnabled = has('publicFontOptionsEnabled')
     ? Boolean(normalizedBody.publicFontOptionsEnabled)
@@ -688,6 +692,7 @@ export async function prepareSiteConfigValuesFromPayload(
     userNoteHitokotoFallbackToNote,
     themePreset,
     themeCustomSurface,
+    aboutProfile,
     publicFontOptionsEnabled,
     publicFontOptions,
     customCss,

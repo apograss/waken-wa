@@ -1,4 +1,5 @@
 import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
+import { parseAboutProfile } from '@/lib/about-profile'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
 import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { parseJsonString } from '@/lib/json-parse'
@@ -56,6 +57,7 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
       : 50,
     forceDisplayTimezone: config.forceDisplayTimezone === true,
     themeCustomSurface: parseThemeCustomSurface(config.themeCustomSurface),
+    aboutProfile: parseAboutProfile(config.aboutProfile),
     publicFontOptionsEnabled: config.publicFontOptionsEnabled === true,
     publicFontOptions: normalizePublicPageFontOptions(config.publicFontOptions),
     userNoteHitokotoCategories: normalizeStringArrayField(config.userNoteHitokotoCategories),

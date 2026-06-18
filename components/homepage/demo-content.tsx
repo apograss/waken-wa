@@ -4,6 +4,10 @@
  * Shows what the page looks like in a "fully filled" state.
  */
 
+import type { AboutProfileFields } from '@/lib/about-profile'
+import { formatDisplayPattern } from '@/lib/timezone'
+import { isTodayStatusActive } from '@/lib/today-status'
+
 import {
   type InspirationPaperItem,
   InspirationStageView,
@@ -196,16 +200,38 @@ interface DemoAboutSectionProps {
   userName: string
   userBio?: string | null
   avatarSrc?: string | null
+  aboutProfile: AboutProfileFields
+  displayTimezone: string
+  todayStatusEmoji: string
+  todayStatusText: string
+  todayStatusExpiresAt: string | null | undefined
+  todayStatusBusy: boolean
 }
 
 export function DemoAboutSection({
   userName,
   userBio,
   avatarSrc,
+  aboutProfile,
+  displayTimezone,
+  todayStatusEmoji,
+  todayStatusText,
+  todayStatusExpiresAt,
+  todayStatusBusy,
 }: DemoAboutSectionProps) {
   const name = userName || 'apograss'
   const bio = userBio || '在写论文 / 听周深 / 偶尔失眠 · CS @ 北邮'
   const initial = name.charAt(0).toLowerCase()
+
+  const showStatus =
+    aboutProfile.statusEnabled &&
+    isTodayStatusActive({ todayStatusEmoji, todayStatusExpiresAt }) &&
+    todayStatusText.trim().length > 0
+  const statusExpireLabel = todayStatusExpiresAt
+    ? formatDisplayPattern(todayStatusExpiresAt, 'HH:mm', displayTimezone)
+    : ''
+  const figureSrc =
+    aboutProfile.figureImage.trim() || '/assets/homepage/section-about-companion.png'
 
   return (
     <>
@@ -224,67 +250,96 @@ export function DemoAboutSection({
 
           <div className="about-identity">
             <h3 className="about-name">{name}</h3>
-            <span className="about-domain">apograss.cn</span>
+            {aboutProfile.domainEnabled && aboutProfile.domain.trim() ? (
+              <span className="about-domain">{aboutProfile.domain}</span>
+            ) : null}
           </div>
 
           <p className="about-bio">{bio}</p>
 
-          <div className="about-status">
-            <span className="about-status-emoji">🌧</span>
-            <span className="about-status-text">在写论文</span>
-            <span className="about-status-busy">busy</span>
-            <span className="about-status-expire">至 13:42</span>
-          </div>
+          {showStatus ? (
+            <div className="about-status">
+              {todayStatusEmoji ? (
+                <span className="about-status-emoji">{todayStatusEmoji}</span>
+              ) : null}
+              <span className="about-status-text">{todayStatusText}</span>
+              {todayStatusBusy ? <span className="about-status-busy">busy</span> : null}
+              {statusExpireLabel ? (
+                <span className="about-status-expire">至 {statusExpireLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="about-meta">
-            <span className="about-meta-row">
-              <span className="about-meta-lab">CITY</span>
-              <span className="about-meta-val">深圳 · 福田</span>
-            </span>
-            <span className="about-meta-row">
-              <span className="about-meta-lab">EMAIL</span>
-              <span className="about-meta-val">apograss@example.com</span>
-            </span>
-            <span className="about-meta-row">
-              <span className="about-meta-lab">GITHUB</span>
-              <span className="about-meta-val">github.com/apograss</span>
-            </span>
-            <span className="about-meta-row">
-              <span className="about-meta-lab">UPTIME</span>
-              <span className="about-meta-val">823 days online</span>
-            </span>
+            {aboutProfile.cityEnabled && aboutProfile.city.trim() ? (
+              <span className="about-meta-row">
+                <span className="about-meta-lab">CITY</span>
+                <span className="about-meta-val">{aboutProfile.city}</span>
+              </span>
+            ) : null}
+            {aboutProfile.emailEnabled && aboutProfile.email.trim() ? (
+              <span className="about-meta-row">
+                <span className="about-meta-lab">EMAIL</span>
+                <span className="about-meta-val">{aboutProfile.email}</span>
+              </span>
+            ) : null}
+            {aboutProfile.githubEnabled && aboutProfile.githubLabel.trim() ? (
+              <span className="about-meta-row">
+                <span className="about-meta-lab">GITHUB</span>
+                {aboutProfile.githubUrl.trim() ? (
+                  <a
+                    className="about-meta-val"
+                    href={aboutProfile.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {aboutProfile.githubLabel}
+                  </a>
+                ) : (
+                  <span className="about-meta-val">{aboutProfile.githubLabel}</span>
+                )}
+              </span>
+            ) : null}
           </div>
         </div>
 
         {/* RIGHT — large editorial figure */}
-        <figure className="about-figure" aria-hidden="true">
-          <span className="about-figure-label">
-            <span className="about-figure-dot"></span>
-            profile · 2026 spring
-          </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/homepage/section-about-companion.png"
-            alt=""
-            loading="lazy"
-            className="about-figure-img"
-          />
-          <figcaption className="about-figure-caption">
-            <span className="about-figure-caption-name">{name}</span>
-            <span className="about-figure-caption-meta">2026 · 春</span>
-          </figcaption>
-        </figure>
+        {aboutProfile.figureEnabled ? (
+          <figure className="about-figure" aria-hidden="true">
+            {aboutProfile.figureLabel.trim() ? (
+              <span className="about-figure-label">
+                <span className="about-figure-dot"></span>
+                {aboutProfile.figureLabel}
+              </span>
+            ) : null}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={figureSrc}
+              alt=""
+              loading="lazy"
+              className="about-figure-img"
+            />
+            <figcaption className="about-figure-caption">
+              <span className="about-figure-caption-name">{name}</span>
+              {aboutProfile.figureCaption.trim() ? (
+                <span className="about-figure-caption-meta">{aboutProfile.figureCaption}</span>
+              ) : null}
+            </figcaption>
+          </figure>
+        ) : null}
       </div>
 
       {/* Pull-quote signature spans full width below the grid */}
-      <div className="about-signature">
-        <p className="about-signature-text">
-          所谓自由，是能在下雨的星期天，一个人写完一段不被催促的字。
-        </p>
-        <div className="about-signature-src">
-          <span>— hitokoto · 子集</span>
+      {aboutProfile.quoteEnabled && aboutProfile.quoteText.trim() ? (
+        <div className="about-signature">
+          <p className="about-signature-text">{aboutProfile.quoteText}</p>
+          {aboutProfile.quoteSource.trim() ? (
+            <div className="about-signature-src">
+              <span>{aboutProfile.quoteSource}</span>
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
     </>
   )
 }
