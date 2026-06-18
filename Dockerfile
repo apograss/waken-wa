@@ -40,9 +40,15 @@ WORKDIR /tools
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists
+# pnpm 10 blocks dependency build scripts by default, so better-sqlite3's
+# native binding never compiles unless it is allow-listed. Mirror the repo's
+# pnpm-workspace.yaml `allowBuilds` entry, then verify the binding actually
+# loads so a broken tools image fails the build instead of the startup migration.
 RUN printf '%s\n' '{"name":"drizzle-tools","private":true,"version":"1.0.0"}' > package.json \
+  && printf '%s\n' 'allowBuilds:' '  better-sqlite3: true' > pnpm-workspace.yaml \
   && pnpm add drizzle-kit@0.31.10 drizzle-orm@0.44.7 better-sqlite3@12.8.0 pg@8.20.0 dotenv@16.6.1 \
-  && pnpm rebuild better-sqlite3
+  && pnpm rebuild better-sqlite3 \
+  && node -e "new (require('better-sqlite3'))(':memory:').close(); console.log('[drizzle-tools] better-sqlite3 binding OK')"
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
