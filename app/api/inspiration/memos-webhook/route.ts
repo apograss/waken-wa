@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import {
   handleMemosWebhookPayload,
-  verifyMemosWebhookSignature,
   type MemosWebhookPayload,
+  verifyMemosWebhookSignature,
 } from '@/lib/memos-inspiration'
 import {
   deleteMemosInspirationEntry,

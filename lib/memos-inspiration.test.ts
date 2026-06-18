@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest'
 
 import {
   handleMemosWebhookPayload,
+  type MemosMemo,
   normalizeMemosMemoForInspiration,
   verifyMemosWebhookSignature,
-  type MemosMemo,
 } from './memos-inspiration'
 
 const baseMemo: MemosMemo = {
