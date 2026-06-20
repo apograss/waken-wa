@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { LayoutFooter } from '@/components/layout-footer'
+import type { FooterBeianFields } from '@/lib/footer-beian'
 
 const PORTAL_ID = 'site-footer-portal'
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
@@ -50,9 +51,11 @@ function computeFooterFollowMaxPx(viewportHeight: number, rootFontSizePx: number
 export function LayoutFooterPortal({
   adminText,
   userName,
+  footerBeian,
 }: {
   adminText: string
   userName: string
+  footerBeian: FooterBeianFields
 }) {
   const [el, setEl] = useState<HTMLElement | null>(null)
   const [ready, setReady] = useState(false)
@@ -294,7 +297,7 @@ export function LayoutFooterPortal({
   if (mobilePinned) {
     return (
       <div ref={shellRef} className="site-footer-inline-shell">
-        <LayoutFooter adminText={adminText} userName={userName} />
+        <LayoutFooter adminText={adminText} userName={userName} footerBeian={footerBeian} />
       </div>
     )
   }
@@ -315,7 +318,7 @@ export function LayoutFooterPortal({
           className={`site-footer-portal-shell ${mobilePinned ? 'is-mobile-pinned' : ''} ${ready && visible ? 'is-visible' : ''}`}
           style={shellStyle}
         >
-          <LayoutFooter adminText={adminText} userName={userName} />
+          <LayoutFooter adminText={adminText} userName={userName} footerBeian={footerBeian} />
         </div>,
         el,
       )}

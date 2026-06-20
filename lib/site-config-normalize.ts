@@ -1,6 +1,7 @@
 import { parseAboutProfile } from '@/lib/about-profile'
 import { normalizeAdminThemeColor } from '@/lib/admin-theme-color'
 import { normalizeAppMessageRules } from '@/lib/app-message-rules'
+import { parseFooterBeian } from '@/lib/footer-beian'
 import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { parseJsonString } from '@/lib/json-parse'
 import { normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
@@ -58,6 +59,7 @@ export function normalizeSiteConfigShape(config: Record<string, any>): Record<st
     forceDisplayTimezone: config.forceDisplayTimezone === true,
     themeCustomSurface: parseThemeCustomSurface(config.themeCustomSurface),
     aboutProfile: parseAboutProfile(config.aboutProfile),
+    footerBeian: parseFooterBeian(config.footerBeian),
     publicFontOptionsEnabled: config.publicFontOptionsEnabled === true,
     publicFontOptions: normalizePublicPageFontOptions(config.publicFontOptions),
     userNoteHitokotoCategories: normalizeStringArrayField(config.userNoteHitokotoCategories),

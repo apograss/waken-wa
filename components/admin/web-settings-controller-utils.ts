@@ -25,6 +25,7 @@ import {
 } from '@/lib/admin-theme-color'
 import { isRemoteAvatarUrl } from '@/lib/avatar-url'
 import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
+import { parseFooterBeian } from '@/lib/footer-beian'
 import { normalizeHitokotoCategories, normalizeHitokotoEncode } from '@/lib/hitokoto'
 import {
   NormalizeHomepageCoverImage,
@@ -237,6 +238,7 @@ export function buildWebSettingsForm(
     themePreset: data.themePreset ?? 'basic',
     themeCustomSurface: themeCustomSurfaceFromApi(data.themeCustomSurface),
     aboutProfile: parseAboutProfile(data.aboutProfile),
+    footerBeian: parseFooterBeian(data.footerBeian),
     publicFontOptionsEnabled: data.publicFontOptionsEnabled === true,
     publicFontOptions: publicPageFontOptionsFromApi(data.publicFontOptions),
     customCss: data.customCss ?? '',

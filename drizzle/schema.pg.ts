@@ -162,6 +162,8 @@ export const siteConfig = pgTable('site_config', {
   themeCustomSurface: jsonb('theme_custom_surface'),
   // "关于我" (section 01) editable content; null = all defaults.
   aboutProfile: jsonb('about_profile'),
+  // Footer ICP / public-security (备案) info; null = empty/hidden.
+  footerBeian: jsonb('footer_beian'),
   publicFontOptionsEnabled: boolean('public_font_options_enabled').default(false),
   publicFontOptions: jsonb('public_font_options'),
   customCss: text('custom_css'),

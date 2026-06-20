@@ -965,6 +965,14 @@
     "figureLabelLabel": "角标文字",
     "figureCaptionLabel": "图注文字"
   },
+  "webSettingsBeian": {
+    "title": "底部备案",
+    "description": "在页面底部显示 ICP 与公安备案信息。留空则不显示。",
+    "icpLabel": "ICP 备案号",
+    "icpDescription": "如 粤ICP备2025507839号-1。会链接到工信部备案系统 beian.miit.gov.cn。",
+    "publicSecurityLabel": "公安备案号",
+    "publicSecurityDescription": "如 粤公网安备44060602003083号。会显示警徽图标并链接到公安备案系统。"
+  },
   "webSettingsBasic": {
     "pageTitleLabel": "网页标题",
     "siteIconUrlLabel": "网页图标地址",

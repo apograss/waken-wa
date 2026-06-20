@@ -1,5 +1,6 @@
 import type { AboutProfileFields } from '@/lib/about-profile'
 import type { ActivityUpdateMode } from '@/lib/activity-update-mode'
+import type { FooterBeianFields } from '@/lib/footer-beian'
 import type { UserNoteHitokotoEncode } from '@/lib/hitokoto'
 import type { PublicPageFontOptionMode } from '@/lib/public-page-font'
 import type { ScheduleCourse, SchedulePeriodTemplateItem } from '@/lib/schedule-courses'
@@ -113,6 +114,8 @@ export interface SiteConfig {
   themeCustomSurface: ThemeCustomSurfaceForm
   /** "关于我" (section 01) editable content. */
   aboutProfile: AboutProfileFields
+  /** Footer ICP / public-security (备案) info. */
+  footerBeian: FooterBeianFields
   publicFontOptionsEnabled: boolean
   publicFontOptions: PublicPageFontOptionForm[]
   customCss: string

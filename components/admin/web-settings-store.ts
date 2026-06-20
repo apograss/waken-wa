@@ -19,6 +19,7 @@ import {
   DEFAULT_ACTIVITY_UPDATE_MODE,
 } from '@/lib/activity-update-mode'
 import { DEFAULT_PAGE_TITLE } from '@/lib/default-page-title'
+import { FOOTER_BEIAN_DEFAULTS } from '@/lib/footer-beian'
 import { resolveSchedulePeriodTemplate } from '@/lib/schedule-courses'
 import { resolveScheduleGridByWeekday } from '@/lib/schedule-grid-by-weekday'
 import { DEFAULT_TIMEZONE } from '@/lib/timezone'
@@ -64,6 +65,7 @@ export const WEB_SETTINGS_INITIAL_FORM: SiteConfig = {
   themePreset: 'basic',
   themeCustomSurface: emptyThemeCustomSurfaceForm(),
   aboutProfile: { ...ABOUT_PROFILE_DEFAULTS },
+  footerBeian: { ...FOOTER_BEIAN_DEFAULTS },
   publicFontOptionsEnabled: false,
   publicFontOptions: emptyPublicPageFontOptionsForm(),
   customCss: '',

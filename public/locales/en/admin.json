@@ -965,6 +965,14 @@
     "figureLabelLabel": "Label text",
     "figureCaptionLabel": "Caption text"
   },
+  "webSettingsBeian": {
+    "title": "Footer ICP / Filing",
+    "description": "Show ICP and public-security filing info in the page footer. Leave empty to hide.",
+    "icpLabel": "ICP filing number",
+    "icpDescription": "e.g. 粤ICP备2025507839号-1. Links to the MIIT filing system beian.miit.gov.cn.",
+    "publicSecurityLabel": "Public-security filing number",
+    "publicSecurityDescription": "e.g. 粤公网安备44060602003083号. Shows the police badge and links to the MPS filing system."
+  },
   "webSettingsBasic": {
     "pageTitleLabel": "Page title",
     "siteIconUrlLabel": "Site icon URL",

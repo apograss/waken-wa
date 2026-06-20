@@ -24,6 +24,7 @@ import { verifySiteLockSession } from '@/lib/auth'
 import { isRemoteAvatarUrl, resolveAvatarUrl } from '@/lib/avatar-url'
 import { db } from '@/lib/db'
 import { inspirationEntries } from '@/lib/drizzle-schema'
+import { parseFooterBeian } from '@/lib/footer-beian'
 import { fetchRecentHaloBlogPosts, haloBlogHomeUrl } from '@/lib/halo-blog'
 import { getHCaptchaPublicConfig } from '@/lib/hcaptcha'
 import {
@@ -163,6 +164,7 @@ export default async function Home() {
   const activityUpdateMode = normalizeActivityUpdateMode(cfg.activityUpdateMode)
   const homepageSettings = NormalizeHomepageSettings(cfg)
   const aboutProfile = parseAboutProfile(cfg.aboutProfile)
+  const footerBeian = parseFooterBeian(cfg.footerBeian)
   const blogPosts = await fetchRecentHaloBlogPosts(3)
   const publicFontOptions = resolvePublicPageControlFontOptions(
     cfg.publicFontOptionsEnabled,
@@ -244,7 +246,7 @@ export default async function Home() {
             steamGames,
           }}
         />
-        <LayoutFooterPortal adminText={adminText} userName={userName} />
+        <LayoutFooterPortal adminText={adminText} userName={userName} footerBeian={footerBeian} />
       </PublicPageTransitionShell>
     </>
   )

@@ -159,6 +159,8 @@ export const siteConfig = sqliteTable('site_config', {
   themeCustomSurface: text('theme_custom_surface', { mode: 'json' }),
   // "关于我" (section 01) editable content; null = all defaults.
   aboutProfile: text('about_profile', { mode: 'json' }),
+  // Footer ICP / public-security (备案) info; null = empty/hidden.
+  footerBeian: text('footer_beian', { mode: 'json' }),
   publicFontOptionsEnabled: integer('public_font_options_enabled', { mode: 'boolean' }).default(false),
   publicFontOptions: text('public_font_options', { mode: 'json' }),
   customCss: text('custom_css'),

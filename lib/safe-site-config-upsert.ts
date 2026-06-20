@@ -14,6 +14,7 @@ const SITE_CONFIG_JSON_FIELDS = [
   'userNoteHitokotoCategories',
   'themeCustomSurface',
   'aboutProfile',
+  'footerBeian',
   'publicFontOptions',
   'appMessageRules',
   'appBlacklist',

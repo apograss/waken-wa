@@ -21,6 +21,7 @@ import {
   parseRedisCacheTtlSeconds,
 } from '@/lib/cache-runtime-toggle'
 import { DEFAULT_PAGE_TITLE, PAGE_TITLE_MAX_LEN } from '@/lib/default-page-title'
+import { parseFooterBeian } from '@/lib/footer-beian'
 import { normalizeHitokotoCategories, normalizeHitokotoEncode } from '@/lib/hitokoto'
 import {
   NormalizeHomepageCoverImage,
@@ -174,6 +175,9 @@ export async function prepareSiteConfigValuesFromPayload(
   )
   const aboutProfile = parseAboutProfile(
     has('aboutProfile') ? normalizedBody.aboutProfile : existing?.aboutProfile,
+  )
+  const footerBeian = parseFooterBeian(
+    has('footerBeian') ? normalizedBody.footerBeian : existing?.footerBeian,
   )
   const publicFontOptionsEnabled = has('publicFontOptionsEnabled')
     ? Boolean(normalizedBody.publicFontOptionsEnabled)
@@ -693,6 +697,7 @@ export async function prepareSiteConfigValuesFromPayload(
     themePreset,
     themeCustomSurface,
     aboutProfile,
+    footerBeian,
     publicFontOptionsEnabled,
     publicFontOptions,
     customCss,

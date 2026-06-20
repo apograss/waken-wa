@@ -18,15 +18,18 @@ import {
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useViewerCount } from '@/hooks/use-viewer-count'
+import { type FooterBeianFields, ICP_BEIAN_URL, publicSecurityBeianUrl } from '@/lib/footer-beian'
 
 const TEMPLATE_REPO_HREF = 'https://github.com/MoYoez/waken-wa'
 
 export function LayoutFooter({
   adminText,
   userName,
+  footerBeian,
 }: {
   adminText: string
   userName: string
+  footerBeian: FooterBeianFields
 }) {
   const { t } = useT('common')
   const isMobile = useIsMobile()
@@ -189,6 +192,42 @@ export function LayoutFooter({
                   </span>
                 </p>
               </div>
+
+              {footerBeian.icpText || footerBeian.publicSecurityText ? (
+                <>
+                  <div aria-hidden className="footer-divider-line h-px w-full" />
+                  <div className="footer-text-soft flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] leading-5 sm:text-xs">
+                    {footerBeian.icpText ? (
+                      <a
+                        href={ICP_BEIAN_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="footer-text-soft inline-flex items-center transition-colors hover:text-foreground"
+                      >
+                        {footerBeian.icpText}
+                      </a>
+                    ) : null}
+                    {footerBeian.publicSecurityText ? (
+                      <a
+                        href={publicSecurityBeianUrl(footerBeian.publicSecurityText)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="footer-text-soft inline-flex items-center gap-1 transition-colors hover:text-foreground"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/icons/gongan-beian.png"
+                          alt=""
+                          width={14}
+                          height={14}
+                          className="h-3.5 w-3.5 shrink-0"
+                        />
+                        {footerBeian.publicSecurityText}
+                      </a>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         </div>
