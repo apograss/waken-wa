@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': __dirname,
+      // node 测试环境缺少 react-server 条件，stub 掉 server-only 以便加载 server 模块。
+      'server-only': `${__dirname}/test/stubs/server-only.ts`,
     },
   },
   test: {

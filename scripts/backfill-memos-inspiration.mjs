@@ -2,7 +2,7 @@
 import { createHmac, randomUUID } from 'node:crypto'
 
 const DEFAULT_MEMOS_BASE_URL = 'https://memos.apograss.cn'
-const DEFAULT_WAKEN_WEBHOOK_URL = 'https://test.apograss.cn/api/inspiration/memos-webhook'
+const DEFAULT_WAKEN_WEBHOOK_URL = 'https://apograss.cn/api/inspiration/memos-webhook'
 const PAGE_SIZE = 100
 
 const args = new Set(process.argv.slice(2))

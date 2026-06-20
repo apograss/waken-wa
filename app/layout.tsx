@@ -27,6 +27,7 @@ import {
 } from '@/lib/public-page-font'
 import { getSiteConfigMemoryFirst } from '@/lib/site-config-cache'
 import { buildSiteIconHref } from '@/lib/site-icon'
+import { getSiteBaseUrl } from '@/lib/site-url'
 import { normalizeThemeMode, THEME_COOKIE_NAME, THEME_STORAGE_KEY } from '@/lib/theme'
 import { DEFAULT_TIMEZONE, normalizeTimezone } from '@/lib/timezone'
 
@@ -47,6 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   return {
     title,
+    metadataBase: new URL(getSiteBaseUrl()),
     icons: {
       icon: siteIconHref,
       shortcut: siteIconHref,
