@@ -131,9 +131,13 @@ export async function getT<
   }
 }
 
-export async function getLayoutResources(lng: AppLanguage): Promise<ResourceMap> {
-  const defaultNamespace = i18nConfig.defaultNS ?? 'common'
-  const namespaces = [...(i18nConfig.ns ?? [defaultNamespace])]
+// 公开页面只需要 `common` 命名空间。其余命名空间（admin/auth）由客户端 I18nProvider
+// 按需从 /locales/{lng}/{ns}.json 拉取（需配合 partialBundledLanguages: true）。
+// 这样公开页 HTML 不再内联庞大的 admin.json（~77KB×2 语言）。
+export async function getLayoutResources(
+  lng: AppLanguage,
+  namespaces: string[] = ['common'],
+): Promise<ResourceMap> {
   const supportedLngs = (i18nConfig.supportedLngs ?? [lng]) as AppLanguage[]
 
   const loadForLanguage = async (language: AppLanguage) => {

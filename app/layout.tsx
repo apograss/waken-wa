@@ -181,6 +181,7 @@ export default async function RootLayout({
           supportedLngs={i18nConfig.supportedLngs}
           defaultNS={i18nConfig.defaultNS}
           fallbackLng={i18nConfig.fallbackLng}
+          i18nextOptions={{ partialBundledLanguages: true }}
         >
           <SiteTimezoneProvider
             displayTimezone={displayTimezone}
