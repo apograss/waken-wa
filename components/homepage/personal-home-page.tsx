@@ -7,7 +7,8 @@ import { HeroGreeting } from './hero-greeting'
 import { HeroSearch } from './hero-search'
 import { HeroSubtitle } from './hero-subtitle'
 import { HeroWeather } from './hero-weather'
-import { HomepageReusedSection, type HomepageReusedSectionProps } from './homepage-reused-section'
+import { HomeBelowTheFold } from './home-below-the-fold'
+import { type HomepageReusedSectionProps } from './homepage-reused-section'
 
 interface PersonalHomePageProps {
   homepageSettings: HomepageSettings
@@ -69,7 +70,7 @@ export function PersonalHomePage({
       {/* ====== BELOW THE FOLD ====== */}
       <section className="scroll-section" id="more">
         <div className="scroll-inner">
-          <HomepageReusedSection {...reusedSectionProps} />
+          <HomeBelowTheFold {...reusedSectionProps} />
         </div>
       </section>
     </>
