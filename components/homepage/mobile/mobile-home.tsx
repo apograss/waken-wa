@@ -6,7 +6,10 @@ import { ActivityFeedProvider } from '@/components/activity-feed-provider'
 import type { HomepageSettings } from '@/types/homepage-settings'
 
 import type { HomepageReusedSectionProps } from '../homepage-reused-section'
+import { MobileScreenAbout } from './mobile-screen-about'
 import { MobileScreenHome } from './mobile-screen-home'
+import { MobileScreenInspiration } from './mobile-screen-inspiration'
+import { MobileScreenNow } from './mobile-screen-now'
 
 export interface MobileHomeProps {
   homepageSettings: HomepageSettings
@@ -46,17 +49,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
 ]
 
-function Placeholder({ label }: { label: string }) {
-  return (
-    <section className="m-screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center', color: 'var(--soft)' }}>
-        <div className="m-serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{label}</div>
-        <div className="m-mono" style={{ fontSize: 11, letterSpacing: '0.16em', color: 'var(--dim)' }}>即将上线</div>
-      </div>
-    </section>
-  )
-}
-
 export function MobileHome({ homepageSettings, reused }: MobileHomeProps) {
   const [tab, setTab] = useState<TabId>('home')
   const [navOpen, setNavOpen] = useState(false)
@@ -80,9 +72,39 @@ export function MobileHome({ homepageSettings, reused }: MobileHomeProps) {
               visibleEngines={homepageSettings.visibleEngines}
             />
           ) : null}
-          {tab === 'now' ? <Placeholder label="此刻" /> : null}
-          {tab === 'inspiration' ? <Placeholder label="灵感" /> : null}
-          {tab === 'about' ? <Placeholder label="关于我" /> : null}
+          {tab === 'now' ? (
+            <MobileScreenNow
+              scheduleCourses={reused.scheduleCoursesForHome as never}
+              schedulePeriodTemplate={reused.schedulePeriodTemplate as never}
+              scheduleShowLocation={reused.scheduleHomeShowLocation}
+              scheduleShowTeacher={reused.scheduleHomeShowTeacher}
+              scheduleEnabled={(reused.scheduleCoursesForHome as unknown[]).length > 0}
+              afterClassesLabel={reused.scheduleHomeAfterClassesLabel}
+              todaySummary={reused.todaySummary}
+              steamGames={reused.steamGames}
+            />
+          ) : null}
+          {tab === 'inspiration' ? (
+            <MobileScreenInspiration
+              entries={reused.inspirationHomeEntries as never}
+              total={reused.inspirationTotal}
+              blogPosts={reused.blogPosts}
+              blogHomeUrl={reused.blogHomeUrl}
+              earlierText={reused.earlierText}
+            />
+          ) : null}
+          {tab === 'about' ? (
+            <MobileScreenAbout
+              userName={reused.userName}
+              userBio={reused.userBio}
+              avatarSrc={reused.avatarSrc}
+              aboutProfile={reused.aboutProfile}
+              todayStatusEmoji={reused.todayStatusEmoji}
+              todayStatusText={reused.todayStatusText}
+              todayStatusBusy={reused.todayStatusBusy}
+              blogHomeUrl={reused.blogHomeUrl}
+            />
+          ) : null}
         </div>
 
         {/* 收起态把手 */}
