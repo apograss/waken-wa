@@ -57,7 +57,11 @@
       "hoverMetaAriaLabel": "悬停查看地点与教师",
       "today": "今天",
       "tomorrow": "明天",
-      "scheduleLabel": "课表 · schedule"
+      "scheduleLabel": "课表 · schedule",
+      "onBreak": "课间",
+      "ended": "已结束",
+      "ongoing": "进行中",
+      "online": "线上"
     },
     "profile": {
       "defaultName": "用户",

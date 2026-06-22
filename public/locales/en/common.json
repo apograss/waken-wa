@@ -57,7 +57,11 @@
       "hoverMetaAriaLabel": "Hover to view location and teacher",
       "today": "Today",
       "tomorrow": "Tomorrow",
-      "scheduleLabel": "Schedule"
+      "scheduleLabel": "Schedule",
+      "onBreak": "On break",
+      "ended": "Ended",
+      "ongoing": "Now",
+      "online": "Online"
     },
     "profile": {
       "defaultName": "User",

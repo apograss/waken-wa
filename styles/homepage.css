@@ -2972,35 +2972,81 @@
     margin-top: 0;
   }
 
-  /* === 02 此刻 · 右栏全天课表面板 === */
+  /* === 02 此刻 · 右栏全天课表面板（时间轴样式） === */
   .now-schedule-panel {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px 14px 12px;
-    border-radius: 14px;
+    gap: 12px;
+    padding: 16px 16px 14px;
+    border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
     background: color-mix(in srgb, var(--muted) 30%, transparent);
   }
   .now-schedule-head {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
   }
   .now-schedule-day {
-    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    line-height: 1.25;
+  }
+  .now-schedule-day-label {
+    font-size: 13px;
     font-weight: 600;
     color: var(--foreground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
+  .now-schedule-day-sub {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 10.5px;
+    color: var(--muted-foreground);
+    margin-top: 2px;
+  }
+
+  /* 大号当前状态 header */
+  .now-schedule-status {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+    border-left: 3px solid var(--muted-foreground);
+  }
+  .now-schedule-status.is-in_class {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border-left-color: var(--primary);
+  }
+  .now-schedule-status.is-break {
+    background: color-mix(in srgb, var(--hero-accent, var(--primary)) 10%, transparent);
+    border-left-color: var(--hero-accent, var(--primary));
+  }
+  .now-schedule-status-big {
+    font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
+    font-size: clamp(20px, 2.4vw, 26px);
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--foreground);
+  }
+  .now-schedule-status.is-in_class .now-schedule-status-big {
+    color: var(--primary);
+  }
+  .now-schedule-status-sub {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
+  }
+
   .now-schedule-empty {
-    padding: 10px 2px;
+    padding: 8px 2px;
     font-size: 12.5px;
     color: var(--muted-foreground);
   }
+
   .now-schedule-list {
     list-style: none;
     margin: 0;
@@ -3010,74 +3056,130 @@
   }
   .now-schedule-item {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 10px;
-    padding: 9px 0;
-    border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+    grid-template-columns: 42px 16px 1fr;
+    gap: 0 10px;
+    padding: 10px 0;
   }
-  .now-schedule-item:first-child {
-    border-top: 0;
-  }
+  /* 时间列：起始大、结束小 */
   .now-schedule-time {
-    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
-    font-size: 11px;
-    line-height: 1.5;
-    color: var(--muted-foreground);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    padding-top: 1px;
   }
-  .now-schedule-time-sep {
-    opacity: 0.5;
+  .now-schedule-time-s {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground);
   }
+  .now-schedule-time-e {
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+  /* 时间轴轨道：竖线 + 圆点 */
+  .now-schedule-rail {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  .now-schedule-rail::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1.5px;
+    transform: translateX(-50%);
+    background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+  .now-schedule-item:first-child .now-schedule-rail::before { top: 7px; }
+  .now-schedule-item:last-child .now-schedule-rail::before { bottom: calc(100% - 7px); }
+  .now-schedule-dot {
+    position: relative;
+    z-index: 1;
+    margin-top: 4px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--muted) 50%, var(--background));
+  }
+  /* body */
   .now-schedule-body {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
   }
   .now-schedule-title {
-    font-size: 13.5px;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--foreground);
     display: flex;
     align-items: center;
     gap: 7px;
-    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .now-schedule-ic {
+    flex: 0 0 auto;
+    display: inline-flex;
+    color: var(--muted-foreground);
+  }
+  .now-schedule-name {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--foreground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .now-schedule-meta {
     font-size: 11.5px;
     color: var(--muted-foreground);
     line-height: 1.35;
     overflow-wrap: anywhere;
+    padding-left: 22px;
   }
-  .now-schedule-live-dot {
+  /* 状态标签 pill */
+  .now-schedule-tag {
     flex: 0 0 auto;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--online);
-    box-shadow: 0 0 8px var(--online);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .now-schedule-tag.is-past {
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+  .now-schedule-tag.is-ongoing {
+    color: var(--background);
+    background: var(--primary);
+  }
+  .now-schedule-tag.is-next {
+    color: var(--hero-accent, var(--primary));
+    background: color-mix(in srgb, var(--hero-accent, var(--primary)) 16%, transparent);
+  }
+
+  /* 行状态：已结束淡化、进行中/下一节点亮 */
+  .now-schedule-item.is-past .now-schedule-name,
+  .now-schedule-item.is-past .now-schedule-time-s { color: var(--muted-foreground); }
+  .now-schedule-item.is-past { opacity: 0.7; }
+  .now-schedule-item.is-past .now-schedule-dot {
+    background: color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  }
+  .now-schedule-item.is-ongoing .now-schedule-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
     animation: pulse 1.6s ease-in-out infinite;
   }
-  /* 已上完：淡化；正在上：高亮主色 */
-  .now-schedule-item.is-past {
-    opacity: 0.45;
-  }
-  .now-schedule-item.is-ongoing .now-schedule-time,
-  .now-schedule-item.is-ongoing .now-schedule-title {
-    color: var(--primary);
-  }
-  .now-schedule-item.is-ongoing {
-    margin: 0 -10px;
-    padding: 9px 10px;
-    border-radius: 10px;
-    border-top-color: transparent;
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
-  }
-  .now-schedule-item.is-ongoing + .now-schedule-item {
-    border-top-color: transparent;
+  .now-schedule-item.is-ongoing .now-schedule-name,
+  .now-schedule-item.is-ongoing .now-schedule-time-s { color: var(--primary); }
+  .now-schedule-item.is-next .now-schedule-dot {
+    background: var(--background);
+    border: 2px solid var(--hero-accent, var(--primary));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hero-accent, var(--primary)) 16%, transparent);
   }
