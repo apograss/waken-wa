@@ -52,14 +52,7 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
   const media = !hideMedia ? findMedia(statuses) : null
 
   return (
-    <figure className="now-banner" aria-hidden="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/assets/homepage/section-now-companion.png"
-        alt=""
-        loading="lazy"
-        className="now-banner-img"
-      />
+    <div className="now-banner">
       <span className="now-banner-live">
         <span className="now-banner-pulse"></span>
         {hasAnyDevice ? 'live · 在线' : 'idle · 暂无活动'}
@@ -99,7 +92,7 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
           )}
         </div>
       )}
-    </figure>
+    </div>
   )
 }
 

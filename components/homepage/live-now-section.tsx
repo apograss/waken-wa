@@ -15,7 +15,6 @@
 import type { ReactNode } from 'react'
 
 import { useSharedActivityFeed } from '@/components/activity-feed-provider'
-import { ScheduleHomeInClassBanner } from '@/components/schedule-home-in-class-banner'
 import { isDeviceBatteryCharging } from '@/lib/activity-battery-metadata'
 import { cleanActivityTitle, prettifyAppName } from '@/lib/activity-display'
 import { getMediaDisplay } from '@/lib/activity-media'
@@ -28,6 +27,7 @@ import {
   type NowHistoryItem,
   NowSectionView,
 } from './now-section-view'
+import { ScheduleHomeDayPanel } from './schedule-home-day-panel'
 
 interface LiveNowSectionProps {
   /** 是否在主页隐藏媒体显示（来自后台开关） */
@@ -74,16 +74,15 @@ export function LiveNowSection({ hideMedia, schedule }: LiveNowSectionProps) {
   // 5) 大游戏卡（Steam）
   const game = buildGameItem(statuses)
 
-  // 6) 课程卡 slot
+  // 6) 课程卡 slot —— 全天课表面板
   let scheduleSlot: ReactNode = null
   if (schedule?.show) {
     scheduleSlot = (
-      <ScheduleHomeInClassBanner
+      <ScheduleHomeDayPanel
         courses={schedule.courses as never}
         showLocation={schedule.showLocation}
         showTeacher={schedule.showTeacher}
         periodTemplate={schedule.periodTemplate as never}
-        showNextUpcoming={schedule.showNextUpcoming}
         afterClassesLabel={schedule.afterClassesLabel}
       />
     )

@@ -54,7 +54,10 @@
       "idleFallback": "Break time",
       "tomorrowHasClass": "You have classes tomorrow~",
       "todayNoClass": "No classes today~",
-      "hoverMetaAriaLabel": "Hover to view location and teacher"
+      "hoverMetaAriaLabel": "Hover to view location and teacher",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "scheduleLabel": "Schedule"
     },
     "profile": {
       "defaultName": "User",

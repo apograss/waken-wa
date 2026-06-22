@@ -1885,59 +1885,34 @@
 
   .now-banner {
     position: relative;
-    margin: 0 0 32px;
-    aspect-ratio: 1320 / 540;
-    border-radius: 22px;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent),
-      0 24px 56px color-mix(in srgb, var(--foreground) 8%, transparent);
-    background: color-mix(in srgb, var(--muted) 60%, transparent);
-  }
-  .now-banner-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 55%;
-    filter: contrast(1.02);
-  }
-  /* Soft right-side wash so the now-playing chip stays readable */
-  .now-banner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(270deg,
-        color-mix(in srgb, var(--background) 35%, transparent) 0%,
-        transparent 30%,
-        transparent 100%),
-      linear-gradient(180deg,
-        color-mix(in srgb, var(--background) 18%, transparent) 0%,
-        transparent 28%);
-    pointer-events: none;
+    margin: 0 0 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 18px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+    background: color-mix(in srgb, var(--muted) 38%, transparent);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--foreground) 5%, transparent);
   }
 
   .now-banner-live {
-    position: absolute;
-    top: 18px;
-    left: 18px;
+    position: static;
     z-index: 2;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    background: rgba(31, 26, 23, 0.86);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    gap: 9px;
+    padding: 6px 12px;
+    background: color-mix(in srgb, var(--foreground) 88%, transparent);
     border-radius: 999px;
-    color: rgba(255, 251, 243, 0.94);
+    color: var(--background);
     font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
     font-size: 10.5px;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     white-space: nowrap;
+    flex: 0 0 auto;
   }
   .now-banner-pulse {
     width: 7px;
@@ -1948,92 +1923,90 @@
     animation: pulse 1.6s ease-in-out infinite;
   }
 
-  /* Centered editorial quote on the left half of the banner */
+  /* Current activity quote — flows inline, no image underneath */
   .now-banner-quote {
-    position: absolute;
-    top: 50%;
-    left: 8%;
-    transform: translateY(-50%);
+    position: static;
+    transform: none;
     z-index: 2;
-    max-width: 38%;
-    color: var(--hero-text);
-    text-shadow: 0 1px 12px rgba(255, 251, 243, 0.6);
+    flex: 1 1 240px;
+    min-width: 0;
+    color: var(--foreground);
+    text-shadow: none;
   }
   .now-banner-quote-eyebrow {
     display: inline-block;
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 4px;
-    background: var(--hero-accent);
+    background: var(--hero-accent, var(--primary));
     color: white;
     font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
   .now-banner-quote-text {
     font-family: "Fraunces", "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
-    font-size: clamp(22px, 2.6vw, 36px);
+    font-size: clamp(17px, 2vw, 24px);
     font-weight: 400;
-    line-height: 1.25;
-    margin: 0 0 12px;
+    line-height: 1.3;
+    margin: 0 0 6px;
     letter-spacing: -0.01em;
+    color: var(--foreground);
     overflow-wrap: break-word;
     word-break: normal;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
   .now-banner-quote-time {
     font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
     font-size: 11px;
-    color: var(--hero-text);
+    color: var(--muted-foreground);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    text-shadow: 0 1px 10px var(--background), 0 0 3px var(--background);
+    text-shadow: none;
   }
   .now-banner-quote-time::before {
     content: '';
     display: inline-block;
-    width: 24px;
+    width: 20px;
     height: 1px;
-    background: var(--hero-accent);
+    background: var(--hero-accent, var(--primary));
   }
 
   .now-banner-chip {
-    position: absolute;
-    bottom: 22px;
-    right: 22px;
+    position: static;
     z-index: 2;
     display: grid;
-    grid-template-columns: 44px 1fr auto;
-    gap: 12px;
+    grid-template-columns: 40px 1fr auto;
+    gap: 11px;
     align-items: center;
-    padding: 12px 14px;
-    background: rgba(255, 251, 243, 0.92);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(31, 26, 23, 0.06);
+    padding: 10px 12px;
+    background: color-mix(in srgb, var(--card, var(--background)) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
     border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(31, 26, 23, 0.12);
-    min-width: 280px;
-    max-width: 360px;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--foreground) 8%, transparent);
+    min-width: 240px;
+    max-width: 340px;
+    flex: 0 1 auto;
+    margin-left: auto;
   }
   .now-banner-cover {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     background: linear-gradient(135deg, #4f3a8a 0%, #1a0d3e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: 17px;
     box-shadow: 0 4px 12px rgba(79, 58, 138, 0.4);
   }
   .now-banner-info {
@@ -2042,7 +2015,7 @@
   .now-banner-title {
     font-size: 13px;
     font-weight: 600;
-    color: var(--hero-text);
+    color: var(--foreground);
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2050,7 +2023,7 @@
   }
   .now-banner-artist {
     font-size: 11.5px;
-    color: var(--hero-text-soft);
+    color: var(--muted-foreground);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2059,20 +2032,19 @@
   .now-banner-time {
     font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
     font-size: 11px;
-    color: var(--hero-text-soft);
+    color: var(--muted-foreground);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
 
   @media (max-width: 720px) {
     .now-banner {
-      aspect-ratio: 4 / 3;
+      gap: 12px;
     }
     .now-banner-chip {
-      left: 14px;
-      right: 14px;
-      bottom: 14px;
       min-width: 0;
+      width: 100%;
+      margin-left: 0;
     }
   }
 
@@ -2272,6 +2244,33 @@
   }
   .today-game-total {
     color: var(--muted-foreground);
+  }
+  .today-steam-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .today-steam-summary {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .today-game-bar {
+    display: block;
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+    overflow: hidden;
+  }
+  .today-game-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--hero-accent, var(--primary));
   }
 
   @media (max-width: 720px) {
@@ -2971,4 +2970,114 @@
   }
   .now-schedule-slot:first-child {
     margin-top: 0;
+  }
+
+  /* === 02 此刻 · 右栏全天课表面板 === */
+  .now-schedule-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 14px 12px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+    background: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+  .now-schedule-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .now-schedule-day {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .now-schedule-empty {
+    padding: 10px 2px;
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+  }
+  .now-schedule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .now-schedule-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
+  .now-schedule-item:first-child {
+    border-top: 0;
+  }
+  .now-schedule-time {
+    font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .now-schedule-time-sep {
+    opacity: 0.5;
+  }
+  .now-schedule-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .now-schedule-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--foreground);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    overflow-wrap: anywhere;
+  }
+  .now-schedule-meta {
+    font-size: 11.5px;
+    color: var(--muted-foreground);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .now-schedule-live-dot {
+    flex: 0 0 auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--online);
+    box-shadow: 0 0 8px var(--online);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  /* 已上完：淡化；正在上：高亮主色 */
+  .now-schedule-item.is-past {
+    opacity: 0.45;
+  }
+  .now-schedule-item.is-ongoing .now-schedule-time,
+  .now-schedule-item.is-ongoing .now-schedule-title {
+    color: var(--primary);
+  }
+  .now-schedule-item.is-ongoing {
+    margin: 0 -10px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border-top-color: transparent;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+  .now-schedule-item.is-ongoing + .now-schedule-item {
+    border-top-color: transparent;
   }

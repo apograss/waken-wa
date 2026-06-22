@@ -29,5 +29,7 @@ export default defineConfig([
     'next-env.d.ts',
     'generated/**',
     'node_modules/**',
+    'mobile-frontend/**',
+    'homepage-frontend/**',
   ]),
 ])

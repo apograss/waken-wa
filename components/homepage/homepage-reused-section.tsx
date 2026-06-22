@@ -166,14 +166,7 @@ export function HomepageReusedSection(props: HomepageReusedSectionProps) {
 /** 02 此刻顶部的 demo banner —— 立绘 + 写死的 LIVE / quote / now-playing chip */
 function DemoNowBanner() {
   return (
-    <figure className="now-banner" aria-hidden="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/assets/homepage/section-now-companion.png"
-        alt=""
-        loading="lazy"
-        className="now-banner-img"
-      />
+    <div className="now-banner">
       <span className="now-banner-live">
         <span className="now-banner-pulse"></span>
         live · 在线
@@ -181,7 +174,7 @@ function DemoNowBanner() {
       <div className="now-banner-quote">
         <span className="now-banner-quote-eyebrow">现在</span>
         <p className="now-banner-quote-text">
-          听见雨声<br />写到第三章
+          听见雨声，写到第三章
         </p>
         <span className="now-banner-quote-time">15:42 · 周三</span>
       </div>
@@ -193,6 +186,6 @@ function DemoNowBanner() {
         </div>
         <div className="now-banner-time">2:47 / 5:38</div>
       </div>
-    </figure>
+    </div>
   )
 }

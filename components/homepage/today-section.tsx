@@ -129,11 +129,20 @@ function TodayTimeline({ timeline }: { timeline: TodaySummary['timeline'] }) {
 }
 
 function TodaySteam({ steam }: { steam: SteamGamesResult }) {
+  const games = steam.games
+  const total2w = games.reduce((sum, g) => sum + g.playtime2weeksMin, 0)
+  const totalForever = games.reduce((sum, g) => sum + g.playtimeForeverMin, 0)
+  const max2w = Math.max(1, ...games.map((g) => g.playtime2weeksMin))
   return (
     <div className="today-steam">
-      <div className="now-eyebrow">Steam · recently played</div>
+      <div className="today-steam-head">
+        <span className="now-eyebrow">Steam · recently played</span>
+        <span className="today-steam-summary">
+          {games.length} 款 · 近两周 {formatMinutes(total2w)} · 累计 {formatMinutes(totalForever)}
+        </span>
+      </div>
       <div className="today-games">
-        {steam.games.map((game) => (
+        {games.map((game) => (
           <a
             key={game.appId}
             className="today-game"
@@ -149,6 +158,17 @@ function TodaySteam({ steam }: { steam: SteamGamesResult }) {
             />
             <span className="today-game-body">
               <span className="today-game-name">{game.name}</span>
+              {game.playtime2weeksMin > 0 && (
+                <span
+                  className="today-game-bar"
+                  title={`近两周 ${formatMinutes(game.playtime2weeksMin)}`}
+                >
+                  <span
+                    className="today-game-bar-fill"
+                    style={{ width: `${Math.max(6, (game.playtime2weeksMin / max2w) * 100)}%` }}
+                  />
+                </span>
+              )}
               <span className="today-game-times">
                 <span className="today-game-2w">近两周 {formatMinutes(game.playtime2weeksMin)}</span>
                 <span className="today-game-total">累计 {formatMinutes(game.playtimeForeverMin)}</span>

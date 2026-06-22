@@ -54,7 +54,10 @@
       "idleFallback": "正在摸鱼",
       "tomorrowHasClass": "明天有课哦~",
       "todayNoClass": "今天没课~",
-      "hoverMetaAriaLabel": "悬停查看地点与教师"
+      "hoverMetaAriaLabel": "悬停查看地点与教师",
+      "today": "今天",
+      "tomorrow": "明天",
+      "scheduleLabel": "课表 · schedule"
     },
     "profile": {
       "defaultName": "用户",
