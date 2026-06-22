@@ -1,11 +1,13 @@
 import '@/styles/homepage.css'
 import '@/styles/noto-serif-sc.css'
+import '@/styles/mobile-home.css'
 
 import { count, desc } from 'drizzle-orm'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { HomeScrollbarHider } from '@/components/home-scrollbar-hider'
+import { MobileHome } from '@/components/homepage/mobile/mobile-home'
 import { PersonalHomePage } from '@/components/homepage/personal-home-page'
 import { LayoutFooterPortal } from '@/components/layout-footer-portal'
 import { LenisSmoothScroll } from '@/components/lenis-smooth-scroll'
@@ -33,6 +35,7 @@ import {
 } from '@/lib/hitokoto'
 import { NormalizeHomepageSettings } from '@/lib/homepage-settings'
 import { inspirationEntryImageUrl } from '@/lib/inspiration-inline-images'
+import { isMobileUserAgent } from '@/lib/is-mobile-ua'
 import { resolvePublicPageControlFontOptions } from '@/lib/public-page-font'
 import {
   parseScheduleCoursesJson,
@@ -171,6 +174,66 @@ export default async function Home() {
     cfg.publicFontOptions,
   )
 
+  const reusedSectionProps = {
+    activityInitialFeed,
+    activityUpdateMode,
+    userName,
+    userBio,
+    avatarSrc,
+    profileOnlineAccentColor: config.profileOnlineAccentColor ?? null,
+    profileOnlinePulseEnabled: config.profileOnlinePulseEnabled ?? null,
+    todayStatusEmoji,
+    todayStatusText,
+    todayStatusExpiresAt,
+    todayStatusBusy,
+    aboutProfile,
+    aboutDisplayTimezone: displayTimezoneForEntries,
+    userNote,
+    noteHitokotoEnabled,
+    noteTypewriterEnabled,
+    noteSignatureFontEnabled,
+    noteSignatureFontFamily,
+    noteHitokotoCategories,
+    noteHitokotoEncode,
+    noteHitokotoFallbackToNote,
+    currentlyText,
+    hideActivityMedia,
+    mediaDisplayShowSource,
+    mediaDisplayShowCover,
+    mediaDisplayShowNcmLink,
+    showScheduleHomeColumn,
+    scheduleCoursesForHome,
+    scheduleHomeShowLocation,
+    scheduleHomeShowTeacher,
+    schedulePeriodTemplate,
+    scheduleHomeShowNextUpcoming,
+    scheduleHomeAfterClassesLabel,
+    hideInspirationOnHome,
+    earlierText,
+    inspirationHomeEntries,
+    inspirationTotal,
+    blogPosts,
+    blogHomeUrl: haloBlogHomeUrl(),
+    demoEnabled: homepageSettings.demoEnabled,
+    todaySummary,
+    steamGames,
+  }
+
+  // 手机端 UA → 渲染移动版（独立标签式结构，不复用桌面滚动壳）
+  const headerStore = await headers()
+  const isMobile = isMobileUserAgent(headerStore.get('user-agent'))
+  if (isMobile) {
+    return (
+      <>
+        {themeCss && (
+          <style id="site-theme-override" dangerouslySetInnerHTML={{ __html: themeCss }} />
+        )}
+        <MobileHome homepageSettings={homepageSettings} reused={reusedSectionProps} />
+        <LayoutFooterPortal adminText={adminText} userName={userName} footerBeian={footerBeian} />
+      </>
+    )
+  }
+
   return (
     <>
       {shouldPrefetchAvatar && avatarSrc ? <link rel="prefetch" href={avatarSrc} as="image" /> : null}
@@ -201,50 +264,7 @@ export default async function Home() {
         <PersonalHomePage
           homepageSettings={homepageSettings}
           userName={userName}
-          reusedSectionProps={{
-            activityInitialFeed,
-            activityUpdateMode,
-            userName,
-            userBio,
-            avatarSrc,
-            profileOnlineAccentColor: config.profileOnlineAccentColor ?? null,
-            profileOnlinePulseEnabled: config.profileOnlinePulseEnabled ?? null,
-            todayStatusEmoji,
-            todayStatusText,
-            todayStatusExpiresAt,
-            todayStatusBusy,
-            aboutProfile,
-            aboutDisplayTimezone: displayTimezoneForEntries,
-            userNote,
-            noteHitokotoEnabled,
-            noteTypewriterEnabled,
-            noteSignatureFontEnabled,
-            noteSignatureFontFamily,
-            noteHitokotoCategories,
-            noteHitokotoEncode,
-            noteHitokotoFallbackToNote,
-            currentlyText,
-            hideActivityMedia,
-            mediaDisplayShowSource,
-            mediaDisplayShowCover,
-            mediaDisplayShowNcmLink,
-            showScheduleHomeColumn,
-            scheduleCoursesForHome,
-            scheduleHomeShowLocation,
-            scheduleHomeShowTeacher,
-            schedulePeriodTemplate,
-            scheduleHomeShowNextUpcoming,
-            scheduleHomeAfterClassesLabel,
-            hideInspirationOnHome,
-            earlierText,
-            inspirationHomeEntries,
-            inspirationTotal,
-            blogPosts,
-            blogHomeUrl: haloBlogHomeUrl(),
-            demoEnabled: homepageSettings.demoEnabled,
-            todaySummary,
-            steamGames,
-          }}
+          reusedSectionProps={reusedSectionProps}
         />
         <LayoutFooterPortal adminText={adminText} userName={userName} footerBeian={footerBeian} />
       </PublicPageTransitionShell>
