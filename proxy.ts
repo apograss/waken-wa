@@ -35,7 +35,6 @@ const FONT_FILE_CSP_SOURCES = [
   'https://gstatic.loli.net',
   'https://fonts.scalar.com',
 ]
-const NEWTAB_EMBED_ALLOWED_PATHS = new Set(['/'])
 
 function getClientIp(request: NextRequest): string {
   return (
@@ -47,7 +46,6 @@ function getClientIp(request: NextRequest): string {
 
 function addSecurityHeaders(response: NextResponse, pathname?: string): NextResponse {
   const scalarScriptSources = pathname === '/api-reference' ? SCALAR_SCRIPT_CSP_SOURCES : []
-  const allowNewtabEmbed = pathname ? NEWTAB_EMBED_ALLOWED_PATHS.has(pathname) : false
   const scriptSrc = [
     "'self'",
     "'unsafe-inline'",
@@ -66,7 +64,7 @@ function addSecurityHeaders(response: NextResponse, pathname?: string): NextResp
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    allowNewtabEmbed ? 'frame-ancestors chrome-extension:' : "frame-ancestors 'none'",
+    "frame-ancestors 'none'",
     "form-action 'self'",
     `frame-src 'self' ${HCAPTCHA_CSP_SOURCES.join(' ')}`,
     "img-src 'self' data: blob: https:",
@@ -76,9 +74,7 @@ function addSecurityHeaders(response: NextResponse, pathname?: string): NextResp
     "connect-src 'self' https: wss: ws:",
   ]
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  if (!allowNewtabEmbed) {
-    response.headers.set('X-Frame-Options', 'DENY')
-  }
+  response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Content-Security-Policy', cspDirectives.join('; '))
