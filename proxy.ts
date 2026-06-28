@@ -45,6 +45,12 @@ function getClientIp(request: NextRequest): string {
 }
 
 function addSecurityHeaders(response: NextResponse, pathname?: string): NextResponse {
+  // Admin area (UI + API) must never be framable — prevents clickjacking on the
+  // authenticated console. Public pages stay framable so the homepage can be
+  // embedded as a browser new-tab page.
+  const isAdminArea =
+    !!pathname && (pathname.startsWith('/admin') || pathname.startsWith('/api/admin'))
+  const frameAncestors = isAdminArea ? "frame-ancestors 'none'" : 'frame-ancestors *'
   const scalarScriptSources = pathname === '/api-reference' ? SCALAR_SCRIPT_CSP_SOURCES : []
   const scriptSrc = [
     "'self'",
@@ -64,7 +70,7 @@ function addSecurityHeaders(response: NextResponse, pathname?: string): NextResp
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "frame-ancestors 'none'",
+    frameAncestors,
     "form-action 'self'",
     `frame-src 'self' ${HCAPTCHA_CSP_SOURCES.join(' ')}`,
     "img-src 'self' data: blob: https:",
@@ -74,7 +80,13 @@ function addSecurityHeaders(response: NextResponse, pathname?: string): NextResp
     "connect-src 'self' https: wss: ws:",
   ]
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
+  // X-Frame-Options has no "allow any origin" value, so only emit DENY for the
+  // admin area; public pages rely on the permissive CSP frame-ancestors above.
+  if (isAdminArea) {
+    response.headers.set('X-Frame-Options', 'DENY')
+  } else {
+    response.headers.delete('X-Frame-Options')
+  }
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Content-Security-Policy', cspDirectives.join('; '))

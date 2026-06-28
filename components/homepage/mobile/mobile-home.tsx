@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from 'react'
 
 import { ActivityFeedProvider } from '@/components/activity-feed-provider'
+import { resolveAboutFigureImage } from '@/lib/about-profile'
 import type { HomepageSettings } from '@/types/homepage-settings'
 
 import type { HomepageReusedSectionProps } from '../homepage-reused-section'
@@ -67,7 +68,7 @@ export function MobileHome({ homepageSettings, reused }: MobileHomeProps) {
               userName={reused.userName}
               userNote={reused.userNote}
               weatherEnabled={homepageSettings.weatherEnabled}
-              coverImage={homepageSettings.coverImage}
+              backgroundImage={resolveAboutFigureImage(reused.aboutProfile)}
               defaultEngine={homepageSettings.defaultEngine}
               visibleEngines={homepageSettings.visibleEngines}
             />

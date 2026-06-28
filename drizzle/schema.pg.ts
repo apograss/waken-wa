@@ -100,6 +100,25 @@ export const userActivities = pgTable(
   ],
 )
 
+/**
+ * 每台设备「最后一次活动」快照（永不过期），用于离线兜底展示「此刻」。
+ */
+export const activityLastSnapshot = pgTable('activity_last_snapshot', {
+  deviceId: integer('device_id')
+    .primaryKey()
+    .references(() => devices.id, { onDelete: 'cascade' }),
+  generatedHashKey: varchar('generated_hash_key', { length: 128 }).notNull(),
+  processName: varchar('process_name', { length: 200 }).notNull(),
+  processTitle: text('process_title'),
+  metadata: jsonb('metadata'),
+  startedAt: timestamp('started_at', { mode: 'date', withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
 export const mediaCovers = pgTable(
   'media_covers',
   {

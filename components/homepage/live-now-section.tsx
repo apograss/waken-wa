@@ -49,19 +49,25 @@ export function LiveNowSection({ hideMedia, schedule }: LiveNowSectionProps) {
 
   const statuses: ActivityFeedItem[] = feed?.activeStatuses ?? []
   const recentActivities: ActivityFeedItem[] = feed?.recentActivities ?? []
+  const isOnline = statuses.length > 0
+  // 离线时回退到最后一条记录，显示真实的「最近在做 + 已摸鱼」而非占位 demo
+  const primary = statuses[0] ?? recentActivities[0] ?? null
 
-  // 1) 设备列表
-  const devices: NowDeviceItem[] = statuses.map(s => buildDeviceItem(s))
+  // 1) 设备列表：在线时列出全部活跃设备；离线但有历史时显示最后那台（灰色离线态）
+  const devices: NowDeviceItem[] = isOnline
+    ? statuses.map((s) => buildDeviceItem(s))
+    : primary
+      ? [buildDeviceItem(primary)]
+      : []
 
-  // 2) 正在做：取第一台 active 设备的当前活动
-  const primary = statuses[0] ?? null
+  // 2) 正在做：在线显示当前活动 + 已打开时长；离线显示最近活动 + 已摸鱼时长
   const doing = primary
     ? {
         title:
           cleanActivityTitle(primary.processTitle) ||
           prettifyAppName(primary.processName) ||
           '工作中',
-        app: buildDoingApp(primary),
+        app: isOnline ? buildDoingApp(primary) : buildIdleApp(primary),
       }
     : null
 
@@ -158,6 +164,27 @@ function buildDoingApp(s: ActivityFeedItem): string {
       const hours = Math.floor(minutes / 60)
       const remainingMin = minutes % 60
       parts.push(`已打开 ${hours} 小时${remainingMin > 0 ? ` ${remainingMin} 分` : ''}`)
+    }
+  }
+  return parts.join(' · ')
+}
+
+/** 离线时的「正在做」副标题：最近用的应用 + 已摸鱼多久（基于最后上报时间）。 */
+function buildIdleApp(s: ActivityFeedItem): string {
+  const parts: string[] = []
+  const app = prettifyAppName(s.processName)
+  if (app) parts.push(app)
+  const iso = s.lastReportAt || s.updatedAt || s.endedAt || s.startedAt
+  if (iso) {
+    const minutes = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60_000))
+    if (minutes < 1) {
+      parts.push('刚刚离开')
+    } else if (minutes < 60) {
+      parts.push(`已摸鱼 ${minutes} 分钟`)
+    } else {
+      const hours = Math.floor(minutes / 60)
+      const remainingMin = minutes % 60
+      parts.push(`已摸鱼 ${hours} 小时${remainingMin > 0 ? ` ${remainingMin} 分` : ''}`)
     }
   }
   return parts.join(' · ')

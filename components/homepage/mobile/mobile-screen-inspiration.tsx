@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { useIsEmbedded } from '@/lib/embed'
 import type { HaloBlogPost } from '@/lib/halo-blog'
 import { getDateParts } from '@/lib/timezone'
 
@@ -49,6 +50,7 @@ export function MobileScreenInspiration({
   blogHomeUrl,
   earlierText,
 }: MobileScreenInspirationProps) {
+  const embedded = useIsEmbedded()
   return (
     <section className="m-screen m-ins" data-screen="inspiration">
       <div className="m-sec-head">
@@ -67,7 +69,7 @@ export function MobileScreenInspiration({
             const title = (e.title ?? '').trim()
             const preview = previewText(e)
             return (
-              <Link key={e.id} href="/inspiration" className="m-note">
+              <Link key={e.id} href="/inspiration" className="m-note" target={embedded ? '_top' : undefined}>
                 <div className="m-note-head">
                   <span className="m-note-num">{pad(i + 1)}</span>
                   <span className="m-mono m-note-date">{entryDate(e)}</span>

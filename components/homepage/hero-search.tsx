@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { navigateTopLevel } from '@/lib/embed'
 import type { HomepageSearchEngineId } from '@/types/homepage-settings'
 
 import {
@@ -96,7 +97,7 @@ export function HeroSearch({
     event.preventDefault()
     const trimmed = query.trim()
     if (!trimmed) return
-    window.location.href = buildSearchUrl(currentEngine, trimmed)
+    navigateTopLevel(buildSearchUrl(currentEngine, trimmed))
   }
 
   const shortcutHint = engines.length > 1 ? `1-${engines.length}` : '1'

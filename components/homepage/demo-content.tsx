@@ -4,7 +4,7 @@
  * Shows what the page looks like in a "fully filled" state.
  */
 
-import type { AboutProfileFields } from '@/lib/about-profile'
+import { type AboutProfileFields, resolveAboutFigureImage } from '@/lib/about-profile'
 import { formatDisplayPattern } from '@/lib/timezone'
 import { isTodayStatusActive } from '@/lib/today-status'
 
@@ -230,8 +230,7 @@ export function DemoAboutSection({
   const statusExpireLabel = todayStatusExpiresAt
     ? formatDisplayPattern(todayStatusExpiresAt, 'HH:mm', displayTimezone)
     : ''
-  const figureSrc =
-    aboutProfile.figureImage.trim() || '/assets/homepage/section-about-companion.png'
+  const figureSrc = resolveAboutFigureImage(aboutProfile)
 
   return (
     <>

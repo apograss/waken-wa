@@ -229,7 +229,6 @@ export default async function Home() {
           <style id="site-theme-override" dangerouslySetInnerHTML={{ __html: themeCss }} />
         )}
         <MobileHome homepageSettings={homepageSettings} reused={reusedSectionProps} />
-        <LayoutFooterPortal adminText={adminText} userName={userName} footerBeian={footerBeian} />
       </>
     )
   }

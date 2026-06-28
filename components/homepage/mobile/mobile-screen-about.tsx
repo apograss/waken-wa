@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 import type { AboutProfileFields } from '@/lib/about-profile'
+import { useIsEmbedded } from '@/lib/embed'
 
 export interface MobileScreenAboutProps {
   userName: string
@@ -29,6 +30,7 @@ export function MobileScreenAbout({
   const name = (userName || 'apograss').trim()
   const showStatus = aboutProfile.statusEnabled && Boolean(todayStatusText.trim())
   const [year] = useState(() => new Date().getFullYear())
+  const embedded = useIsEmbedded()
 
   return (
     <section className="m-screen m-about" data-screen="about">
@@ -97,7 +99,7 @@ export function MobileScreenAbout({
         </div>
       ) : null}
 
-      <Link className="m-admin-btn" href="/admin">
+      <Link className="m-admin-btn" href="/admin" target={embedded ? '_top' : undefined}>
         <span className="m-admin-btn-ic">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fdf8f0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L16.5 2h-4l-.4 2.3a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.3h4l.4-2.3a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z" /></svg>
         </span>

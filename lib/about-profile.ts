@@ -49,6 +49,14 @@ export const ABOUT_PROFILE_DEFAULTS: AboutProfileFields = {
   figureCaption: '2026 · 春',
 }
 
+/** Bundled fallback illustration used when no About figure image is configured. */
+export const ABOUT_FIGURE_FALLBACK_IMAGE = '/assets/homepage/section-about-companion.png'
+
+/** Resolve the About-section figure image, falling back to the bundled illustration. */
+export function resolveAboutFigureImage(profile: AboutProfileFields): string {
+  return profile.figureImage.trim() || ABOUT_FIGURE_FALLBACK_IMAGE
+}
+
 const MAX_SHORT = 60
 const MAX_LABEL = 80
 const MAX_EMAIL = 120

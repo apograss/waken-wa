@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { navigateTopLevel } from '@/lib/embed'
 import type { HomepageSearchEngineId } from '@/types/homepage-settings'
 
 import {
@@ -52,7 +53,7 @@ export interface MobileScreenHomeProps {
   userName: string
   userNote: string | null | undefined
   weatherEnabled: boolean
-  coverImage?: string
+  backgroundImage: string
   defaultEngine: HomepageSearchEngineId
   visibleEngines: HomepageSearchEngineId[]
 }
@@ -61,7 +62,7 @@ export function MobileScreenHome({
   userName,
   userNote,
   weatherEnabled,
-  coverImage,
+  backgroundImage,
   defaultEngine,
   visibleEngines,
 }: MobileScreenHomeProps) {
@@ -169,7 +170,7 @@ export function MobileScreenHome({
   const submit = useCallback(() => {
     const trimmed = query.trim()
     if (!trimmed) return
-    window.location.href = buildSearchUrl(currentEngine, trimmed)
+    navigateTopLevel(buildSearchUrl(currentEngine, trimmed))
   }, [query, currentEngine])
 
   const hh = String(now.getHours()).padStart(2, '0')
@@ -182,7 +183,7 @@ export function MobileScreenHome({
     <section className="m-screen m-home" data-screen="home">
       <div className="m-home-bg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={coverImage || '/assets/homepage/section-about-companion.webp'} alt="" />
+        <img src={backgroundImage} alt="" />
         <div className="g1" />
         <div className="g2" />
         <div className="g3" />

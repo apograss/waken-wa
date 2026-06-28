@@ -25,7 +25,7 @@ import {
 import { getSession, isSiteLockSatisfied } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { clearDeviceAuthCache } from '@/lib/device-auth-cache'
-import { devices, userActivities } from '@/lib/drizzle-schema'
+import { activityLastSnapshot,devices, userActivities } from '@/lib/drizzle-schema'
 import { isLockScreenReporterProcessName } from '@/lib/lockapp-reporter'
 import { saveCoverFromDataUrl } from '@/lib/media-cover-storage'
 import { findMediaPlaySourceRuleMatch } from '@/lib/media-play-source-rules'
@@ -456,6 +456,36 @@ export async function POST(request: NextRequest) {
         },
         realtimeTtlSeconds,
       )
+    }
+
+    // 持久化「最后一次活动」快照（永不过期，每设备一条）。设备长时间离线、
+    // user_activities 行被清理后，「此刻」仍可兜底展示最近在做什么。
+    try {
+      const snapshotNow = sqlTimestamp()
+      await db
+        .insert(activityLastSnapshot)
+        .values({
+          deviceId: deviceRecord.id,
+          generatedHashKey,
+          processName: process_name,
+          processTitle: process_title ?? null,
+          metadata: toDbJsonValue(finalMetadata),
+          startedAt: snapshotNow,
+          updatedAt: snapshotNow,
+        })
+        .onConflictDoUpdate({
+          target: activityLastSnapshot.deviceId,
+          set: {
+            generatedHashKey,
+            processName: process_name,
+            processTitle: process_title ?? null,
+            metadata: toDbJsonValue(finalMetadata),
+            startedAt: snapshotNow,
+            updatedAt: snapshotNow,
+          },
+        })
+    } catch (error) {
+      console.error('[activity] last-activity snapshot upsert failed:', error)
     }
 
     const entry = upsertActivity({

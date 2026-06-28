@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useViewerCount } from '@/hooks/use-viewer-count'
+import { useIsEmbedded } from '@/lib/embed'
 import { type FooterBeianFields, ICP_BEIAN_URL, publicSecurityBeianUrl } from '@/lib/footer-beian'
 
 const TEMPLATE_REPO_HREF = 'https://github.com/MoYoez/waken-wa'
@@ -33,6 +34,7 @@ export function LayoutFooter({
 }) {
   const { t } = useT('common')
   const isMobile = useIsMobile()
+  const embedded = useIsEmbedded()
   const currentYear = new Date().getFullYear()
   const [poweredWaveTick, setPoweredWaveTick] = useState(0)
   const [cloudWobbleTick, setCloudWobbleTick] = useState(0)
@@ -132,6 +134,7 @@ export function LayoutFooter({
                 <div className="flex min-w-0 items-center justify-self-start gap-2">
                   <Link
                     href="/admin"
+                    target={embedded ? '_top' : undefined}
                     className="footer-text-soft inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md px-1 py-2 font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:min-h-0 sm:py-1"
                     onMouseEnter={() => setCloudWobbleTick((c) => c + 1)}
                     onTouchStart={() => setCloudWobbleTick((c) => c + 1)}

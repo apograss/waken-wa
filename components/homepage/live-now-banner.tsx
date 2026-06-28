@@ -17,10 +17,10 @@ interface LiveNowBannerProps {
 export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
   const { feed } = useSharedActivityFeed()
   const statuses = feed?.activeStatuses ?? []
-  const primary = statuses[0] ?? null
-
-  // 没有任何数据上来时，依然渲染立绘 + LIVE 角标，不显示 quote 和 chip
-  const hasAnyDevice = statuses.length > 0
+  const recent = feed?.recentActivities ?? []
+  const isOnline = statuses.length > 0
+  // 离线时回退到最后一条记录，让横幅显示「最近在做什么」而非空着
+  const primary = statuses[0] ?? recent[0] ?? null
 
   // quote 文本：当前活动标题（清洗装饰符）；标题缺失或就是应用名本身时，
   // 改写成「正在用 ××」让横幅读起来更像一句话而不是裸进程名。
@@ -55,12 +55,12 @@ export function LiveNowBanner({ hideMedia }: LiveNowBannerProps) {
     <div className="now-banner">
       <span className="now-banner-live">
         <span className="now-banner-pulse"></span>
-        {hasAnyDevice ? 'live · 在线' : 'idle · 暂无活动'}
+        {isOnline ? 'live · 在线' : primary ? 'idle · 离线' : 'idle · 暂无活动'}
       </span>
 
       {quoteText && (
         <div className="now-banner-quote">
-          <span className="now-banner-quote-eyebrow">现在</span>
+          <span className="now-banner-quote-eyebrow">{isOnline ? '现在' : '最近'}</span>
           <p className="now-banner-quote-text">{quoteText}</p>
           {timeLabel && <span className="now-banner-quote-time">{timeLabel}</span>}
         </div>

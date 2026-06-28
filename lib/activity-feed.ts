@@ -15,7 +15,7 @@ import {
   renderAppMessageRuleText,
 } from '@/lib/app-message-rules'
 import { db } from '@/lib/db'
-import { devices, userActivities } from '@/lib/drizzle-schema'
+import { activityLastSnapshot,devices, userActivities } from '@/lib/drizzle-schema'
 import { isLockScreenReporterProcessName } from '@/lib/lockapp-reporter'
 import { applyMediaPlaySourceRulesToMetadata, normalizeMediaPlaySourceRules } from '@/lib/media-play-source-rules'
 import { listRealtimeActivities } from '@/lib/realtime-activity-cache'
@@ -558,6 +558,60 @@ export async function getActivityFeedData(
     }
 
     activeStatuses.push(syntheticItem)
+  }
+
+  // 兜底：在线和近期活动都为空时，注入「最后一次活动」快照（永不过期），
+  // 让设备长时间离线后「此刻」仍显示最近在做什么，而不是彻底空白。
+  if (activeStatuses.length === 0 && recentActivities.length === 0) {
+    try {
+      const snapRows = (await db
+        .select({
+          deviceId: activityLastSnapshot.deviceId,
+          generatedHashKey: activityLastSnapshot.generatedHashKey,
+          processName: activityLastSnapshot.processName,
+          processTitle: activityLastSnapshot.processTitle,
+          metadata: activityLastSnapshot.metadata,
+          startedAt: activityLastSnapshot.startedAt,
+          updatedAt: activityLastSnapshot.updatedAt,
+          device: devices.displayName,
+        })
+        .from(activityLastSnapshot)
+        .innerJoin(devices, eq(activityLastSnapshot.deviceId, devices.id))
+        .orderBy(desc(activityLastSnapshot.updatedAt))
+        .limit(1)) as Array<{
+        deviceId: number
+        generatedHashKey: string
+        processName: string
+        processTitle: string | null
+        metadata: unknown
+        startedAt: unknown
+        updatedAt: unknown
+        device: string | null
+      }>
+      const snap = snapRows[0]
+      if (snap && passesAppFilter(snap.processName)) {
+        const processTitle = nameOnlySet.has(normalizeProcessName(snap.processName))
+          ? null
+          : snap.processTitle
+        const snapItem = redactGeneratedHashKeyForClient({
+          id: `snapshot-${snap.deviceId}`,
+          deviceId: snap.deviceId,
+          generatedHashKey: snap.generatedHashKey,
+          device: snap.device ?? '',
+          processName: snap.processName,
+          processTitle,
+          metadata: normalizeMetadata(snap.metadata),
+          startedAt: toIso(snap.startedAt),
+          endedAt: null,
+          pushMode: 'active' as const,
+          updatedAt: toIso(snap.updatedAt),
+          lastReportAt: toIso(snap.updatedAt || snap.startedAt),
+        })
+        recentActivities.push(snapItem)
+      }
+    } catch (error) {
+      console.error('[activity-feed] last-activity snapshot fallback failed:', error)
+    }
   }
 
   const recentTopApps: ActivityFeedItem[] = []

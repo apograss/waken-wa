@@ -91,6 +91,22 @@ export const userActivities = sqliteTable(
   ],
 )
 
+/**
+ * 每台设备「最后一次活动」快照（永不过期）。用于设备长时间离线、
+ * user_activities 行已被清理后，「此刻」仍能兜底展示最近在做什么。
+ */
+export const activityLastSnapshot = sqliteTable('activity_last_snapshot', {
+  deviceId: integer('device_id')
+    .primaryKey()
+    .references(() => devices.id, { onDelete: 'cascade' }),
+  generatedHashKey: text('generated_hash_key').notNull(),
+  processName: text('process_name').notNull(),
+  processTitle: text('process_title'),
+  metadata: text('metadata', { mode: 'json' }),
+  startedAt: ts('started_at'),
+  updatedAt: ts('updated_at'),
+})
+
 export const mediaCovers = sqliteTable(
   'media_covers',
   {

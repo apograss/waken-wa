@@ -66,7 +66,10 @@ export function MobileScreenNow({
   }, [mounted, scheduleEnabled, scheduleCourses, schedulePeriodTemplate, effectiveTimezone, now])
 
   const statuses: ActivityFeedItem[] = feed?.activeStatuses ?? []
-  const primary = statuses[0] ?? null
+  const recentActivities: ActivityFeedItem[] = feed?.recentActivities ?? []
+  const isOnline = statuses.length > 0
+  // 离线时回退到最后一条记录，展示「最近在做什么 + 已摸鱼多久」，而不是空占位
+  const primary = statuses[0] ?? recentActivities[0] ?? null
   const doingTitle = primary
     ? cleanActivityTitle(primary.processTitle) || prettifyAppName(primary.processName) || '工作中'
     : null
@@ -74,6 +77,19 @@ export function MobileScreenNow({
   const doingMinutes = primary?.startedAt
     ? Math.max(0, Math.floor((now.getTime() - new Date(primary.startedAt).getTime()) / 60_000))
     : null
+  const lastSeenIso =
+    primary?.lastReportAt || primary?.updatedAt || primary?.endedAt || primary?.startedAt || null
+  const idleMinutes =
+    !isOnline && lastSeenIso
+      ? Math.max(0, Math.floor((now.getTime() - new Date(lastSeenIso).getTime()) / 60_000))
+      : null
+  const doingSub = isOnline
+    ? doingMinutes !== null
+      ? `已打开 ${doingMinutes < 1 ? '不到 1' : doingMinutes} 分钟`
+      : '—'
+    : idleMinutes !== null
+      ? `已摸鱼 ${fmtMinutes(idleMinutes)}`
+      : '—'
 
   const deviceName = primary?.device?.trim() || primary?.processName || 'APOGRASS'
   const platform = (() => {
@@ -126,10 +142,10 @@ export function MobileScreenNow({
         <div className="m-now-banner-orb1" />
         <div className="m-now-banner-orb2" />
         <div className="m-now-banner-dots" />
-        <span className="m-mono m-now-badge"><span className="m-now-badge-dot" />{statuses.length > 0 ? '在线' : '离线'}</span>
+        <span className="m-mono m-now-badge"><span className="m-now-badge-dot" />{isOnline ? '在线' : '离线'}</span>
         <div className="m-now-banner-body">
-          <div className="m-mono m-now-banner-eyebrow">现在</div>
-          <div className="m-now-banner-title">{doingTitle || '暂时空闲'}</div>
+          <div className="m-mono m-now-banner-eyebrow">{isOnline ? '现在' : '最近'}</div>
+          <div className="m-now-banner-title">{doingTitle || (isOnline ? '暂时空闲' : '正在摸鱼')}</div>
           <div className="m-mono m-now-banner-time">
             <span className="m-now-banner-time-bar" />
             {format(now, 'HH:mm')} · {WEEKDAYS[now.getDay()]}{doingApp ? ` · ${doingApp}` : ''}
@@ -148,7 +164,7 @@ export function MobileScreenNow({
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.6"><rect x="2" y="4" width="20" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
               <div style={{ minWidth: 0 }}>
                 <div className="m-now-kv-main">{deviceName}</div>
-                <div className="m-now-kv-sub">{platform} · {statuses.length > 0 ? '在线' : '离线'}</div>
+                <div className="m-now-kv-sub">{platform} · {isOnline ? '在线' : '离线'}</div>
               </div>
             </div>
           </div>
@@ -157,8 +173,8 @@ export function MobileScreenNow({
             <div className="m-now-kv">
               <span className="m-now-kv-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg></span>
               <div style={{ minWidth: 0 }}>
-                <div className="m-now-kv-main">{doingTitle || '暂时空闲'}</div>
-                <div className="m-now-kv-sub">{doingMinutes !== null ? `已打开 ${doingMinutes < 1 ? '不到 1' : doingMinutes} 分钟` : '—'}</div>
+                <div className="m-now-kv-main">{doingTitle || (isOnline ? '暂时空闲' : '正在摸鱼')}</div>
+                <div className="m-now-kv-sub">{doingSub}</div>
               </div>
             </div>
           </div>
